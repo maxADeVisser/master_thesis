@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "master_thesis"
+description = ""
+version = "0.1.0"
+authors = ["Max Andreas de Visser"]
+readme = "README.md"
+packages = [{ include = "poetry_demo" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydicom = "^2.4.4"
+matplotlib = "^3.9.2"
+ipykernel = "^6.29.5"
+numpy = "^2.1.0"
+pandas = "^2.2.2"
+seaborn = "^0.13.2"
+torch = "^2.4.0"
+torchvision = "^0.19.0"
+tqdm = "^4.66.5"
+regex = "^2024.7.24"
+clip = { git = "https://github.com/openai/CLIP.git" }
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
