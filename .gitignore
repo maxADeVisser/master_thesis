@@ -1,6 +1,7 @@
 data/
 out/
 .env
+max/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
