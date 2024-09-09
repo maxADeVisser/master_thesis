@@ -23,6 +23,7 @@ python-dotenv = "^1.0.1"
 
 # Dependency group for medvis streamlit application
 opencv-python = "^4.10.0.84"
+pyqt6 = "^6.7.1"
 [tool.poetry.group.medvis.dependencies]
 streamlit = "^1.38.0"
 streamlit-lottie = "^0.0.5"
