@@ -8,7 +8,7 @@ packages = [{ include = "poetry_demo" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydicom = "^2.4.4"       # for reading DICOM files
+pydicom = "^2.4.4"           # for reading DICOM files
 ipykernel = "^6.29.5"
 numpy = "^2.1.0"
 pandas = "^2.2.2"
@@ -17,13 +17,14 @@ torch = "^2.4.0"
 torchvision = "^0.19.0"
 tqdm = "^4.66.5"
 fiftyone = "^0.25.0"
-xlrd = "^2.0.1"          # Required for pandas to read excel files
-pylidc = "^0.2.3"        # Package for LIDC-IDRI dataset
+xlrd = "^2.0.1"              # Required for pandas to read excel files
+pylidc = "^0.2.3"            # Package for LIDC-IDRI dataset
 python-dotenv = "^1.0.1"
-
-# Dependency group for medvis streamlit application
 opencv-python = "^4.10.0.84"
-pyqt6 = "^6.7.1"
+pyqt6 = "^6.7.1"             # Required for itkwidgets
+scipy = "^1.14.1"
+
+# Dependency group for visualitation streamlit application
 [tool.poetry.group.medvis.dependencies]
 streamlit = "^1.38.0"
 streamlit-lottie = "^0.0.5"

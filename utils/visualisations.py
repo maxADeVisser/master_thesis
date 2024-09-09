@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pydicom
 
+from utils.processing import load_scan
+
 # from matplotlib import animation, rc
 
 # rc("animation", html="jshtml")
@@ -38,9 +40,7 @@ def plot_slices(
         end_scan_idx - start_scan_idx == num_rows * num_cols
     ), "The number of selected slices must equal the number of rows and columns multiplied"
 
-    slices = [pydicom.dcmread(scan_dir + f) for f in os.listdir(scan_dir)]
-    slices.sort(key=lambda x: int(x.InstanceNumber))
-    slices = np.stack([s.pixel_array for s in slices])
+    slices: np.ndarray = load_scan(scan_dir)
 
     # the number of selected slices must equal the number of rows and columns multiplied:
     slices = slices[start_scan_idx:end_scan_idx]
