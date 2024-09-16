@@ -1,3 +1,4 @@
+# %%
 """Refer to learning_pylidc.ipynb in the project for usage examples"""
 
 import matplotlib.pyplot as plt
@@ -11,26 +12,16 @@ np.int = int
 np.float = float
 
 
-def get_scans_by_patient_id(patient_id: str) -> list[pl.Scan]:
-    """Returns all scans for a given patient_id"""
-    scans = pl.query(pl.Scan).filter(pl.Scan.patient_id == patient_id).all()
-    return scans
+def get_scans_by_patient_id(patient_id: str, to_numpy: bool = True) -> list[pl.Scan]:
+    """Returns the first scan for a given patient_id (i think there is only one scan per patient)"""
+    scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == patient_id).first()
+    return scan.to_volume(verbose=False).reshape(-1, 512, 512) if to_numpy else scan
 
 
 def get_annotations_by_scan_id(scan_id: int) -> list[pl.Annotation]:
     """Returns all annotations for a given scan_id"""
     annotations = pl.query(pl.Annotation).filter(pl.Annotation.scan_id == scan_id).all()
     return annotations
-
-
-def get_annotations_by_scan(scan: pl.Scan) -> list[pl.Annotation]:
-    """Returns all annotations for a given scan object"""
-    return scan.annotations
-
-
-def get_nodules_by_scan(scan: pl.Scan) -> list[pl.Annotation]:
-    """Returns all nodules for a given scan object"""
-    return scan.cluster_annotations()
 
 
 def show_segmentation_consensus(
@@ -43,7 +34,6 @@ def show_segmentation_consensus(
         @scan: The pylidc.Scan object.
         @nodule_idx: The index of the nodule in the scan.
         @clevel: The consensus fraction. For example, if clevel=0.5, then a voxel will have value 1 (True) in the returned boolean volume when at least 50% of the annotations have a value of 1 at that voxel, and 0 (False) otherwise.
-        @pad: The number of slices to pad the volume by in the z-direction.
     Source: https://pylidc.github.io/tuts/consensus.html
     """
     # Query for a scan, and convert it to an array volume.
@@ -83,11 +73,14 @@ def show_segmentation_consensus(
     plt.show()
 
 
+# %%
 if __name__ == "__main__":
     pid = "LIDC-IDRI-0010"
-    pid_scans = get_scans_by_patient_id(pid)
-    scan_annotations = get_annotations_by_scan_id(pid_scans[0].id)
-    scan_nodules = get_nodules_by_scan(pid_scans[0])
+    pid_scan = get_scans_by_patient_id(pid, to_numpy=False)
+    scan_annotations = get_annotations_by_scan_id(pid_scan.id)
+    scan_nodules = get_nodules_by_scan(pid_scan)
+
+    show_segmentation_consensus(pid_scan, 2)
 
     # get the malignancy of each annotation:
     print([s.malignancy for s in scan_annotations])

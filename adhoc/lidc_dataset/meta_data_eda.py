@@ -7,7 +7,7 @@ from typing import Any
 from tqdm import tqdm
 
 from utils.common_imports import *
-from utils.utils import get_scan_directory_path_by_patient_id
+from utils.utils import get_ct_scan_slice_paths
 
 
 def _get_dicom_vals(dicom_file: pydicom.dataset.FileDataset) -> list[Any]:
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     vals = []
     for pid in tqdm(config.patient_ids):
-        patient_scan_dir: str = get_scan_directory_path_by_patient_id(pid)
+        patient_scan_dir: str = get_ct_scan_slice_paths(pid, return_parent_dir=True)
         cif = collect_meta_fields(patient_scan_dir, encoding)
         if attribute in cif.keys():
             vals.extend(cif[attribute])

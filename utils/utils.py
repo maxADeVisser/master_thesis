@@ -1,3 +1,4 @@
+# %%
 import os
 
 import matplotlib.pyplot as plt
@@ -9,20 +10,13 @@ from project_config import config
 PATH = str  # type alias
 
 
-def get_scan_ids(data_dir: PATH = config.DATA_DIR) -> list[PATH]:
-    scan_ids = sorted(
-        [
-            pid
-            for pid in os.listdir(config.DATA_DIR)
-            if os.path.isdir(os.path.join(config.DATA_DIR, pid))
-        ]
-    )
-    return scan_ids
-
-
-def get_ct_scan_slices(scan_id: str) -> list[PATH]:
-    """Get all the full CT scan file paths for a given patient."""
-    directory = os.path.join(config.DATA_DIR, scan_id)
+def get_ct_scan_slice_paths(
+    patient_id_dir: PATH, return_parent_dir: bool = False
+) -> list[PATH] | PATH:
+    """Dending on @return_parent_dir_only flag:
+    - Returns ALL (multiple) the full CT scan file paths for a given patient
+    - OR Returns the parent directory path of the CT scan for a given patient"""
+    directory = os.path.join(config.DATA_DIR, patient_id_dir)
 
     if not os.path.isdir(directory):
         raise ValueError(f"Provided path '{directory}' is not a valid directory.")
@@ -32,70 +26,29 @@ def get_ct_scan_slices(scan_id: str) -> list[PATH]:
     # expects that the file structure is sorted in ascending order
     sub_dir = os.path.join(directory, entries[0])
     if os.path.isdir(sub_dir):
-        return get_ct_scan_slices(sub_dir)
+        return get_ct_scan_slice_paths(sub_dir, return_parent_dir)
     else:
-        # If no subdirectory is found, filter out .dcm files in the current directory
-        dcm_files = sorted([f for f in entries if f.endswith(".dcm")])
+        if return_parent_dir == True:
+            return directory
+        else:
+            # If no subdirectory is found, filter out .dcm files in the current directory
+            dcm_files = sorted([f for f in entries if f.endswith(".dcm")])
 
-        # Return the .dcm files (with full path)
-        return [os.path.join(directory, f) for f in dcm_files]
-
-
-def get_scan_directory_path_by_patient_id(patient_id_dir: str) -> list[PATH]:
-    """Returns the directory path of the scan for a given patient ID."""
-    directory = os.path.join(config.DATA_DIR, patient_id_dir)
-
-    if not os.path.isdir(directory):
-        raise ValueError(f"Provided path '{directory}' is not a valid directory.")
-
-    excluded_files = [".DS_Store"]
-    entries = sorted([f for f in os.listdir(directory) if f not in excluded_files])
-
-    # expects that the file structure is sorted in ascending order
-    sub_dir = os.path.join(directory, entries[0])
-    if os.path.isdir(sub_dir):
-        return get_scan_directory_path_by_patient_id(sub_dir)  # recursive call
-    else:
-        return directory
+            # Return the .dcm files (with full path)
+            return [os.path.join(directory, f) for f in dcm_files]
 
 
-def load_dicom_image(dicom_file_path: PATH) -> pydicom.dataset.FileDataset:
-    """Returns a pydicom object from a DICOM file path."""
-    dicom = pydicom.dcmread(dicom_file_path)
-    return dicom.pixel_array
-
-
-def load_dicom_images_from_folder(folder_path: PATH) -> np.ndarray:
+def load_dicom_images_from_folder(scan_parent_dir: PATH) -> np.ndarray:
+    """Returns a 3D numpy array of the CT scan images in the given directory."""
     dicom_files = [
-        pydicom.dcmread(os.path.join(folder_path, f))
-        for f in sorted(os.listdir(folder_path))
+        pydicom.dcmread(os.path.join(scan_parent_dir, f))
+        for f in sorted(os.listdir(scan_parent_dir))
         if f.endswith(".dcm")
     ]
     images = np.stack([f.pixel_array for f in dicom_files], axis=0)
     return images
 
 
-def normalize_image(image):
-    """Normalize an image's pixel values to the range [0, 255]."""
-    # Convert image to float for accurate division
-    image = image.astype(np.float32)
-    # Find the minimum and maximum pixel values
-    min_val = np.min(image)
-    max_val = np.max(image)
-
-    # Normalize the image to the range [0, 1]
-    normalized_image = (image - min_val) / (max_val - min_val)
-
-    # Scale to the range [0, 255]:
-    return (normalized_image * 255).astype(np.uint8)
-
-
-def show_image(slice_index, images):
-    plt.imshow(images[slice_index], cmap="gray")
-    plt.axis("off")
-    plt.show()
-
-
+# %%
 if __name__ == "__main__":
-    scan_ids = get_scan_ids(config.DATA_DIR)
-    get_ct_scan_slices(scan_ids[1])
+    get_ct_scan_slice_paths("LIDC-IDRI-0001", return_parent_dir=True)

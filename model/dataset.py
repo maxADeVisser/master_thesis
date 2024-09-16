@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from torch.utils.data import Dataset
 
 from project_config import config
-from utils.pylidc_utils import get_malignancy_by_scan, get_scans_by_patient_id
+from utils.pylidc_utils import get_scans_by_patient_id
 
 
 def load_dicom_file(dicom_file_path: str) -> pydicom.dataset.FileDataset:
