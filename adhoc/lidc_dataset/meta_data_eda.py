@@ -81,7 +81,7 @@ def collect_meta_fields(
 # %%
 
 if __name__ == "__main__":
-    attribute = "Focal Spo"
+    attribute = "Exposure"
 
     with open("utils/dicom_encoding_mapping.pkl", "rb") as f:
         encoding_key_mapping = pickle.load(f)
@@ -97,8 +97,10 @@ if __name__ == "__main__":
         else:
             continue
 
-    # plt.figure(figsize=(10, 8))
-    pd.Series(vals).value_counts(ascending=False).plot(kind="bar")
+    plt.figure(figsize=(10, 8))
+    pd.Series(vals).value_counts(ascending=False).plot(
+        kind="hist", bins=30
+    )  # .plot(kind="bar")
     plt.title(f"{attribute} distribtion for individual images")
     plt.tight_layout()
     plt.savefig(f"out/figures/meta_data_dists/{attribute}.png")
