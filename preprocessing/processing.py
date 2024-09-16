@@ -38,8 +38,8 @@ def normalise_volume(volume: np.ndarray) -> np.ndarray:
     """CT scans store raw voxel intensity in Hounsfield units (HU). They range from -1024 to above 2000 in this dataset. Above 400 are bones with different radiointensity, so this is used as a higher bound. A threshold between -1000 and 400 is commonly used to normalize CT scans.
     source: https://keras.io/examples/vision/3D_image_classification/
     """
-    min = -1000
-    max = 400
+    min = -1000  # lower bound. corresponds to air
+    max = 400  # higher bound. corresponds to bones
     volume[volume < min] = min
     volume[volume > max] = max
     volume = (volume - min) / (max - min)
@@ -74,5 +74,5 @@ if __name__ == "__main__":
     # testing:
     convert_dicom_to_png(
         "data/lung_data/manifest-1725363397135/LIDC-IDRI/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-100.dcm",
-        "/Users/newuser/Documents/ITU/master_thesis/out/test.jpg",
+        "/Users/newuser/Documents/ITU/master_thesis/out/figures/test.jpg",
     )
