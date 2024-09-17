@@ -13,19 +13,20 @@ from utils.utils import get_ct_scan_slice_paths
 def _get_dicom_vals(dicom_file: pydicom.dataset.FileDataset) -> list[Any]:
     """Returns the values of the dicom image in a clean format.
     Util func for @parse_dicom_to_dict"""
-    vals = [v for v in dicom_file.to_json_dict().values()]
+    vals = list(dicom_file.to_json_dict().values())
     return_vals = []
     for v in vals:
-        if isinstance(v, dict):
-            if "Value" in v:
-                if len(v["Value"]) == 1:
-                    return_vals.append(v["Value"][0])
-                else:
-                    return_vals.append(v["Value"])
-            else:
-                return_vals.append(None)
+        if "Value" not in v:
+            # handle empty values
+            return_vals.append(None)
+            continue
+
+        if len(v["Value"]) == 1:
+            # if there is only one value, return the value itself (not as a list):
+            return_vals.append(v["Value"][0])
         else:
-            raise ValueError(f"Value is not a dict: {type(v)}")
+            # if there are multiple values, return them as a list:
+            return_vals.append(v["Value"])
 
     return return_vals
 
@@ -62,7 +63,6 @@ def collect_meta_fields(
             fp=s, force=True, specific_tags=[meta_attribute]
         ) as dicom_image:
             # NOTE: the print statement (or pixel_array access) forces the image to be read into memory. Do not remove.
-            # print(dicom_image)
             try:
                 dicom_image.pixel_array
             except Exception as e:
@@ -82,7 +82,6 @@ def collect_meta_fields(
 
 if __name__ == "__main__":
     attribute = "Exposure"
-
     with open("utils/dicom_encoding_mapping.pkl", "rb") as f:
         encoding_key_mapping = pickle.load(f)
 
@@ -98,9 +97,7 @@ if __name__ == "__main__":
             continue
 
     plt.figure(figsize=(10, 8))
-    pd.Series(vals).value_counts(ascending=False).plot(
-        kind="hist", bins=30
-    )  # .plot(kind="bar")
+    pd.Series(vals).value_counts(ascending=False).plot(kind="hist", bins=30)
     plt.title(f"{attribute} distribtion for individual images")
     plt.tight_layout()
     plt.savefig(f"out/figures/meta_data_dists/{attribute}.png")

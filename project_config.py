@@ -8,7 +8,7 @@ load_dotenv(".env")
 
 
 class _Config:
-    """Config class for the project. Intended to be a singleton."""
+    """Config class for the project. Intended to be a singleton"""
 
     def __init__(self):
         self.DATA_DIR = os.getenv("LIDC_IDRI_DIR")
@@ -26,5 +26,3 @@ config = _Config()
 
 if __name__ == "__main__":
     config = _Config()
-    print(config.DATA_DIR)
-    print(len(config.patient_ids))
