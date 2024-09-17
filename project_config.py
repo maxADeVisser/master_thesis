@@ -27,6 +27,7 @@ class _Config:
             ]
         )
         self.dicom_encoding_mapping_file = "utils/dicom_encoding_mapping.pkl"
+        self.meta_dataframe_file = "utils/meta_dataframe.parquet"
 
 
 # Singleton pattern: only one instance of the Config class is created
