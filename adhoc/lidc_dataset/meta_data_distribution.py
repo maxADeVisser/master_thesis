@@ -2,7 +2,7 @@
 import pickle
 import re
 from glob import glob
-from typing import Any
+from typing import Any, Literal
 
 from tqdm import tqdm
 
@@ -46,21 +46,24 @@ def parse_dicom_to_dict(dicom_file: pydicom.dataset.FileDataset):
     return dict(zip(_get_dicom_keys(dicom_file), _get_dicom_vals(dicom_file)))
 
 
-def collect_meta_fields(
-    patient_scan_dir: str, meta_attribute: str | None = None
+def collect_meta_fields_pr_scan(
+    patient_scan_dir: str,
+    meta_attribute_encodings: list[str] | None = None,
+    return_only_dominant: bool = False,
 ) -> dict:
     """
-    Fetches all meta data dicom fields from a patient scan dir (a single scan).
+    Returns all meta data dicom fields from a patient scan dir (a single scan) as a dict.
     Each meta data value from each slice is appended to a list with the key of the
     attribute as the list name.
-    # TODO add a list input of attributes that only fetches those if specified
+
+    @meta_attribute_encodings: list of dicom attribute encodings to fetch. Get this from the dicom_encoding_mapping.pkl file.
     """
     patient_scan_paths = sorted(glob(f"{patient_scan_dir}/*.dcm"))
     collected_meta_fields = {}
 
     for s in patient_scan_paths:
         with pydicom.dcmread(
-            fp=s, force=True, specific_tags=[meta_attribute]
+            fp=s, force=True, specific_tags=meta_attribute_encodings
         ) as dicom_image:
             # NOTE: the print statement (or pixel_array access) forces the image to be read into memory. Do not remove.
             try:
@@ -75,54 +78,101 @@ def collect_meta_fields(
                 collected_meta_fields[k] = []
             collected_meta_fields[k].append(v)
 
+    if return_only_dominant:
+        get_mode = lambda x: max(
+            set(x), key=x.count
+        )  # get the most common value in the list
+        collected_meta_fields = {
+            k: get_mode(v) for k, v in collected_meta_fields.items()
+        }
+
     return collected_meta_fields
+
+
+def make_encoding_mapping_file() -> dict | None:
+    """Creates the encoding mapping for the dicom file keys and saves it to a file."""
+    if not os.path.exists(config.dicom_encoding_mapping_file):
+        # read in a random dicom file:
+        dicom_file_path = f"{config.DATA_DIR}/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm"
+        assert os.path.exists(dicom_file_path), "First Dicom file not found"
+        dicom_file = pydicom.dcmread(
+            dicom_file_path,
+            force=True,
+        )
+        dicom_dict = dicom_file.to_json_dict()
+        encoding_key_mapping = dict(zip(_get_dicom_keys(dicom_file), dicom_dict.keys()))
+
+        with open(config.dicom_encoding_mapping_file, "wb") as f:
+            pickle.dump(encoding_key_mapping, f)
+
+        if os.path.exists(config.dicom_encoding_mapping_file):
+            # TODO use proper logging instead of print
+            print("INFO: Dicom encoding mapping file saved.")
+            return encoding_key_mapping
+        else:
+            print("ERROR: Dicom encoding mapping file not saved.")
+            return None
+    else:
+        print("INFO: Dicom encoding mapping file already exists. Skipping creation.")
+        with open(config.dicom_encoding_mapping_file, "rb") as f:
+            encoding_key_mapping = pickle.load(f)
+        return encoding_key_mapping
+
+
+def plot_meta_attribute_distribution(
+    attribute: str,
+    dir_save_path: str | None = None,
+    granularity: Literal["scan", "slice"] = "slice",
+) -> None:
+    """Get values for a SPECIFIC attribute for all scans in the dataset and plots them.
+
+    Attributes:
+        @dir_save_path: str, the directory where to save the plot
+    """
+    assert os.path.exists(
+        config.dicom_encoding_mapping_file
+    ), "Encoding file not found. Create it first using @make_encoding_mapping_file()"
+    with open(config.dicom_encoding_mapping_file, "rb") as f:
+        encoding_key_mapping = pickle.load(f)
+
+    encoding = [encoding_key_mapping[key] for key in [attribute]]
+
+    vals = []
+    for pid in tqdm(config.patient_ids):
+        patient_scan_dir: str = get_ct_scan_slice_paths(pid, return_parent_dir=True)
+        cif = collect_meta_fields_pr_scan(
+            patient_scan_dir,
+            encoding,
+            return_only_dominant=True if granularity == "scan" else False,
+        )
+        if attribute in cif.keys():
+            match granularity:
+                case "scan":
+                    vals.append(cif[attribute])
+                case "slice":
+                    vals.extend(cif[attribute])
+        else:
+            continue
+
+    plt.figure(figsize=(10, 8))
+    # TODO
+    pd.Series(vals).value_counts(ascending=False).plot(kind="hist", bins=30)
+    plt.title(f"{attribute_keys} distribtion for individual images")
+    plt.tight_layout()
+    if dir_save_path:
+        plt.savefig(f"{dir_save_path}/{attribute_keys}.png")
+    plt.show()
 
 
 # %%
 
 if __name__ == "__main__":
-    # MAKE THE DICOM ENCODING MAPPING FILE:
-    # read in a random dicom file:
-    # dicom_file = pydicom.dcmread(
-    #     "/Users/newuser/Documents/ITU/master_thesis/data/lung_data/manifest-1725363397135/LIDC-IDRI/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm",
-    #     force=True,
-    # )
-    # dicom_dict = dicom_file.to_json_dict()
-    # encoding_key_mapping = dict(zip(_get_dicom_keys(dicom_file), dicom_dict.keys()))
-    # with open("utils/dicom_encoding_mapping.pkl", "wb") as f:
-    #     pickle.dump(encoding_key_mapping, f)
-
-    # ----------------------------------------------------------
-
-    # LOAD THE DICOM ENCODING MAPPING FILE:
-    with open("utils/dicom_encoding_mapping.pkl", "rb") as f:
-        encoding_key_mapping = pickle.load(f)
-
-    patient_scan_dir = get_ct_scan_slice_paths(
-        config.patient_ids[0], return_parent_dir=True
-    )
-    cif = collect_meta_fields(patient_scan_dir, encoding)
-    collect_meta_fields()
+    encoding_key_mapping = make_encoding_mapping_file()
+    # attribute_keys = ["Exposure", "KVP"]
+    # encodings = [encoding_key_mapping[key] for key in attribute_keys]
 
     attribute = "Exposure"
-
-    encoding = encoding_key_mapping[attribute]
-
-    vals = []
-    for pid in tqdm(config.patient_ids):
-        patient_scan_dir: str = get_ct_scan_slice_paths(pid, return_parent_dir=True)
-        cif = collect_meta_fields(patient_scan_dir, encoding)
-        if attribute in cif.keys():
-            vals.extend(cif[attribute])
-        else:
-            continue
-
-    plt.figure(figsize=(10, 8))
-    pd.Series(vals).value_counts(ascending=False).plot(kind="hist", bins=30)
-    plt.title(f"{attribute} distribtion for individual images")
-    plt.tight_layout()
-    plt.savefig(f"out/figures/meta_data_dists/{attribute}.png")
-    plt.show()
-
+    granularity = "scan"
+    plot_meta_attribute_distribution(attribute=attribute, granularity=granularity)
 
 # %%

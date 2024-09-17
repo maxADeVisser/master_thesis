@@ -41,7 +41,7 @@ def show_segmentation_consensus(
 
     # Cluster the annotations for the scan, and grab one.
     nods = scan.cluster_annotations()
-    anns = nods[nodule_idx]  # TODO maybe this should be the nodule id ??
+    anns = nods[nodule_idx]
 
     # Perform a consensus consolidation and 50% agreement level.
     # We pad the slices to add context for viewing.

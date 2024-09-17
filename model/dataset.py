@@ -23,7 +23,7 @@ class LIDC_IDRI_DATASET(Dataset):
 
     def __getitem__(self, patient_id: str) -> tuple[np.ndarray, str]:
         """Retrieves a single scan and its corresponding label"""
-        # TODO this needs to eventually return a tensor
+        # this needs to eventually return a tensor
         # TODO add normalising the images and preprocessing them
         scan = get_scans_by_patient_id(patient_id, to_numpy=False)
         # TODO needs to return label as well
