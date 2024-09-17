@@ -81,9 +81,30 @@ def collect_meta_fields(
 # %%
 
 if __name__ == "__main__":
-    attribute = "Exposure"
+    # MAKE THE DICOM ENCODING MAPPING FILE:
+    # read in a random dicom file:
+    # dicom_file = pydicom.dcmread(
+    #     "/Users/newuser/Documents/ITU/master_thesis/data/lung_data/manifest-1725363397135/LIDC-IDRI/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm",
+    #     force=True,
+    # )
+    # dicom_dict = dicom_file.to_json_dict()
+    # encoding_key_mapping = dict(zip(_get_dicom_keys(dicom_file), dicom_dict.keys()))
+    # with open("utils/dicom_encoding_mapping.pkl", "wb") as f:
+    #     pickle.dump(encoding_key_mapping, f)
+
+    # ----------------------------------------------------------
+
+    # LOAD THE DICOM ENCODING MAPPING FILE:
     with open("utils/dicom_encoding_mapping.pkl", "rb") as f:
         encoding_key_mapping = pickle.load(f)
+
+    patient_scan_dir = get_ct_scan_slice_paths(
+        config.patient_ids[0], return_parent_dir=True
+    )
+    cif = collect_meta_fields(patient_scan_dir, encoding)
+    collect_meta_fields()
+
+    attribute = "Exposure"
 
     encoding = encoding_key_mapping[attribute]
 
