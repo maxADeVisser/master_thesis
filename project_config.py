@@ -1,21 +1,10 @@
 """Project config file"""
 
-import logging
 import os
 
 from dotenv import load_dotenv
 
 load_dotenv(".env")  # Load environment variables from .env file
-
-LOG_LEVEL = os.getenv(key="LOG_LEVEL", default=logging.DEBUG)
-
-# global logging configuration:
-logging.basicConfig(
-    filename="logs/logs.log",
-    format="%(asctime)s | %(levelname)s | file: %(filename)s > %(funcName)s() > line: %(lineno)d | %(message)s",
-    level=LOG_LEVEL,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 
 
 class _Config:
@@ -37,6 +26,7 @@ class _Config:
                 if os.path.isdir(os.path.join(self.DATA_DIR, pid))
             ]
         )
+        self.OUT_DIR = os.getenv("OUTPUT_DIR")
         self.dicom_encoding_mapping_file = "utils/dicom_encoding_mapping.pkl"
         self.meta_dataframe_file = "utils/meta_dataframe.parquet"
         self.excluded_dicom_attributes = [
