@@ -7,6 +7,7 @@ from typing import Any, Literal
 from tqdm import tqdm
 
 from utils.common_imports import *
+from utils.logger_setup import logger
 from utils.utils import get_ct_scan_slice_paths
 
 # NO LONGER USED
@@ -52,7 +53,6 @@ def collect_meta_fields_pr_scan(
     meta_attributes: list[str] | None = None,
     return_only_dominant: bool = False,
 ) -> dict:
-    # TODO maybe this should just be precomputed and stored in a file for look up (much faster).
     """
     Returns all meta data dicom fields from a patient scan dir (a single scan) as a dict.
     Each meta data value from each slice is appended to a list with the key of the
@@ -81,13 +81,11 @@ def collect_meta_fields_pr_scan(
         dicom_file = pydicom.dcmread(
             fp=slice_path,
             force=True,
-            specific_tags=meta_attributes if meta_attributes else None,
+            specific_tags=encodings if encodings else None,
         )
 
-        _map_to_semantic_key = lambda k: reversed_encoding_mapping[k]
-
         dicom_dict = {
-            _map_to_semantic_key(k): v.get("Value")
+            reversed_encoding_mapping[k]: v.get("Value")
             for i, (k, v) in enumerate(dicom_file.to_json_dict().items())
         }
 
@@ -97,19 +95,14 @@ def collect_meta_fields_pr_scan(
                 cif[k] = []
             cif[k].append(v)
 
-    # if return_only_dominant:
-    #     get_mode = lambda x: max(
-    #         set(x), key=x.count
-    #     )  # get the most common value in the list
-    #     collected_meta_fields = {
-    #         k: get_mode(v) for k, v in collected_meta_fields.items()
-    #     }
-
     return cif
 
 
 def make_encoding_mapping_file(reverse: bool = False) -> None:
-    """Creates the encoding mapping for the dicom file keys and saves it to a file."""
+    """
+    Creates the encoding mapping for the dicom file keys and saves it to a file.
+    If @reverse then the mapping is reversed.
+    """
     # read in a random dicom file:
     dicom_file_path = f"{config.DATA_DIR}/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm"
     assert os.path.exists(dicom_file_path), "First Dicom file not found"
@@ -129,10 +122,9 @@ def make_encoding_mapping_file(reverse: bool = False) -> None:
         pickle.dump(encoding_key_mapping, f)
 
     if os.path.exists(save_path):
-        # TODO use proper logging instead of print
-        print("INFO: Dicom encoding mapping file saved.")
+        logger.info("INFO: Dicom encoding mapping file exists.")
     else:
-        print("ERROR: Dicom encoding mapping file not saved.")
+        logger.info("ERROR: Dicom encoding mapping file does not exists.")
 
 
 def _map_to_encoding_key(attributes: list[str]) -> list[Any]:
@@ -191,8 +183,6 @@ def plot_meta_attribute_distribution(
 if __name__ == "__main__":
     make_encoding_mapping_file()
     make_encoding_mapping_file(reverse=True)
-    # attribute_keys = ["Exposure", "KVP"]
-    # encodings = [encoding_key_mapping[key] for key in attribute_keys]
 
     # How to use plot_meta_attribute_distribution:
     # attribute = "Exposure"
@@ -202,10 +192,7 @@ if __name__ == "__main__":
     patient_scan_dir = get_ct_scan_slice_paths(
         patient_id_dir=config.patient_ids[0], return_parent_dir=True
     )
-    return_only_dominant = False
-    meta_attributes = None
-    cif = collect_meta_fields_pr_scan(
-        patient_scan_dir, meta_attributes, return_only_dominant
-    )
+    cif = collect_meta_fields_pr_scan(patient_scan_dir)
+
 
 # %%
