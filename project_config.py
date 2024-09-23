@@ -18,6 +18,9 @@ class _Config:
     """
 
     def __init__(self):
+        assert os.getenv(
+            "LIDC_IDRI_DIR"
+        ), "Please set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
         self.DATA_DIR = os.getenv("LIDC_IDRI_DIR")
         self.patient_ids = sorted(
             [
@@ -26,7 +29,7 @@ class _Config:
                 if os.path.isdir(os.path.join(self.DATA_DIR, pid))
             ]
         )
-        self.OUT_DIR = os.getenv("OUTPUT_DIR")
+        self.OUT_DIR = os.getenv("OUTPUT_DIR") or "out"
         self.dicom_encoding_mapping_file = "utils/dicom_encoding_mapping.pkl"
         self.meta_dataframe_file = "utils/meta_dataframe.parquet"
         self.excluded_dicom_attributes = [
