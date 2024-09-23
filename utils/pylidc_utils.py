@@ -12,10 +12,12 @@ np.int = int
 np.float = float
 
 
-def get_scans_by_patient_id(patient_id: str, to_numpy: bool = True) -> list[pl.Scan]:
+def get_scans_by_patient_id(
+    patient_id: str, to_numpy: bool = True
+) -> list[pl.Scan] | np.ndarray:
     """Returns the first scan for a given patient_id (i think there is only one scan per patient)"""
     scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == patient_id).first()
-    return scan.to_volume(verbose=False).reshape(-1, 512, 512) if to_numpy else scan
+    return scan.to_volume(verbose=False) if to_numpy else scan
 
 
 def get_annotations_by_scan_id(scan_id: int) -> list[pl.Annotation]:
@@ -81,6 +83,3 @@ if __name__ == "__main__":
     scan_nodules = get_nodules_by_scan(pid_scan)
 
     show_segmentation_consensus(pid_scan, 2)
-
-    # get the malignancy of each annotation:
-    print([s.malignancy for s in scan_annotations])

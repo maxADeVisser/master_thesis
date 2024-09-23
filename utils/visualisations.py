@@ -1,3 +1,4 @@
+# %%
 import os
 
 import matplotlib.pyplot as plt
@@ -11,7 +12,7 @@ def plot_slices(
     num_cols: int,
     start_scan_idx: int,
     end_scan_idx: int,
-    scan_dir: str,
+    slices: np.ndarray,
     save_path: str | None = None,
 ) -> None:
     """Plot a montage of @num_rows * @num_cols CT slices.
@@ -19,8 +20,6 @@ def plot_slices(
     assert (
         end_scan_idx - start_scan_idx == num_rows * num_cols
     ), "The number of selected slices must equal the number of rows and columns multiplied"
-
-    slices: np.ndarray = load_scan(scan_dir)
 
     # the number of selected slices must equal the number of rows and columns multiplied:
     slices = slices[start_scan_idx:end_scan_idx]
@@ -51,11 +50,16 @@ def plot_slices(
 
 if __name__ == "__main__":
     # TESTING
+    slices = load_scan(
+        "/Users/newuser/Documents/ITU/master_thesis/data/lung_data/manifest-1725363397135/LIDC-IDRI/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/"
+    )
     plot_slices(
         num_rows=4,
         num_cols=10,
         start_scan_idx=30,
         end_scan_idx=70,
-        scan_dir="/Users/newuser/Documents/ITU/master_thesis/data/lung_data/manifest-1725363397135/LIDC-IDRI/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/",
-        save_path="out/test.png",
+        slices=slices,
+        # save_path="out/test.png",
     )
+
+# %%

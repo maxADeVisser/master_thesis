@@ -39,6 +39,7 @@ def get_ct_scan_slice_paths(
             return [os.path.join(directory, f) for f in dcm_files]
 
 
+# TODO this can be replaced by @pylidc_utils.get_scans_by_patient_id
 def load_dicom_images_from_folder(scan_parent_dir: PATH) -> np.ndarray:
     """Returns a 3D numpy array of the CT scan images in the given directory."""
     dicom_files = [
