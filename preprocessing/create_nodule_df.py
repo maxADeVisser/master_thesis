@@ -1,6 +1,7 @@
 """Scrip for creating a pandas dataframe with nodule data and malignancy information"""
 
 # %%
+import itertools
 from statistics import median_high
 
 from pylidc.utils import consensus
@@ -61,7 +62,6 @@ def main() -> None:
                 # Calculate the malignancy of the nodule:
                 malignancy_score, cancer_label = compute_nodule_malignancy(nodule_anns)
 
-                # TODO there is something wrong with the consensus_bbox, it is not returning the bbox in 3D.
                 dict_df[f"{nodule_idx}_{pid}"] = {
                     "pid": pid,
                     "nodule_idx": nodule_idx,
@@ -82,16 +82,23 @@ def main() -> None:
 
     nodule_df = pd.DataFrame.from_dict(dict_df, orient="index")
 
-    # Filtering:
+    # FILTERING:
     # nodule_df = nodule_df[nodule_df["cancer_label"] != "Ambiguous"]
 
-    # Type casting
+    # TYPE CASTING
     nodule_df = nodule_df.assign(
         pid=nodule_df["pid"].astype("string"),
         nodule_idx=nodule_df["nodule_idx"].astype("int"),
         malignancy_score=nodule_df["malignancy_score"].astype("int"),
         cancer_label=nodule_df["cancer_label"].astype("category"),
     )
+
+    # VERIFICATIONS:
+    # Check that no annotations id are repeated (i.e. that the annotations are unique to each nodule)
+    # Flatten the list of annotation ids:
+    all_ids = list(itertools.chain.from_iterable(nodule_df["nodule_annotation_ids"]))
+    if not len(all_ids) == len(set(all_ids)):
+        logger.debug("Some nodule annotation ids are repeated")
 
     try:
         nodule_df.to_csv(f"{config.OUT_DIR}/{csv_file_name}.csv")
@@ -102,9 +109,3 @@ def main() -> None:
 # %%
 if __name__ == "__main__":
     main()
-
-    # # DEBUGGING:
-    # nodule_df = pd.read_csv(f"{config.OUT_DIR}/{csv_file_name}.csv")
-    # nodule_df
-
-# %%
