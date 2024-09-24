@@ -11,8 +11,9 @@ from utils.logger_setup import logger
 
 # SCRIPT PARAMS:
 # confidence level: A pixel will be considered part of the nodule if it is annotated by at least @c_level of the radiologists
+# TODO add these paraemeters to the config file
 c_level = 0.5
-padding = 10
+image_dim = 64
 verbose = False
 csv_file_name = "nodule_df_all_pad_10"
 
@@ -34,7 +35,7 @@ def compute_nodule_malignancy(nodule: pl.Annotation) -> str:
 
 def main() -> None:
     dict_df = {}
-    for pid in tqdm(config.patient_ids[:200]):  # DEBUGGING
+    for pid in tqdm(config.patient_ids[:100]):  # DEBUGGING
         scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
@@ -50,15 +51,26 @@ def main() -> None:
         if len(nodules_annotation) >= 1:
             for nodule_idx, nodule_anns in enumerate(nodules_annotation):
 
-                # Get the consensus mask and bbox at @c_level consensus from the 4 radiologists
-                # Refer to documentation for more information
-                # NOTE: The padding should only be applied to the x-y dimensions, thus remove it from the z dimension
-                _, cmbbox = consensus(
-                    anns=nodule_anns, clevel=c_level, pad=padding, ret_masks=False
+                ann_nodule_centroids = [ann.centroid for ann in nodule_anns]
+                # 1. calculate the consensus centroid of the nodule (average of the point cloud)
+                consensus_centroid = tuple(
+                    [
+                        int(np.mean([centroid[i] for centroid in ann_nodule_centroids]))
+                        for i in range(3)
+                    ]
                 )
-                x = (int(cmbbox[0].start), int(cmbbox[0].stop))
-                y = (int(cmbbox[1].start), int(cmbbox[1].stop))
-                z = (int(cmbbox[2].start) + padding, int(cmbbox[2].stop) - padding)
+                x_dim = (
+                    consensus_centroid[0] - (image_dim // 2),
+                    consensus_centroid[0] + (image_dim // 2),
+                )
+                y_dim = (
+                    consensus_centroid[1] - (image_dim // 2),
+                    consensus_centroid[1] + (image_dim // 2),
+                )
+                z_dim = (
+                    consensus_centroid[2] - (image_dim // 2),
+                    consensus_centroid[2] + (image_dim // 2),
+                )
 
                 # Calculate the malignancy of the nodule:
                 malignancy_score, cancer_label = compute_nodule_malignancy(nodule_anns)
@@ -68,11 +80,12 @@ def main() -> None:
                     "nodule_idx": nodule_idx,
                     "malignancy_score": malignancy_score,
                     "cancer_label": cancer_label,
-                    "consensus_bbox": (x, y, z),
+                    "consensus_centroid": consensus_centroid,
+                    "consensus_bbox": (x_dim, y_dim, z_dim),
                     "nodule_annotation_ids": tuple(
                         [int(ann.id) for ann in nodule_anns]
                     ),
-                    "padding": padding,
+                    "padding": image_dim,
                 }
 
                 # TODO might need to do some more processing here...
@@ -101,6 +114,20 @@ def main() -> None:
     if not len(all_ids) == len(set(all_ids)):
         logger.debug("Some nodule annotation ids are repeated")
 
+    # check that the dimensions of the nodule bbox are all the same (aligned with the image_dim):
+    verify_dim = (
+        lambda roi_dim: image_dim
+        == roi_dim[0][1] - roi_dim[0][0]  # x_dim
+        == roi_dim[1][1] - roi_dim[1][0]  # y_dim
+        == roi_dim[2][1] - roi_dim[2][0]  # z_dim
+    )
+    if not all(list(nodule_df["consensus_bbox"].apply(verify_dim))):
+        logger.debug("Some nodule bbox dimensions are not aligned with the image_dim")
+        raise ValueError(
+            "Some nodule bbox dimensions are not aligned with the image_dim"
+        )
+
+    # WRITE FILE:
     try:
         nodule_df.to_csv(f"{config.OUT_DIR}/{csv_file_name}.csv")
     except Exception as e:
@@ -110,5 +137,3 @@ def main() -> None:
 # %%
 if __name__ == "__main__":
     main()
-
-# %%

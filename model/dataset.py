@@ -11,7 +11,7 @@ from torchvision import transforms
 from project_config import config
 from utils.pylidc_utils import get_scans_by_patient_id
 
-nodule_df_path = "out/nodule_df_all_pad_10.csv"
+nodule_df_path = "out/nodule_df_all_pad_10.csv"  # TODO move to config
 
 
 class LIDC_IDRI_DATASET(Dataset):
@@ -62,8 +62,8 @@ class LIDC_IDRI_DATASET(Dataset):
 # %%
 if __name__ == "__main__":
     dataset = LIDC_IDRI_DATASET()
-    # roi_consensus, label = dataset.__getitem__(0)
-    # roi_consensus.shape
+    roi_consensus, label = dataset.__getitem__(0)
+    roi_consensus.shape
 
     # VISUAL INSPECTION OF BOUNDING BOX AND MASK:
     from utils.visualisation import interactive_nodule_bbox_visualisation
