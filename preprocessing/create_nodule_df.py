@@ -1,21 +1,16 @@
-"""Scrip for creating a pandas dataframe with nodule data and malignancy information"""
+"""Scrip for creating a pandas dataframe with nodule annotation data"""
 
 # %%
 import itertools
 from statistics import median_high
 
-from pylidc.utils import consensus
-
 from utils.common_imports import *
 from utils.logger_setup import logger
 
-# SCRIPT PARAMS:
-# confidence level: A pixel will be considered part of the nodule if it is annotated by at least @c_level of the radiologists
-# TODO add these paraemeters to the config file
-c_level = 0.5
-image_dim = 64
+SCRIPT_PARAMS = pipeline_config["preprocessing"]["nodule_df"]
+image_dim = SCRIPT_PARAMS["image_dim"]
+csv_file_name = SCRIPT_PARAMS["nodule_df_csv_name"]
 verbose = False
-csv_file_name = "nodule_df_all_pad_10"
 
 
 def compute_nodule_malignancy(nodule: pl.Annotation) -> str:
@@ -35,7 +30,7 @@ def compute_nodule_malignancy(nodule: pl.Annotation) -> str:
 
 def main() -> None:
     dict_df = {}
-    for pid in tqdm(config.patient_ids[:100]):  # DEBUGGING
+    for pid in tqdm(config.patient_ids):
         scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
@@ -46,19 +41,20 @@ def main() -> None:
             verbose=verbose
         )
 
-        # TODO add the size of the nodule from the nodules size list
         # TODO we can also exlude nodules if they only have a single annotation?
         if len(nodules_annotation) >= 1:
             for nodule_idx, nodule_anns in enumerate(nodules_annotation):
 
+                # calculate the consensus centroid of the nodule (average of the point cloud)
                 ann_nodule_centroids = [ann.centroid for ann in nodule_anns]
-                # 1. calculate the consensus centroid of the nodule (average of the point cloud)
                 consensus_centroid = tuple(
                     [
                         int(np.mean([centroid[i] for centroid in ann_nodule_centroids]))
                         for i in range(3)
                     ]
                 )
+
+                # calculate the consensus bbox of the nodule
                 x_dim = (
                     consensus_centroid[0] - (image_dim // 2),
                     consensus_centroid[0] + (image_dim // 2),
@@ -72,6 +68,12 @@ def main() -> None:
                     consensus_centroid[2] + (image_dim // 2),
                 )
 
+                # Compute consensus diameter of the nodule:
+                ann_mean_diameter = np.mean([ann.diameter for ann in nodule_anns])
+
+                # Compute consensus volumne of the nodule:
+                ann_mean_volume = np.mean([ann.volume for ann in nodule_anns])
+
                 # Calculate the malignancy of the nodule:
                 malignancy_score, cancer_label = compute_nodule_malignancy(nodule_anns)
 
@@ -82,10 +84,13 @@ def main() -> None:
                     "cancer_label": cancer_label,
                     "consensus_centroid": consensus_centroid,
                     "consensus_bbox": (x_dim, y_dim, z_dim),
+                    "ann_mean_diameter": ann_mean_diameter,
+                    "ann_mean_volume": ann_mean_volume,
                     "nodule_annotation_ids": tuple(
                         [int(ann.id) for ann in nodule_anns]
                     ),
-                    "padding": image_dim,
+                    "nodule_annotation_count": len(nodule_anns),
+                    "image_dim": image_dim,
                 }
 
                 # TODO might need to do some more processing here...
@@ -126,6 +131,10 @@ def main() -> None:
         raise ValueError(
             "Some nodule bbox dimensions are not aligned with the image_dim"
         )
+
+    # verify that there are at most 4 annotations per nodule:
+    if max(nodule_df["nodule_annotation_ids"].apply(len)) > 4:
+        logger.debug("Some nodules have more than 4 annotations")
 
     # WRITE FILE:
     try:

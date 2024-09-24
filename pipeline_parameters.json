@@ -1,0 +1,30 @@
+{
+  "evaluation": {
+    "folds": 5,
+    "metrics": [
+      "accuracy",
+      "precision",
+      "recall",
+      "f1"
+    ]
+  },
+  "model": {
+    "batch_size": 32,
+    "image_dim": 64,
+    "model_name": "model_1",
+    "model_type": "cnn",
+    "num_classes": 2,
+    "num_epochs": 10
+  },
+  "preprocessing": {
+    "nodule_df": {
+      "image_dim": 64,
+      "nodule_df_csv_name": "nodule_df_all"
+    }
+  },
+  "training": {
+    "batch_size": 32,
+    "lr": 0.001,
+    "num_epochs": 10
+  }
+}
