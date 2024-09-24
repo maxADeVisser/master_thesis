@@ -8,32 +8,6 @@ from pylidc.utils import volume_viewer
 from model.dataset import LIDC_IDRI_DATASET
 
 
-def interactive_nodule_bbox_visualisation(
-    nodule_df: pd.DataFrame, nodule_idx: int, annotation_idx: int = 0
-) -> None:
-    """
-    - Visualise the consensus bbox of @nodule_idx (idxd in @nodule_df) as created by the @create_nodule_df.py script.
-    - Also show the segmentation mask of the nodule as given by @annotation_idx.
-    """
-    annotation_id = nodule_df.iloc[nodule_idx]["nodule_annotation_ids"][annotation_idx]
-    ann = pl.query(pl.Annotation).filter(pl.Annotation.id == annotation_id).first()
-    x, y, z = nodule_df.iloc[nodule_idx]["consensus_bbox"]
-
-    # NOTE: pad is set to a large number to include the entire scan:
-    ann_mask = ann.boolean_mask(pad=100_000)[x[0] : x[1], y[0] : y[1], z[0] : z[1]]
-    ann_cutout = ann.scan.to_volume(verbose=False)[
-        x[0] : x[1], y[0] : y[1], z[0] : z[1]
-    ]
-
-    # NOTE: has to be run from the console
-    volume_viewer(
-        vol=ann_cutout,
-        mask=ann_mask,
-        ls="--",
-        c="r",
-    )
-
-
 def plot_slices(
     num_rows: int,
     num_cols: int,
