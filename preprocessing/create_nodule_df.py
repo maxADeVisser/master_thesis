@@ -34,7 +34,7 @@ def compute_nodule_malignancy(nodule: pl.Annotation) -> str:
 
 def main() -> None:
     dict_df = {}
-    for pid in tqdm(config.patient_ids[:100]):
+    for pid in tqdm(config.patient_ids[:200]):  # DEBUGGING
         scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
@@ -52,12 +52,13 @@ def main() -> None:
 
                 # Get the consensus mask and bbox at @c_level consensus from the 4 radiologists
                 # Refer to documentation for more information
+                # NOTE: The padding should only be applied to the x-y dimensions, thus remove it from the z dimension
                 consensus_mask, cmbbox = consensus(
                     anns=nodule_anns, clevel=c_level, pad=padding, ret_masks=False
                 )
                 x = (int(cmbbox[0].start), int(cmbbox[0].stop))
                 y = (int(cmbbox[1].start), int(cmbbox[1].stop))
-                z = (int(cmbbox[2].start), int(cmbbox[2].stop))
+                z = (int(cmbbox[2].start) + padding, int(cmbbox[2].stop) - padding)
 
                 # Calculate the malignancy of the nodule:
                 malignancy_score, cancer_label = compute_nodule_malignancy(nodule_anns)
@@ -109,3 +110,5 @@ def main() -> None:
 # %%
 if __name__ == "__main__":
     main()
+
+# %%
