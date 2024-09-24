@@ -6,11 +6,11 @@ import sys
 
 LOG_LEVEL = os.getenv(key="LOG_LEVEL", default=logging.DEBUG)
 assert LOG_LEVEL in [
-    logging.DEBUG,
-    logging.INFO,
-    logging.WARNING,
-    logging.ERROR,
-    logging.CRITICAL,
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR",
+    "CRITICAL",
 ], "Invalid log level configured in .env file"
 
 if not os.path.exists("logs"):

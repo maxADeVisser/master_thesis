@@ -7,7 +7,7 @@ from adhoc.lidc_dataset.meta_data_distribution import (
 )
 from project_config import config
 from utils.utils import get_ct_scan_slice_paths, load_dicom_images_from_folder
-from utils.visualisations import plot_slices
+from utils.visualisation import plot_slices
 
 # 1. need method for fetching the dominant value for a given meta data field
 

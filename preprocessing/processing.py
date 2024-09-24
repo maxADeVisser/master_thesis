@@ -1,20 +1,10 @@
-"""Here we define several helper functions to process the data. These functions will be used when building training and validation datasets.
+"""Here we define functions to process the data. These functions will be used when building training and validation datasets.
 source: https://keras.io/examples/vision/3D_image_classification/"""
-
-import os
 
 import numpy as np
 import pydicom
 from PIL import Image
 from scipy import ndimage
-
-
-def load_scan(path: str) -> np.ndarray:
-    """Loads scans from a folder and returns a 3D numpy array of all the scans stacked together
-    in the shape: (n_slices, width, height)"""
-    slices = [pydicom.dcmread(path + "/" + s) for s in os.listdir(path)]
-    slices.sort(key=lambda x: int(x.InstanceNumber))
-    return np.stack([s.pixel_array for s in slices])
 
 
 def convert_dicom_to_png(
@@ -68,11 +58,3 @@ def resize_volume(
     # Resize across z-axis
     img = ndimage.zoom(img, (width_factor, height_factor, depth_factor), order=1)
     return img
-
-
-if __name__ == "__main__":
-    # testing:
-    convert_dicom_to_png(
-        "data/lung_data/manifest-1725363397135/LIDC-IDRI/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-100.dcm",
-        "/Users/newuser/Documents/ITU/master_thesis/out/figures/test.jpg",
-    )

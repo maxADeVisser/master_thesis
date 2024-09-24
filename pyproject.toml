@@ -25,6 +25,7 @@ pyqt6 = "^6.7.1"             # Required for itkwidgets (do not remember why it i
 scipy = "^1.14.1"
 ruff = "^0.6.4"
 wandb = "^0.18.1"
+mypy = "^1.11.2"
 
 [tool.poetry.group.medvis.dependencies]
 streamlit = "^1.38.0"

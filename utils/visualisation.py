@@ -1,10 +1,6 @@
 # %%
-import os
-
 import matplotlib.pyplot as plt
 import numpy as np
-
-from preprocessing.processing import load_scan
 
 
 def plot_slices(
@@ -50,9 +46,9 @@ def plot_slices(
 
 if __name__ == "__main__":
     # TESTING
-    slices = load_scan(
-        "/Users/newuser/Documents/ITU/master_thesis/data/lung_data/manifest-1725363397135/LIDC-IDRI/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/"
-    )
+    """Need to Load a scan from a folder and returns a 3D numpy array of all the scans stacked together
+    in the shape: (n_slices, width, height):"""
+    slices = ...
     plot_slices(
         num_rows=4,
         num_cols=10,
