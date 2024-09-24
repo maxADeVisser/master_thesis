@@ -16,7 +16,8 @@ nodule_df_path = "out/nodule_df_all_pad_10.csv"
 
 class LIDC_IDRI_DATASET(Dataset):
     """
-    NOTE: Relies on having the nodule dataframe created by create_nodule_df.py script
+    Custom dataset for the LIDC-IDRI dataset containing nodule ROIs and their cancer labels.
+    - NOTE: Relies on having the nodule dataframe created by create_nodule_df.py script
     """
 
     def __init__(self, main_dir_path: str = config.DATA_DIR) -> None:
@@ -60,12 +61,13 @@ class LIDC_IDRI_DATASET(Dataset):
 
 # %%
 if __name__ == "__main__":
-    # roi_consensus, label = dataset.__getitem__(nodule_idx)
+    dataset = LIDC_IDRI_DATASET()
+    # roi_consensus, label = dataset.__getitem__(0)
+    # roi_consensus.shape
 
     # VISUAL INSPECTION OF BOUNDING BOX AND MASK:
     from utils.visualisation import interactive_nodule_bbox_visualisation
 
-    dataset = LIDC_IDRI_DATASET()
     interactive_nodule_bbox_visualisation(
         nodule_df=dataset.nodule_df, nodule_idx=0, annotation_idx=0
     )

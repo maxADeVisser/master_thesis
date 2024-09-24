@@ -53,7 +53,7 @@ def main() -> None:
                 # Get the consensus mask and bbox at @c_level consensus from the 4 radiologists
                 # Refer to documentation for more information
                 # NOTE: The padding should only be applied to the x-y dimensions, thus remove it from the z dimension
-                consensus_mask, cmbbox = consensus(
+                _, cmbbox = consensus(
                     anns=nodule_anns, clevel=c_level, pad=padding, ret_masks=False
                 )
                 x = (int(cmbbox[0].start), int(cmbbox[0].stop))

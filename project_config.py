@@ -18,6 +18,7 @@ class _Config:
     """
 
     def __init__(self):
+        # TODO write these attributes in a configuration file and load them here instead
         assert os.getenv(
             "LIDC_IDRI_DIR"
         ), "Please set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
@@ -32,6 +33,7 @@ class _Config:
         self.OUT_DIR = os.getenv("OUTPUT_DIR") or "out"
         self.dicom_encoding_mapping_file = "utils/dicom_encoding_mapping.pkl"
         self.meta_dataframe_file = "utils/meta_dataframe.parquet"
+        self.nodule_df_file = "out/nodule_df.csv"
         self.excluded_dicom_attributes = [
             "Acquisition DateTime",
             "Study Time",
