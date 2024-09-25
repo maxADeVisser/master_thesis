@@ -1,6 +1,5 @@
 # %%
 import ast
-import os
 
 import numpy as np
 import pandas as pd
@@ -12,7 +11,7 @@ from torchvision import transforms
 
 from project_config import config
 from utils.common_imports import pipeline_config
-from utils.pylidc_utils import get_scans_by_patient_id
+from utils.utils import get_scans_by_patient_id
 
 
 class LIDC_IDRI_DATASET(Dataset):
@@ -80,6 +79,8 @@ class LIDC_IDRI_DATASET(Dataset):
             x[0] : x[1], y[0] : y[1], z[0] : z[1]
         ]
 
+        # Uncomment the following to visualise the nodule bbox and mask in jupyter notebook
+        # %matplotlib widget
         volume_viewer(
             vol=ann_cutout,
             mask=ann_mask,
@@ -93,11 +94,12 @@ if __name__ == "__main__":
     dataset = LIDC_IDRI_DATASET()
     # pd.cut(dataset.nodule_df["consensus_diameter"], bins=[0, 3, 100]).value_counts()
 
-    # # roi_consensus, label = dataset.__getitem__(0)
-    # # roi_consensus.shape
+    roi_consensus, label = dataset.__getitem__(0)
+    roi_consensus.shape
 
     # dataset.nodule_df.query("pid == 'LIDC-IDRI-0101'")
 
-    dataset.visualise_nodule_bbox(nodule_idx=292, annotation_idx=0)
+    dataset.visualise_nodule_bbox(nodule_idx=0, annotation_idx=0)
+    # dataset.visualise_nodule_bbox(nodule_idx=292, annotation_idx=0)
 
 # %%

@@ -1,11 +1,15 @@
 # %%
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pydicom
+import pylidc as pl
 
 from project_config import config
+
+# to avoid error in pylidc due to deprecated types:
+np.int = int
+np.float = float
 
 PATH = str  # type alias
 
@@ -39,7 +43,15 @@ def get_ct_scan_slice_paths(
             return [os.path.join(directory, f) for f in dcm_files]
 
 
-# TODO this can be replaced by @pylidc_utils.get_scans_by_patient_id
+def get_scans_by_patient_id(
+    patient_id: str, to_numpy: bool = True
+) -> list[pl.Scan] | np.ndarray:
+    """Returns the first scan for a given patient_id (i think there is only one scan per patient)"""
+    scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == patient_id).first()
+    return scan.to_volume(verbose=False) if to_numpy else scan
+
+
+# TODO this can be replaced by @get_scans_by_patient_id
 def load_dicom_images_from_folder(scan_parent_dir: PATH) -> np.ndarray:
     """Returns a 3D numpy array of the CT scan images in the given directory."""
     dicom_files = [

@@ -1,10 +1,61 @@
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
+import pylidc as pl
+from pylidc.utils import consensus, find_contours
 from tqdm import tqdm
 
 from project_config import config
-from utils.pylidc_utils import get_scans_by_patient_id
+from utils.utils import get_scans_by_patient_id
+
+
+def show_segmentation_consensus(
+    scan: pl.Scan, nodule_idx: int, clevel: float = 0.5
+) -> None:
+    """
+    Display the consensus segmentation for a nodule in a scan.
+
+    Args:
+        @scan: The pylidc.Scan object.
+        @nodule_idx: The index of the nodule in the scan.
+        @clevel: The consensus fraction. For example, if clevel=0.5, then a voxel will have value 1 (True) in the returned boolean volume when at least 50% of the annotations have a value of 1 at that voxel, and 0 (False) otherwise.
+    Source: https://pylidc.github.io/tuts/consensus.html
+    """
+    # Query for a scan, and convert it to an array volume.
+    vol = scan.to_volume(verbose=False)
+
+    # Cluster the annotations for the scan, and grab one.
+    nods = scan.cluster_annotations()
+    anns = nods[nodule_idx]
+
+    # Perform a consensus consolidation and 50% agreement level.
+    # We pad the slices to add context for viewing.
+    cmask, cbbox, masks = consensus(
+        anns, clevel=clevel, pad=[(20, 20), (20, 20), (0, 0)]
+    )
+
+    # Get the central slice of the computed bounding box.
+    k = int(0.5 * (cbbox[2].stop - cbbox[2].start))
+
+    # Set up the plot.
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    ax.imshow(vol[cbbox][:, :, k], cmap=plt.cm.gray, alpha=0.5)
+
+    # Plot the annotation contours for the kth slice.
+    colors = ["r", "g", "b", "y"]
+    for j in range(len(masks)):
+        for c in find_contours(masks[j][:, :, k].astype(float), 0.5):
+            label = "Annotation %d" % (j + 1)
+            plt.plot(c[:, 1], c[:, 0], colors[j], label=label)
+
+    # Plot the 50% consensus contour for the kth slice.
+    for c in find_contours(cmask[:, :, k].astype(float), 0.5):
+        plt.plot(c[:, 1], c[:, 0], "--k", label="50% Consensus")
+
+    ax.axis("off")
+    ax.legend()
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_scan_hounsfield_histogram(pids: list[str], bins: int = 80) -> None:
@@ -82,5 +133,11 @@ if __name__ == "__main__":
         # save_path="out/test.png",
     )
 
+    # TESTING
     plot_scan_hounsfield_histogram(config.patient_ids[:20], bins=80)
+
+    # TESTING
+    pid = "LIDC-IDRI-0010"
+    pid_scan = get_scans_by_patient_id(pid, to_numpy=False)
+    show_segmentation_consensus(pid_scan, 2)
 # %%
