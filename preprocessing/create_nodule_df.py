@@ -7,10 +7,10 @@ from statistics import median_high
 from utils.common_imports import *
 from utils.logger_setup import logger
 
+# SCIPRT PARAMS:
 SCRIPT_PARAMS = pipeline_config["preprocessing"]["nodule_df"]
 image_dim = SCRIPT_PARAMS["image_dim"]
-# csv_file_name = SCRIPT_PARAMS["nodule_df_csv_name"]
-csv_file_name = "test"
+csv_file_name = "nodule_df_all"
 verbose = False
 
 
@@ -31,9 +31,40 @@ def get_malignancy_label(malignancy_scores: tuple[int]) -> str:
         return "Ambiguous"
 
 
+def compute_consensus_bbox(
+    nodule_anns: list[pl.Annotation], image_dim: int
+) -> tuple[tuple[int]]:
+    """
+    Returns the consensus bbox with standardise dimensions of size @image_dim
+    of the nodule based on the consensus centroid of the annotations
+    """
+    ann_nodule_centroids = [ann.centroid for ann in nodule_anns]
+    consensus_centroid = tuple(
+        [
+            int(np.mean([centroid[i] for centroid in ann_nodule_centroids]))
+            for i in range(3)
+        ]
+    )
+
+    # calculate the consensus bbox of the nodule
+    x_dim = (
+        consensus_centroid[0] - (image_dim // 2),
+        consensus_centroid[0] + (image_dim // 2),
+    )
+    y_dim = (
+        consensus_centroid[1] - (image_dim // 2),
+        consensus_centroid[1] + (image_dim // 2),
+    )
+    z_dim = (
+        consensus_centroid[2] - (image_dim // 2),
+        consensus_centroid[2] + (image_dim // 2),
+    )
+    return (x_dim, y_dim, z_dim), consensus_centroid
+
+
 def main() -> None:
     dict_df = {}
-    for pid in tqdm(config.patient_ids[:10]):
+    for pid in tqdm(config.patient_ids):
         scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
@@ -48,27 +79,9 @@ def main() -> None:
         if len(nodules_annotation) >= 1:
             for nodule_idx, nodule_anns in enumerate(nodules_annotation):
 
-                # calculate the consensus centroid of the nodule (average of the point cloud)
-                ann_nodule_centroids = [ann.centroid for ann in nodule_anns]
-                consensus_centroid = tuple(
-                    [
-                        int(np.mean([centroid[i] for centroid in ann_nodule_centroids]))
-                        for i in range(3)
-                    ]
-                )
-
-                # calculate the consensus bbox of the nodule
-                x_dim = (
-                    consensus_centroid[0] - (image_dim // 2),
-                    consensus_centroid[0] + (image_dim // 2),
-                )
-                y_dim = (
-                    consensus_centroid[1] - (image_dim // 2),
-                    consensus_centroid[1] + (image_dim // 2),
-                )
-                z_dim = (
-                    consensus_centroid[2] - (image_dim // 2),
-                    consensus_centroid[2] + (image_dim // 2),
+                # calculate the consensus centroid and bbox of the nodule:
+                consensus_bbox, consensus_centroid = compute_consensus_bbox(
+                    nodule_anns, image_dim
                 )
 
                 dict_df[f"{nodule_idx}_{pid}"] = {
@@ -76,7 +89,7 @@ def main() -> None:
                     "nodule_idx": nodule_idx,
                     "consensus_centroid": consensus_centroid,
                     "bbox_dim": image_dim,
-                    "consensus_bbox": (x_dim, y_dim, z_dim),
+                    "consensus_bbox": consensus_bbox,
                     "ann_mean_diameter": np.mean([ann.diameter for ann in nodule_anns]),
                     "ann_mean_volume": np.mean([ann.volume for ann in nodule_anns]),
                     "nodule_annotation_ids": tuple(
@@ -144,3 +157,6 @@ def main() -> None:
 # %%
 if __name__ == "__main__":
     main()
+    import pandas as pd
+
+    pd.read_csv("out/nodule_df_all.csv")

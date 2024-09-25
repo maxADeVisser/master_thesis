@@ -18,8 +18,7 @@
   },
   "preprocessing": {
     "nodule_df": {
-      "image_dim": 64,
-      "nodule_df_csv_name": "nodule_df_all"
+      "image_dim": 64
     }
   },
   "training": {
