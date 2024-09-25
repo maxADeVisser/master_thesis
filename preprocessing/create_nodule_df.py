@@ -8,7 +8,7 @@ from utils.common_imports import *
 from utils.logger_setup import logger
 
 # SCIPRT PARAMS:
-SCRIPT_PARAMS = pipeline_config["preprocessing"]["nodule_df"]
+SCRIPT_PARAMS = pipeline_config["preprocessing"]["nodule_dataset"]
 image_dim = SCRIPT_PARAMS["image_dim"]
 csv_file_name = "nodule_df_all"
 verbose = False

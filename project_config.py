@@ -1,10 +1,15 @@
 """Project config file"""
 
+import json
 import os
 
 from dotenv import load_dotenv
 
 load_dotenv(".env")  # Load environment variables from .env file
+
+# TODO make the pipeline config into a pydantic class. This way, I can verify the parameters and types provided in the configuration
+with open("pipeline_parameters.json", "r") as f:
+    pipeline_config = json.load(f)
 
 
 class _Config:

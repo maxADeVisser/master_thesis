@@ -8,9 +8,14 @@ import torch
 from pylidc.utils import volume_viewer
 from torch.utils.data import Dataset
 
-from model.processing import clip_and_normalise_volume
-from project_config import config
+from model.processing import add_dialation, clip_and_normalise_volume
+from project_config import config, pipeline_config
 from utils.utils import get_scans_by_patient_id
+
+dataset_config = pipeline_config["prepreprocessing"]["nodule_dataset"]
+
+# this is 0, 1 or 2 for now. 0 means no segmentation, 1 means segment the nodule, 2 means segment the background
+nodule_segmentation_config = int(dataset_config["segment_nodule"])
 
 
 class LIDC_IDRI_DATASET(Dataset):
@@ -40,6 +45,34 @@ class LIDC_IDRI_DATASET(Dataset):
     def __len__(self) -> int:
         return len(self.nodule_df)
 
+    def segment_nodule(
+        self, nodule_roi: torch.Tensor, nodule_idx: int, invert: bool = False
+    ) -> torch.Tensor:
+        """
+        Either cut out the nodule from the scan using the consensus boundary or remove the nodule from the scan.
+        @nodule_roi: the nodule region of interest
+        @nodule_idx: the index of the nodule in the nodules dataframe
+        @invert: if True, the nodule will be removed only instead of the background
+        """
+        # TODO compute concensus mask instead (do not just use a single one as now)
+        # annotations = self.nodule_df.iloc[nodule_idx]["nodule_annotation_ids"]
+        annotation_id = self.nodule_df.iloc[nodule_idx]["nodule_annotation_ids"][
+            0
+        ]  # DEBUGGING
+
+        ann = pl.query(pl.Annotation).filter(pl.Annotation.id == annotation_id).first()
+        x, y, z = self.nodule_df.iloc[nodule_idx]["consensus_bbox"]
+        ann_mask = ann.boolean_mask(pad=100_000)[x[0] : x[1], y[0] : y[1], z[0] : z[1]]
+        ann_mask = torch.from_numpy(ann_mask).to(dtype=torch.bool)  # binary mask
+
+        # ann_mask = add_dialation(ann_mask, dilation=1) # TODO does not work yet
+        if invert:
+            ann_mask = 1 - ann_mask
+
+        # BUG: the mask cut out regions are not completely black. The shape of the mask is correct however.
+        nodule_roi = nodule_roi * ann_mask
+        return nodule_roi
+
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
         """
         Retrieves a single nodule volume and its
@@ -56,15 +89,20 @@ class LIDC_IDRI_DATASET(Dataset):
 
         # Convert to pytorch tensor
         nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).float()
-        nodule_roi = clip_and_normalise_volume(nodule_roi)
 
-        # TODO implement transform to cut out the nodule from the scan
+        if nodule_segmentation_config == 1:
+            # segment nodule
+            nodule_roi = self.segment_nodule(nodule_roi, idx, invert=False)
+        elif nodule_segmentation_config == 2:
+            # segment background
+            nodule_roi = self.segment_nodule(nodule_roi, idx, invert=True)
 
         # TODO implement transform to cut out the background from the scan
 
         # TODO implement random translation of the nodule in the scan to augment the dataset
 
         malignancy_consensus = nodule_row["malignancy_consensus"]
+        nodule_roi = clip_and_normalise_volume(nodule_roi)
 
         return nodule_roi, malignancy_consensus
 
@@ -102,7 +140,11 @@ if __name__ == "__main__":
     dataset = LIDC_IDRI_DATASET()
     roi_consensus, label = dataset.__getitem__(0)
 
-    # dataset.nodule_df.query("pid == 'LIDC-IDRI-0101'")
+    import matplotlib.pyplot as plt
+
+    roi_consensus.shape
+    plt.imshow(roi_consensus[:, :, 32], cmap="gray")
+    torch.max(roi_consensus)
 
     dataset.visualise_nodule_bbox(nodule_idx=0, annotation_idx=0)
     # dataset.visualise_nodule_bbox(nodule_idx=292, annotation_idx=0)

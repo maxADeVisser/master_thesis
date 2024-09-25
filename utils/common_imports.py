@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 from project_config import config
 
+# TODO move this to project_config.py
 with open("pipeline_parameters.json", "r") as f:
     pipeline_config = json.load(f)
 
