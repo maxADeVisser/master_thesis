@@ -71,16 +71,10 @@ class Nodule:
         nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).float()
         return nodule_roi
 
-    def segment_nodule(
-        self, consensus_level: float = CONSENSUS_LEVEL, invert: bool = False
+    def get_consensus_mask(
+        self, consensus_level: float = CONSENSUS_LEVEL
     ) -> torch.Tensor:
-        """
-        Either cut out the nodule from the scan using the consensus boundary or remove the nodule from the scan.
-        @consensus_level: the level of agreement between the annotators to be used for the
-        consensus mask of the nodule.
-        @invert: if True, the nodule will be removed only instead of the background
-        """
-        x, y, z = self.nodule_consensus_bbox
+        """Returns the consensus mask of the nodule based on the annotations of the 4 radiologists. Refer to the documentation of pylidc.utils.consensus for more info."""
         # NOTE: Using 100_000 as padding to include the entire scan in the mask (for alignment with the nodule consensus bbox)
         consensus_mask, _ = consensus(
             self.pylidc_annotations,
@@ -88,7 +82,19 @@ class Nodule:
             pad=100_000,
             ret_masks=False,
         )
-        consensus_mask = consensus_mask[x[0] : x[1], y[0] : y[1], z[0] : z[1]]
+        return consensus_mask
+
+    def segment_nodule(self, invert: bool = False) -> torch.Tensor:
+        """
+        Either cut out the nodule from the scan using the consensus boundary or remove the nodule from the scan.
+        @consensus_level: the level of agreement between the annotators to be used for the
+        consensus mask of the nodule.
+        @invert: if True, the nodule will be removed only instead of the background
+        """
+        x, y, z = self.nodule_consensus_bbox
+        consensus_mask = self.get_consensus_mask()[
+            x[0] : x[1], y[0] : y[1], z[0] : z[1]
+        ]
         consensus_mask = torch.from_numpy(consensus_mask).to(dtype=torch.bool)
         # consensus_mask = add_dialation(consensus_mask, dilation=1) # TODO does not work yet (needed?)
         if invert:
@@ -107,16 +113,15 @@ class Nodule:
 
         # NOTE: pad is set to a large number to include the entire scan in the mask.
         # Then we can index the full scan with the consensus bbox for alignment.
-        ann_mask = ann.boolean_mask(pad=100_000)[x[0] : x[1], y[0] : y[1], z[0] : z[1]]
-        ann_cutout = ann.scan.to_volume(verbose=False)[
+        consensus_mask = self.get_consensus_mask()[
             x[0] : x[1], y[0] : y[1], z[0] : z[1]
         ]
 
         # Uncomment the following to visualise the nodule bbox and mask in jupyter notebook
         # %matplotlib widget
         volume_viewer(
-            vol=ann_cutout,
-            mask=ann_mask,
+            vol=self.nodule_roi,
+            mask=consensus_mask,
             ls="--",
             c="r",
         )
@@ -169,23 +174,23 @@ class LIDC_IDRI_DATASET(Dataset):
 
 # %%
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
 
     # Testing data loader
     dataset = LIDC_IDRI_DATASET()
-    roi_consensus, label = dataset.__getitem__(0)
-    plt.imshow(roi_consensus[:, :, 35], cmap="gray")
-    plt.title(f"Label malignancy score: {label}")
-    plt.show()
+    # roi_consensus, label = dataset.__getitem__(0)
+    # plt.imshow(roi_consensus[:, :, 35], cmap="gray")
+    # plt.title(f"Label malignancy score: {label}")
+    # plt.show()
 
     # Test Nodule
     test_nodule = Nodule(
         dataset.nodule_df.iloc[0],
         nodule_context_size=IMAGE_DIM,
-        segmentation_setting="remove_background",
+        segmentation_setting="remove_nodule",
     )
-    plt.imshow(test_nodule.nodule_roi[:, :, 20], cmap="gray")
-    plt.show()
+    # plt.imshow(test_nodule.nodule_roi[:, :, 35], cmap="gray")
+    # plt.show()
     test_nodule.visualise_nodule_bbox()
 
 # %%

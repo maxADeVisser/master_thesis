@@ -21,19 +21,3 @@ def clip_and_normalise_volume(
     """
     scan = torch.clamp(scan, min_bound, max_bound)
     return (scan - min_bound) / (max_bound - min_bound)
-
-
-def add_dialation(scan: torch.Tensor, dilation: int = 1) -> torch.Tensor:
-    """
-    Add dilation to the scan
-    """
-    # TODO does not work yet
-    # Define a kernel (for example, a 3x3 kernel)
-    kernel = torch.ones(
-        (1, 3, 3), dtype=torch.float32
-    )  # Shape (out_channels, in_channels, height, width)
-
-    # Perform a dilated convolution with a dilation factor of 2
-    dilation = 2
-    output_tensor = F.conv2d(scan, kernel, padding=dilation, dilation=dilation)
-    return output_tensor
