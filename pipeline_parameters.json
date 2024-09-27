@@ -19,7 +19,7 @@
   "preprocessing": {
     "nodule_dataset": {
       "image_dim": 64,
-      "segment_nodule": 0
+      "segment_nodule": "none"
     }
   },
   "training": {
