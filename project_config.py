@@ -7,10 +7,6 @@ from dotenv import load_dotenv
 
 load_dotenv(".env")  # Load environment variables from .env file
 
-# TODO make the pipeline config into a pydantic class. This way, I can verify the parameters and types provided in the configuration
-with open("pipeline_parameters.json", "r") as f:
-    pipeline_config = json.load(f)
-
 
 class _Config:
     """
@@ -90,5 +86,6 @@ class _Config:
 # Singleton pattern: only one instance of the Config class is created
 config = _Config()
 
-if __name__ == "__main__":
-    config = _Config()
+# TODO make the pipeline config into a pydantic class. This way, I can verify the parameters and types provided in the configuration
+with open("pipeline_parameters.json", "r") as f:
+    pipeline_config = json.load(f)

@@ -15,34 +15,42 @@ from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
 
 DATASET_CONFIG = pipeline_config["nodule_dataset"]
+CONTEXT_EXPERIMENT = pipeline_config["context_experiment"]
 IMAGE_DIM = DATASET_CONFIG["image_dim"]
 NODULE_SEGMENTATION = DATASET_CONFIG["segment_nodule"]
+CONSENSUS_LEVEL = DATASET_CONFIG["consensus_level"]
 logger.info(f"Dataset config: {DATASET_CONFIG}")
 
 
 class Nodule:
-    """
-    Helper class to store and manipulate nodule information from nodule_df.
-    @segmentation_setting is either 0, 1 or 2. 0 means no segmentation, 1 means segment the nodule, 2 means segment the background
-    """
-
     def __init__(
         self,
         nodule_record: pd.Series,
+        nodule_context_size: Literal[8, 16, 32, 64, 128],
         segmentation_setting: (
             Literal["none", "remove_nodule", "remove_background"] | None
         ) = None,
     ) -> None:
-        self.nodule_record = nodule_record
+        """
+        Helper class to store and manipulate nodule information from nodule df created by create_nodule_df.py script.
+        @nodule_record: a single row from the nodule dataframe.
+        @nodule_context_size: the size of the nodule context to be used for the nodule ROI.
+        @segmentation_setting determines if/how the nodule is segmented from the scan.
+        """
+        assert (
+            nodule_context_size in CONTEXT_EXPERIMENT["image_dims"]
+        ), f"Invalid nodule context size. Must be one of {CONTEXT_EXPERIMENT['image_dims']}"
+        self.patient_id = nodule_record["pid"]
         self.annotation_ids = nodule_record["nodule_annotation_ids"]
         self.pylidc_annotations = [
             pl.query(pl.Annotation).filter(pl.Annotation.id == ann_id).first()
             for ann_id in self.annotation_ids
         ]
         self.malignancy_consensus = nodule_record["malignancy_consensus"]
-        self.nodule_consensus_bbox = nodule_record["consensus_bbox"]
+        self.nodule_consensus_bbox = nodule_record[
+            f"consensus_bbox_{nodule_context_size}"
+        ]
         self.nodule_roi = self.get_nodule_roi()
-
         self.nodule_roi = clip_and_normalise_volume(self.nodule_roi)
 
         if segmentation_setting == "remove_background":
@@ -52,10 +60,8 @@ class Nodule:
 
     def get_nodule_roi(self) -> torch.Tensor:
         """Returns the nodule region of interest from the scan based on the consensus bbox from the 4 annotators"""
-        scan: np.ndarray = get_scans_by_patient_id(
-            self.nodule_record["pid"], to_numpy=True
-        )
-        x_bounds, y_bounds, z_bounds = self.nodule_record["consensus_bbox"]
+        scan: np.ndarray = get_scans_by_patient_id(self.patient_id, to_numpy=True)
+        x_bounds, y_bounds, z_bounds = self.nodule_consensus_bbox
         nodule_roi = scan[
             x_bounds[0] : x_bounds[1],
             y_bounds[0] : y_bounds[1],
@@ -66,12 +72,12 @@ class Nodule:
         return nodule_roi
 
     def segment_nodule(
-        self, consensus_level: float = 0.5, invert: bool = False
+        self, consensus_level: float = CONSENSUS_LEVEL, invert: bool = False
     ) -> torch.Tensor:
         """
         Either cut out the nodule from the scan using the consensus boundary or remove the nodule from the scan.
-        @nodule_roi: the nodule region of interest
-        @nodule_idx: the index of the nodule in the nodules dataframe
+        @consensus_level: the level of agreement between the annotators to be used for the
+        consensus mask of the nodule.
         @invert: if True, the nodule will be removed only instead of the background
         """
         x, y, z = self.nodule_consensus_bbox
@@ -129,12 +135,14 @@ class LIDC_IDRI_DATASET(Dataset):
 
         try:
             # Read in the nodule dataframe and convert the string representations to python objects
-            self.nodule_df = pd.read_csv(f"out/nodule_df_{IMAGE_DIM}.csv").assign(
-                consensus_bbox=lambda x: x["consensus_bbox"].apply(ast.literal_eval),
-                nodule_annotation_ids=lambda x: x["nodule_annotation_ids"].apply(
-                    ast.literal_eval
-                ),
-            )
+            self.nodule_df = pd.read_csv(f"out/nodule_df.csv")
+            self.nodule_df[f"consensus_bbox_{IMAGE_DIM}"] = self.nodule_df[
+                f"consensus_bbox_{IMAGE_DIM}"
+            ].apply(ast.literal_eval)
+            self.nodule_df["nodule_annotation_ids"] = self.nodule_df[
+                "nodule_annotation_ids"
+            ].apply(ast.literal_eval)
+
         except FileNotFoundError:
             raise FileNotFoundError(
                 "The nodule dataframe was not found. Please run the create_nodule_df.py script first."
@@ -151,6 +159,7 @@ class LIDC_IDRI_DATASET(Dataset):
         nodule = Nodule(
             self.nodule_df.iloc[idx],
             segmentation_setting=NODULE_SEGMENTATION,
+            nodule_context_size=IMAGE_DIM,
         )
 
         # TODO implement random translation of the nodule in the scan to augment the dataset
@@ -160,14 +169,23 @@ class LIDC_IDRI_DATASET(Dataset):
 
 # %%
 if __name__ == "__main__":
-    dataset = LIDC_IDRI_DATASET()
-    test_nodule = Nodule(dataset.nodule_df.iloc[0])
     import matplotlib.pyplot as plt
 
+    # Testing data loader
+    dataset = LIDC_IDRI_DATASET()
     roi_consensus, label = dataset.__getitem__(0)
-    plt.imshow(roi_consensus[:, :, 32], cmap="gray")
+    plt.imshow(roi_consensus[:, :, 35], cmap="gray")
+    plt.title(f"Label malignancy score: {label}")
     plt.show()
 
+    # Test Nodule
+    test_nodule = Nodule(
+        dataset.nodule_df.iloc[0],
+        nodule_context_size=IMAGE_DIM,
+        segmentation_setting="remove_background",
+    )
+    plt.imshow(test_nodule.nodule_roi[:, :, 20], cmap="gray")
+    plt.show()
     test_nodule.visualise_nodule_bbox()
 
 # %%
