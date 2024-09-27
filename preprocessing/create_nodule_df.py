@@ -2,6 +2,7 @@
 
 # %%
 import itertools
+import math
 from statistics import median_high
 
 from utils.common_imports import *
@@ -10,8 +11,20 @@ from utils.logger_setup import logger
 # SCIPRT PARAMS:
 SCRIPT_PARAMS = pipeline_config["preprocessing"]["nodule_dataset"]
 image_dim = SCRIPT_PARAMS["image_dim"]
-csv_file_name = "nodule_df_all"
+CSV_FILE_NAME = "nodule_df_64"
 verbose = False
+logger.info(
+    f"Creating nodule df with image_dim: {image_dim} as {CSV_FILE_NAME}.csv ..."
+)
+
+
+def calculate_consensus(annotation_variable_values: list[int]) -> int:
+    """
+    Calculate the consensus of discrete annotation variable values
+    """
+    round_to_nearest = lambda x: math.floor(x + 0.5)
+    # return median_high(annotation_variable_values)
+    return round_to_nearest(np.mean(annotation_variable_values))
 
 
 def get_malignancy_label(malignancy_scores: tuple[int]) -> str:
@@ -22,7 +35,7 @@ def get_malignancy_label(malignancy_scores: tuple[int]) -> str:
     If the median high is equal to 3, the nodule is labelled as "Ambiguous".
     (source: https://github.com/benkeel/VAE_lung_lesion_BMVC/blob/main/Preprocessing/LIDC_DICOM_to_Numpy.ipynb)
     """
-    consensus_malignancy = median_high(malignancy_scores)
+    consensus_malignancy = calculate_consensus(malignancy_scores)
     if consensus_malignancy > 3:
         return "Malignant"
     elif consensus_malignancy < 3:
@@ -97,6 +110,8 @@ def main() -> None:
                     ),
                     "nodule_annotation_count": len(nodule_anns),
                     "malignancy_scores": tuple([ann.malignancy for ann in nodule_anns]),
+                    "subtlety_scores": tuple([ann.subtlety for ann in nodule_anns]),
+                    "margin_scores": tuple([ann.margin for ann in nodule_anns]),
                 }
 
                 # TODO might need to do some more processing here...
@@ -104,16 +119,19 @@ def main() -> None:
 
     nodule_df = pd.DataFrame.from_dict(dict_df, orient="index")
 
+    # CALCULATE CONSENSUS OF SCORES:
     nodule_df["malignancy_consensus"] = nodule_df["malignancy_scores"].apply(
-        median_high
+        calculate_consensus
+    )
+    nodule_df["subtlety_consensus"] = nodule_df["subtlety_scores"].apply(
+        calculate_consensus
+    )
+    nodule_df["margin_consensus"] = nodule_df["margin_scores"].apply(
+        calculate_consensus
     )
     nodule_df["cancer_label"] = nodule_df["malignancy_scores"].apply(
         get_malignancy_label
     )
-
-    # FILTERING:
-    # nodule_df = nodule_df[nodule_df["cancer_label"] != "Ambiguous"]
-    # ...
 
     # TYPE CASTING
     nodule_df = nodule_df.assign(
@@ -145,11 +163,11 @@ def main() -> None:
 
     # verify that there are at most 4 annotations per nodule:
     if max(nodule_df["nodule_annotation_ids"].apply(len)) > 4:
-        logger.debug("Some nodules have more than 4 annotations")
+        logger.debug("There are nodules with more than 4 annotations")
 
     # WRITE FILE:
     try:
-        nodule_df.to_csv(f"{config.OUT_DIR}/{csv_file_name}.csv", index=True)
+        nodule_df.to_csv(f"{config.OUT_DIR}/{CSV_FILE_NAME}.csv", index=True)
     except Exception as e:
         logger.error(f"Error saving nodule_df dataframe: {e}")
 
@@ -157,6 +175,6 @@ def main() -> None:
 # %%
 if __name__ == "__main__":
     main()
-    import pandas as pd
 
-    pd.read_csv("out/nodule_df_all.csv")
+    # import pandas as pd
+    # pd.read_csv("out/nodule_df_all.csv")

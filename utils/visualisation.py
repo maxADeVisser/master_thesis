@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pylidc as pl
-from pylidc.utils import consensus, find_contours
+from pylidc.utils import consensus, find_contours, volume_viewer
 from tqdm import tqdm
 
 from project_config import config
@@ -58,7 +58,9 @@ def show_segmentation_consensus(
     plt.show()
 
 
-def plot_scan_hounsfield_histogram(pids: list[str], bins: int = 80) -> None:
+def plot_scan_hounsfield_histogram(
+    pids: list[str], bounds: tuple[int, int], bins: int = 80
+) -> None:
     """
     Plots the histogram of Hounsfield units in a CT scan
     @scan - a 3D numpy array of the CT scan
@@ -72,6 +74,8 @@ def plot_scan_hounsfield_histogram(pids: list[str], bins: int = 80) -> None:
     print("Plotting...")
     plt.title(f"Hounsfield Units (HU) Distribution for {len(pids)} Scans")
     plt.hist(scan.flatten(), bins=bins, color="c")
+    plt.axvline(x=bounds[0], color="r", linestyle="--", label="Lower Bound")
+    plt.axvline(x=bounds[1], color="r", linestyle="--", label="Upper Bound")
     plt.xlabel("Hounsfield Units (HU)")
     plt.ylabel("Frequency")
     plt.show()
@@ -118,20 +122,25 @@ def plot_slices(
     plt.show()
 
 
+def visualise_scan_interactively(pid: str) -> None:
+    scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).first()
+    volume_viewer(scan.to_volume(verbose=False))
+
+
 # %%
 if __name__ == "__main__":
     # TESTING
     """Need to Load a scan from a folder and returns a 3D numpy array of all the scans stacked together
     in the shape: (n_slices, width, height):"""
-    slices = ...
-    plot_slices(
-        num_rows=4,
-        num_cols=10,
-        start_scan_idx=30,
-        end_scan_idx=70,
-        slices=slices,
-        # save_path="out/test.png",
-    )
+    # slices = ...
+    # plot_slices(
+    #     num_rows=4,
+    #     num_cols=10,
+    #     start_scan_idx=30,
+    #     end_scan_idx=70,
+    #     slices=slices,
+    #     # save_path="out/test.png",
+    # )
 
     # TESTING
     plot_scan_hounsfield_histogram(config.patient_ids[:20], bins=80)
@@ -140,4 +149,7 @@ if __name__ == "__main__":
     pid = "LIDC-IDRI-0010"
     pid_scan = get_scans_by_patient_id(pid, to_numpy=False)
     show_segmentation_consensus(pid_scan, 2)
+
+    # TESTING
+    visualise_scan_interactively("LIDC-IDRI-0010")
 # %%
