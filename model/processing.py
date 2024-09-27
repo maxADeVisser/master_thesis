@@ -5,9 +5,14 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from project_config import pipeline_config
+
+LOWER_BOUND = pipeline_config["nodule_dataset"]["lower_normalisation_bound"]
+HIGHER_BOUND = pipeline_config["nodule_dataset"]["higher_normalisation_bound"]
+
 
 def clip_and_normalise_volume(
-    scan: torch.Tensor, min_bound: int = -1000, max_bound: int = 400
+    scan: torch.Tensor, min_bound: int = LOWER_BOUND, max_bound: int = HIGHER_BOUND
 ) -> np.ndarray:
     """
     Normalize the scan to be in the range of [0, 1] by clipping

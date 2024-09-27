@@ -3,15 +3,18 @@
 # %%
 import itertools
 import math
-from statistics import median_high
 
+from project_config import config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 
+# from statistics import median_high
+
+
 # SCIPRT PARAMS:
-SCRIPT_PARAMS = pipeline_config["preprocessing"]["nodule_dataset"]
+SCRIPT_PARAMS = pipeline_config["nodule_dataset"]
 image_dim = SCRIPT_PARAMS["image_dim"]
-CSV_FILE_NAME = "nodule_df_64"
+CSV_FILE_NAME = f"nodule_df_{image_dim}"
 verbose = False
 logger.info(
     f"Creating nodule df with image_dim: {image_dim} as {CSV_FILE_NAME}.csv ..."

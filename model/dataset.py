@@ -14,9 +14,10 @@ from project_config import config, pipeline_config
 from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
 
-dataset_config = pipeline_config["preprocessing"]["nodule_dataset"]
-nodule_segmentation_config = dataset_config["segment_nodule"]
-logger.info(f"Dataset config: {dataset_config}")
+DATASET_CONFIG = pipeline_config["nodule_dataset"]
+IMAGE_DIM = DATASET_CONFIG["image_dim"]
+NODULE_SEGMENTATION = DATASET_CONFIG["segment_nodule"]
+logger.info(f"Dataset config: {DATASET_CONFIG}")
 
 
 class Nodule:
@@ -128,7 +129,7 @@ class LIDC_IDRI_DATASET(Dataset):
 
         try:
             # Read in the nodule dataframe and convert the string representations to python objects
-            self.nodule_df = pd.read_csv(f"out/nodule_df_32.csv").assign(
+            self.nodule_df = pd.read_csv(f"out/nodule_df_{IMAGE_DIM}.csv").assign(
                 consensus_bbox=lambda x: x["consensus_bbox"].apply(ast.literal_eval),
                 nodule_annotation_ids=lambda x: x["nodule_annotation_ids"].apply(
                     ast.literal_eval
@@ -149,7 +150,7 @@ class LIDC_IDRI_DATASET(Dataset):
         """
         nodule = Nodule(
             self.nodule_df.iloc[idx],
-            segmentation_setting=nodule_segmentation_config,
+            segmentation_setting=NODULE_SEGMENTATION,
         )
 
         # TODO implement random translation of the nodule in the scan to augment the dataset
@@ -161,11 +162,11 @@ class LIDC_IDRI_DATASET(Dataset):
 if __name__ == "__main__":
     dataset = LIDC_IDRI_DATASET()
     test_nodule = Nodule(dataset.nodule_df.iloc[0])
-    # import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
 
-    # roi_consensus, label = dataset.__getitem__(0)
-    # plt.imshow(roi_consensus[:, :, 20], cmap="gray")
-    # plt.show()
+    roi_consensus, label = dataset.__getitem__(0)
+    plt.imshow(roi_consensus[:, :, 32], cmap="gray")
+    plt.show()
 
     test_nodule.visualise_nodule_bbox()
 

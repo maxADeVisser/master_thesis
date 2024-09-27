@@ -4,8 +4,9 @@ import re
 from glob import glob
 from typing import Any, Literal
 
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 
+from project_config import config
 from utils.common_imports import *
 from utils.logger_setup import logger
 from utils.utils import get_ct_scan_slice_paths

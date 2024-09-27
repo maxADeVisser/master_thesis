@@ -5,7 +5,7 @@ import pylidc as pl
 from pylidc.utils import consensus, find_contours, volume_viewer
 from tqdm import tqdm
 
-from project_config import config
+from project_config import config, pipeline_config
 from utils.utils import get_scans_by_patient_id
 
 
@@ -59,7 +59,12 @@ def show_segmentation_consensus(
 
 
 def plot_scan_hounsfield_histogram(
-    pids: list[str], bounds: tuple[int, int], bins: int = 80
+    pids: list[str],
+    bounds: tuple[int, int] = (
+        pipeline_config["nodule_dataset"]["lower_normalisation_bound"],
+        pipeline_config["nodule_dataset"]["higher_normalisation_bound"],
+    ),
+    bins: int = 80,
 ) -> None:
     """
     Plots the histogram of Hounsfield units in a CT scan
@@ -67,7 +72,7 @@ def plot_scan_hounsfield_histogram(
     """
     scan = get_scans_by_patient_id(pids[0], to_numpy=True)
 
-    for pid in tqdm(range(1, len(pids))):
+    for pid in tqdm(range(1, len(pids)), desc="Loading Scans"):
         next_pid_scan = get_scans_by_patient_id(config.patient_ids[pid], to_numpy=True)
         scan = np.concatenate([scan, next_pid_scan], axis=2)
 
@@ -75,7 +80,8 @@ def plot_scan_hounsfield_histogram(
     plt.title(f"Hounsfield Units (HU) Distribution for {len(pids)} Scans")
     plt.hist(scan.flatten(), bins=bins, color="c")
     plt.axvline(x=bounds[0], color="r", linestyle="--", label="Lower Bound")
-    plt.axvline(x=bounds[1], color="r", linestyle="--", label="Upper Bound")
+    plt.axvline(x=bounds[1], color="b", linestyle="--", label="Upper Bound")
+    plt.legend()
     plt.xlabel("Hounsfield Units (HU)")
     plt.ylabel("Frequency")
     plt.show()
@@ -143,7 +149,7 @@ if __name__ == "__main__":
     # )
 
     # TESTING
-    plot_scan_hounsfield_histogram(config.patient_ids[:20], bins=80)
+    plot_scan_hounsfield_histogram(config.patient_ids[:50], bins=80)
 
     # TESTING
     pid = "LIDC-IDRI-0010"
