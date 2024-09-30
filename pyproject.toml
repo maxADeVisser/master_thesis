@@ -24,8 +24,9 @@ opencv-python = "^4.10.0.84"
 pyqt6 = "^6.7.1"             # Required for itkwidgets (do not remember why it is needed)
 scipy = "^1.14.1"
 ruff = "^0.6.4"
-wandb = "^0.18.1"
 mypy = "^1.11.2"
+pydantic = "^2.9.2"
+mlflow = "^2.16.2"
 
 [tool.poetry.group.medvis.dependencies]
 streamlit = "^1.38.0"
