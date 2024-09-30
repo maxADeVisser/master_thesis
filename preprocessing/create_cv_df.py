@@ -6,7 +6,7 @@ from project_config import SEED, pipeline_config
 from utils.common_imports import *
 
 SCRIPT_PARAMS = pipeline_config["nodule_dataset"]
-N_FOLDS = SCRIPT_PARAMS["n_cv_folds"]
+CV_N_FOLDS = SCRIPT_PARAMS["n_cv_folds"]
 
 
 def create_cv_df(nodule_df: pd.DataFrame, cv: StratifiedGroupKFold) -> pd.DataFrame:
@@ -59,14 +59,25 @@ def add_cv_info(nodule_df: pd.DataFrame) -> None:
     created by create_nodule_df.py script. Function uses StratifiedGroupKFold
     to make sure that nodule from the same patient are in the same fold.
     """
-    sgkf = StratifiedGroupKFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
+    sgkf = StratifiedGroupKFold(n_splits=CV_N_FOLDS, shuffle=True, random_state=SEED)
     cv_df = create_cv_df(nodule_df, sgkf)
 
     # make n_folds fold columns in the nodule_df that indicates which rows are in the train and test set:
-    for fold in range(N_FOLDS):
+    for fold in range(CV_N_FOLDS):
         nodule_df[f"fold_{fold + 1}"] = "no_fold"  # initialise all rows to "no_fold"
         nodule_df.loc[cv_df.loc[fold, "train_idxs"], f"fold_{fold + 1}"] = "train"
         nodule_df.loc[cv_df.loc[fold, "test_idxs"], f"fold_{fold + 1}"] = "test"
+
+    # VALIDATION
+    # Train and test sets should be stratified by malignancy and grouped by pid:
+    fold_validations = []
+    for fold in range(1, CV_N_FOLDS + 1):
+        fold_validations.append(
+            all(nodule_df.groupby("pid")[f"fold_{fold}"].nunique() == 1)
+        )
+    assert all(
+        fold_validations
+    ), "Train and test sets are not stratified by malignancy and grouped by pid in all folds"
 
     return nodule_df
 
