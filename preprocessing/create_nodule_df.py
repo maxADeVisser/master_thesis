@@ -4,7 +4,8 @@
 import itertools
 import math
 
-from project_config import config, pipeline_config
+from preprocessing.create_cv_df import add_cv_info
+from project_config import SEED, config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 
@@ -125,7 +126,7 @@ def main() -> None:
                 # TODO might need to do some more processing here...
                 # i.e. check if the mask is too small to be included
 
-    nodule_df = pd.DataFrame.from_dict(dict_df, orient="index")
+    nodule_df = pd.DataFrame.from_dict(dict_df, orient="index").reset_index()
 
     # CALCULATE CONSENSUS OF SCORES:
     nodule_df["malignancy_consensus"] = nodule_df["malignancy_scores"].apply(
@@ -179,9 +180,13 @@ def main() -> None:
     if max(nodule_df["nodule_annotation_ids"].apply(len)) > 4:
         logger.debug("There are nodules with more than 4 annotations")
 
+    # ADD CROSS VALIDATION FOLDS:
+    # StratifiedGroupKFold
+    nodule_df = add_cv_info(nodule_df)
+
     # WRITE FILE:
     try:
-        nodule_df.to_csv(f"{config.OUT_DIR}/{CSV_FILE_NAME}.csv", index=True)
+        nodule_df.to_csv(f"{config.OUT_DIR}/{CSV_FILE_NAME}.csv", index=False)
     except Exception as e:
         logger.error(f"Error saving nodule_df dataframe: {e}")
 
