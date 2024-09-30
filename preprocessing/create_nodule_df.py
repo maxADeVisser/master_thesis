@@ -5,7 +5,7 @@ import itertools
 import math
 
 from preprocessing.create_cv_df import add_cv_info
-from project_config import SEED, config, pipeline_config
+from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 
@@ -86,7 +86,7 @@ def compute_consensus_bbox(
 
 def main() -> None:
     dict_df = {}
-    for pid in tqdm(config.patient_ids, desc="Processing patients"):
+    for pid in tqdm(env_config.patient_ids, desc="Processing patients"):
         scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
@@ -186,7 +186,7 @@ def main() -> None:
 
     # WRITE FILE:
     try:
-        nodule_df.to_csv(f"{config.OUT_DIR}/{CSV_FILE_NAME}.csv", index=False)
+        nodule_df.to_csv(f"{env_config.OUT_DIR}/{CSV_FILE_NAME}.csv", index=False)
     except Exception as e:
         logger.error(f"Error saving nodule_df dataframe: {e}")
 

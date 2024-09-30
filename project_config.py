@@ -12,7 +12,7 @@ load_dotenv(".env")  # Load environment variables from .env file
 SEED = 39
 
 
-class _Config:
+class _EnvConfig:
     """
     Config class for the project. Intended to be a singleton
 
@@ -88,7 +88,7 @@ class _Config:
 
 
 # Singleton pattern: only one instance of the Config class is created
-config = _Config()
+env_config = _EnvConfig()
 
 # TODO make the pipeline config into a pydantic class. This way, I can verify the parameters and types provided in the configuration
 with open("pipeline_parameters.json", "r") as f:

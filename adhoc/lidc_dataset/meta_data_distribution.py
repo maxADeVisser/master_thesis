@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from tqdm import tqdm  # type: ignore
 
-from project_config import config
+from project_config import env_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 from utils.utils import get_ct_scan_slice_paths
@@ -68,13 +68,13 @@ def collect_meta_fields_pr_scan(
         encodings = _map_to_encoding_key(meta_attributes)
     else:
         # get all encoding values
-        with open(config.dicom_encoding_mapping_file, "rb") as f:
+        with open(env_config.dicom_encoding_mapping_file, "rb") as f:
             encoding_mapping = pickle.load(f)
         encodings = list(encoding_mapping.values())
 
     # load reversed encoding mapping
     with open(
-        config.dicom_encoding_mapping_file.replace(".pkl", "_reverse.pkl"), "rb"
+        env_config.dicom_encoding_mapping_file.replace(".pkl", "_reverse.pkl"), "rb"
     ) as f:
         reversed_encoding_mapping = pickle.load(f)
 
@@ -105,7 +105,7 @@ def make_encoding_mapping_file(reverse: bool = False) -> None:
     If @reverse then the mapping is reversed.
     """
     # read in a random dicom file:
-    dicom_file_path = f"{config.DATA_DIR}/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm"
+    dicom_file_path = f"{env_config.DATA_DIR}/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm"
     assert os.path.exists(dicom_file_path), "First Dicom file not found"
     dicom_file = pydicom.dcmread(
         dicom_file_path,
@@ -114,10 +114,12 @@ def make_encoding_mapping_file(reverse: bool = False) -> None:
     dicom_dict = dicom_file.to_json_dict()
     if reverse:
         encoding_key_mapping = dict(zip(dicom_dict.keys(), _get_dicom_keys(dicom_file)))
-        save_path = config.dicom_encoding_mapping_file.replace(".pkl", "_reverse.pkl")
+        save_path = env_config.dicom_encoding_mapping_file.replace(
+            ".pkl", "_reverse.pkl"
+        )
     else:
         encoding_key_mapping = dict(zip(_get_dicom_keys(dicom_file), dicom_dict.keys()))
-        save_path = config.dicom_encoding_mapping_file
+        save_path = env_config.dicom_encoding_mapping_file
 
     with open(save_path, "wb") as f:
         pickle.dump(encoding_key_mapping, f)
@@ -131,10 +133,10 @@ def make_encoding_mapping_file(reverse: bool = False) -> None:
 def _map_to_encoding_key(attributes: list[str]) -> list[Any]:
     """Util func to map the attributes to the encoding keys."""
     assert os.path.exists(
-        config.dicom_encoding_mapping_file
+        env_config.dicom_encoding_mapping_file
     ), "Encoding file not found. Create it first using @make_encoding_mapping_file()"
 
-    with open(config.dicom_encoding_mapping_file, "rb") as f:
+    with open(env_config.dicom_encoding_mapping_file, "rb") as f:
         encoding_key_mapping = pickle.load(f)
 
     encoding = [encoding_key_mapping[key] for key in attributes]
@@ -154,7 +156,7 @@ def plot_meta_attribute_distribution(
     encoding = _map_to_encoding_key([attribute])
 
     vals = []
-    for pid in tqdm(config.patient_ids):
+    for pid in tqdm(env_config.patient_ids):
         patient_scan_dir: str = get_ct_scan_slice_paths(pid, return_parent_dir=True)
         cif = collect_meta_fields_pr_scan(
             patient_scan_dir,
@@ -191,7 +193,7 @@ if __name__ == "__main__":
     # plot_meta_attribute_distribution(attribute=attribute, granularity=granularity)
 
     patient_scan_dir = get_ct_scan_slice_paths(
-        patient_id_dir=config.patient_ids[0], return_parent_dir=True
+        patient_id_dir=env_config.patient_ids[0], return_parent_dir=True
     )
     cif = collect_meta_fields_pr_scan(patient_scan_dir)
 

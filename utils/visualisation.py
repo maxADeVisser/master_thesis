@@ -5,7 +5,7 @@ import pylidc as pl
 from pylidc.utils import consensus, find_contours, volume_viewer
 from tqdm import tqdm
 
-from project_config import config, pipeline_config
+from project_config import env_config, pipeline_config
 from utils.utils import get_scans_by_patient_id
 
 
@@ -73,7 +73,9 @@ def plot_scan_hounsfield_histogram(
     scan = get_scans_by_patient_id(pids[0], to_numpy=True)
 
     for pid in tqdm(range(1, len(pids)), desc="Loading Scans"):
-        next_pid_scan = get_scans_by_patient_id(config.patient_ids[pid], to_numpy=True)
+        next_pid_scan = get_scans_by_patient_id(
+            env_config.patient_ids[pid], to_numpy=True
+        )
         scan = np.concatenate([scan, next_pid_scan], axis=2)
 
     print("Plotting...")
@@ -149,7 +151,7 @@ if __name__ == "__main__":
     # )
 
     # TESTING
-    plot_scan_hounsfield_histogram(config.patient_ids[:50], bins=80)
+    plot_scan_hounsfield_histogram(env_config.patient_ids[:50], bins=80)
 
     # TESTING
     pid = "LIDC-IDRI-0010"

@@ -10,7 +10,7 @@ from pylidc.utils import consensus, volume_viewer
 from torch.utils.data import Dataset
 
 from model.processing import clip_and_normalise_volume
-from project_config import config, pipeline_config
+from project_config import env_config, pipeline_config
 from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
 
@@ -134,9 +134,9 @@ class LIDC_IDRI_DATASET(Dataset):
     The file is saved in the projects out/ directory as "nodule_df_all.csv"
     """
 
-    def __init__(self, main_dir_path: str = config.DATA_DIR) -> None:
+    def __init__(self, main_dir_path: str = env_config.DATA_DIR) -> None:
         self.main_dir_path = main_dir_path
-        self.patient_ids = config.patient_ids
+        self.patient_ids = env_config.patient_ids
 
         try:
             # Read in the nodule dataframe and convert the string representations to python objects

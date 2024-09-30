@@ -5,7 +5,7 @@ from adhoc.lidc_dataset.meta_data_distribution import (
     collect_meta_fields_pr_scan,
     make_encoding_mapping_file,
 )
-from project_config import config
+from project_config import env_config
 from utils.utils import get_ct_scan_slice_paths, load_dicom_images_from_folder
 from utils.visualisation import plot_slices
 
@@ -15,7 +15,7 @@ from utils.visualisation import plot_slices
 # %%
 if __name__ == "__main__":
     patient_scan_dir = get_ct_scan_slice_paths(
-        config.patient_ids[0], return_parent_dir=True
+        env_config.patient_ids[0], return_parent_dir=True
     )
     cif = collect_meta_fields_pr_scan(
         patient_scan_dir,
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     start_scan_idx2 = 80
 
     results = {}
-    for pid in config.patient_ids:
+    for pid in env_config.patient_ids:
         patient_scan_dir = get_ct_scan_slice_paths(pid, return_parent_dir=True)
 
         cif = collect_meta_fields_pr_scan(

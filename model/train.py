@@ -1,6 +1,6 @@
 """Training script for the model."""
 
-from project_config import SEED, config, pipeline_config
+from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 
