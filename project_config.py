@@ -8,6 +8,10 @@ from dotenv import load_dotenv
 load_dotenv(".env")  # Load environment variables from .env file
 
 
+# seed for reproducibility
+SEED = 39
+
+
 class _Config:
     """
     Config class for the project. Intended to be a singleton

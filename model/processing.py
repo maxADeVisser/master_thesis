@@ -7,8 +7,7 @@ import torch.nn.functional as F
 
 from project_config import pipeline_config
 
-LOWER_BOUND = pipeline_config["nodule_dataset"]["lower_normalisation_bound"]
-HIGHER_BOUND = pipeline_config["nodule_dataset"]["higher_normalisation_bound"]
+LOWER_BOUND, HIGHER_BOUND = pipeline_config["nodule_dataset"]["normalisation_bounds"]
 
 
 def clip_and_normalise_volume(
