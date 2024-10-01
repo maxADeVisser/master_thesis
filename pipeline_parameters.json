@@ -1,16 +1,19 @@
 {
-  "context_experiment": {
-    "image_dims": [
-      8,
-      16,
-      32,
-      64,
-      128
-    ]
+  "dataset": {
+    "consensus_level": 0.5,
+    "cross_validation_folds": 5,
+    "dataset_desc": "LIDC-IDRI dataset",
+    "image_dim": 64,
+    "n_cv_folds": 5,
+    "normalisation_bounds": [
+      -1000,
+      400
+    ],
+    "segment_nodule": "remove_background",
+    "validation_split": 0.2
   },
   "evaluation": {
-    "folds": 5,
-    "metrics": [
+    "eval_metrics": [
       "accuracy",
       "precision",
       "recall",
@@ -18,24 +21,14 @@
     ]
   },
   "model": {
-    "model_name": "model_1",
-    "model_type": "cnn",
+    "model_description": "Test configuration",
+    "model_name": "test_model",
     "num_classes": 2
   },
-  "nodule_dataset": {
-    "consensus_level": 0.5,
-    "image_dim": 64,
-    "n_cv_folds": 5,
-    "normalisation_bounds": [
-      -1000,
-      400
-    ],
-    "segment_nodule": "remove_background"
-  },
   "training": {
-    "batch_size": 32,
+    "batch_size": 64,
     "epoch_print_interval": 10,
-    "lr": 0.001,
+    "learning_rate": 0.001,
     "num_epochs": 10
   }
 }
