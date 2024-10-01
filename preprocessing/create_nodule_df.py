@@ -10,7 +10,8 @@ from utils.common_imports import *
 from utils.logger_setup import logger
 
 # SCIPRT PARAMS:
-IMAGE_DIMS = [8, 16, 32, 64, 128]  # TODO add to context window experiment
+# IMAGE_DIMS = [8, 16, 32, 64, 128]
+IMAGE_DIMS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 CSV_FILE_NAME = f"nodule_df"
 verbose = False
 logger.info(
@@ -44,7 +45,9 @@ def get_malignancy_label(malignancy_scores: tuple[int]) -> str:
         return "Ambiguous"
 
 
-def compute_consensus_centroid(nodule_anns: list[pl.Annotation]):
+def compute_consensus_centroid(
+    nodule_anns: list[pl.Annotation],
+) -> tuple[int, int, int]:
     """Return the consensus centroid of the nodule based on the annotations"""
     ann_nodule_centroids = [ann.centroid for ann in nodule_anns]
     consensus_centroid = tuple(
@@ -80,13 +83,29 @@ def compute_consensus_bbox(
     return (x_dim, y_dim, z_dim)
 
 
+def verify_bbox_within_scan(
+    scan_dims: tuple[int, int, int], consensus_bbox: tuple[tuple[int]]
+) -> bool:
+    """
+    Verify that the bbox (computed using @compute_consensus_bbox()) lies within the scan dimensions
+    """
+    return all(
+        [
+            (0 < consensus_bbox[0][1] < scan_dims[0]),
+            (0 < consensus_bbox[1][1] < scan_dims[1]),
+            (0 < consensus_bbox[2][1] < scan_dims[2]),
+        ]
+    )
+
+
 def main() -> None:
     dict_df = {}
     for pid in tqdm(env_config.patient_ids, desc="Processing patients"):
-        scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
+        scan: list[pl.Scan] = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
-        scan = scan[0]
+        scan: pl.Scan = scan[0]
+        scan_dims = scan.to_volume(verbose=verbose).shape
 
         # Get the annotations for the individual nodules in the scan:
         nodules_annotation: list[list[pl.Annotation]] = scan.cluster_annotations(
@@ -96,7 +115,9 @@ def main() -> None:
         # TODO we can also exlude nodules if they only have a single annotation? (there are a significant portion)
         if len(nodules_annotation) >= 1:
             for nodule_idx, nodule_anns in enumerate(nodules_annotation):
-                consensus_centroid = compute_consensus_centroid(nodule_anns)
+                consensus_centroid: tuple[int, int, int] = compute_consensus_centroid(
+                    nodule_anns
+                )
 
                 nodule_id = f"{nodule_idx}_{pid}"
                 dict_df[nodule_id] = {
@@ -115,9 +136,20 @@ def main() -> None:
                 }
 
                 for img_dim in IMAGE_DIMS:
-                    # compute the bounding box at different image dimensions:
-                    consensus_bbox = compute_consensus_bbox(img_dim, consensus_centroid)
-                    dict_df[nodule_id][f"consensus_bbox_{img_dim}"] = consensus_bbox
+                    # Compute the bounding box at different dimensions:
+                    (x_dim, y_dim, z_dim) = compute_consensus_bbox(
+                        img_dim, consensus_centroid
+                    )
+                    dict_df[nodule_id][f"consensus_bbox_{img_dim}"] = (
+                        x_dim,
+                        y_dim,
+                        z_dim,
+                    )
+
+                    # Record whether the nodule bbox is within the scan dimensions:
+                    dict_df[nodule_id][f"bbox_within_scan_{img_dim}"] = (
+                        verify_bbox_within_scan(scan_dims, (x_dim, y_dim, z_dim))
+                    )
 
                 # TODO might need to do some more processing here...
                 # i.e. check if the mask is too small to be included

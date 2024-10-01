@@ -63,10 +63,13 @@ def load_dicom_images_from_folder(scan_parent_dir: PATH) -> np.ndarray:
     return images
 
 
+# TODO remove when done?
 def calc_conv_output_dim(
     in_dim: int, kernel_size: int, stride: int, padding: int
 ) -> int:
-    """Calculate the output dimension of a convolutional layer."""
+    """
+    Calculate the output dimension of a convolutional layer.
+    """
     return ((in_dim - kernel_size + 2 * padding) / stride) + 1
 
 
