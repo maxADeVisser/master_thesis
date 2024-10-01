@@ -7,7 +7,7 @@ import pandas as pd
 import pylidc as pl
 import torch
 from pylidc.utils import consensus, volume_viewer
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset
 
 from model.processing import clip_and_normalise_volume
 from project_config import env_config, pipeline_config
@@ -19,6 +19,7 @@ CONTEXT_EXPERIMENT = pipeline_config["context_experiment"]
 IMAGE_DIM = DATASET_CONFIG["image_dim"]
 NODULE_SEGMENTATION = DATASET_CONFIG["segment_nodule"]
 CONSENSUS_LEVEL = DATASET_CONFIG["consensus_level"]
+BATCH_SIZE = pipeline_config["training"]["batch_size"]
 logger.info(f"Dataset config: {DATASET_CONFIG}")
 
 
@@ -170,6 +171,12 @@ class LIDC_IDRI_DATASET(Dataset):
         # TODO implement random translation of the nodule in the scan to augment the dataset
 
         return nodule.nodule_roi, nodule.malignancy_consensus
+
+    def get_train_loader(self):
+        return DataLoader(self, batch_size=BATCH_SIZE, shuffle=True)
+
+    def get_test_loader(self):
+        pass
 
 
 # %%

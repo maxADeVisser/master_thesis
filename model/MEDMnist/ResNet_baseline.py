@@ -1,14 +1,14 @@
 """
 source: https://github.com/MedMNIST/experiments/blob/main/MedMNIST3D/models.py
-This is the ResNet benchmarkmodel for the MedMNIST3D dataset.
-
-Adapted from kuangliu/pytorch-cifar (https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py?)
+This is the ResNet50 benchmark model for the MedMNIST3D dataset.
+Adapted from kuangliu/pytorch-cifar.
 """
 
 # %%
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from acsconv.converters import Conv3dConverter
 from torch.autograd import Variable
 
 
@@ -137,21 +137,41 @@ def ResNet50(in_channels, num_classes):
     )
 
 
+def convert_model_to_3d(model: nn.Module) -> nn.Module:
+    """
+    Uses the ACSConv library to convert a 2D model to its 3D counterpart
+    see https://github.com/M3DV/ACSConv for more information
+
+    TODO: I am omitting to use the SyncBN conversion function for now (they do this in their training script)
+    SyncBN is useful in distributed training (e.g., training on multiple GPUs), where it synchronizes the
+    batch statistics across all GPUs to make batch normalization work more effectively with small batch sizes
+    split across devices.
+    (refer to their training script for more information. The func is in utils.py of the ACSConv repo. I have a chatGPT conversation explaining what the code does)
+    """
+    return Conv3dConverter(model)
+
+
 # %%
 if __name__ == "__main__":
     img_dim = 64  # 64x64x64; depth, height, width
-    channels = 1  # 1 for grayscale (or one-dimensional data), 3 for RGB
+    channels = 1  # 1 for grayscale (or one-dimensional data)
     batch_size = 8
     n_classes = 5
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ResNet50(channels, num_classes=n_classes).to(device)
-    model
+    # model
 
     # Test 3D input
-    test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim, img_dim))
+    # test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim, img_dim))
 
     # Test 2D input
     test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim))
     output = model(test_input)
     print(output.shape)
+    output
+
+    model = ResNet50(in_channels=1, num_classes=5)  # 2D model
+    model = convert_model_to_3d(model)  # 3D model
+    test_input = torch.randn(8, 1, 64, 64, 64)  # 3D input
+    model(test_input)
