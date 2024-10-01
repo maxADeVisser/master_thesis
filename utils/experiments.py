@@ -12,6 +12,9 @@ class ExperimentDataset(BaseModel):
     """Base Experiment Dataset for input validation"""
 
     dataset_desc: str = Field(..., description="Description of the dataset.")
+    image_dim: int = Field(
+        ..., description="Uniform dimensions of the images: (H, W, D)"
+    )
     consensus_level: float = Field(
         0.5,
         ge=0,
@@ -36,8 +39,8 @@ class ExperimentDataset(BaseModel):
 class ExperimentModel(BaseModel):
     """Base Experiment Model for input validation"""
 
-    model_name: str = Field(..., description="Name of the model.")
-    model_description: str = Field(..., description="Description of the model.")
+    name: str = Field(..., description="Name of the model.")
+    description: str = Field(..., description="Description of the model.")
     # TODO remove when changing to regression:
     num_classes: int = Field(
         5, ge=2, description="Number of output classes for classification."
@@ -71,10 +74,8 @@ class BaseExperimentConfig(BaseModel):
     """Base Experiment Configuration for input validation"""
 
     # Experiment metadata
-    experiment_name: str = Field(..., description="Name of the experiment.")
-    experiment_description: str = Field(
-        ..., description="Description of the experiment."
-    )
+    name: str = Field(..., description="Name of the experiment.")
+    description: str = Field(..., description="Description of the experiment.")
     start_time: dt.datetime = Field(
         dt.datetime.now(), description="Start time of the experiment."
     )
@@ -100,9 +101,7 @@ def create_experiment_from_json(
     """Load the configuration from the pipeline parameters JSON file."""
     with open(json_path, "r") as f:
         config = json.load(f)
-    return BaseExperimentConfig(
-        experiment_name=name, experiment_description=desc, **config
-    )
+    return BaseExperimentConfig(name=name, description=desc, **config)
 
 
 class ContextExperimentConfig(BaseExperimentConfig):

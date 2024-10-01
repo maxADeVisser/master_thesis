@@ -4,7 +4,6 @@
     "cross_validation_folds": 5,
     "dataset_desc": "LIDC-IDRI dataset",
     "image_dim": 64,
-    "n_cv_folds": 5,
     "normalisation_bounds": [
       -1000,
       400
@@ -21,12 +20,12 @@
     ]
   },
   "model": {
-    "model_description": "Test configuration",
-    "model_name": "test_model",
+    "description": "Test configuration",
+    "name": "test_model",
     "num_classes": 2
   },
   "training": {
-    "batch_size": 64,
+    "batch_size": 2,
     "epoch_print_interval": 10,
     "learning_rate": 0.001,
     "num_epochs": 10

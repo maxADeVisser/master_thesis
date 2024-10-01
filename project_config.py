@@ -5,11 +5,12 @@ import os
 
 from dotenv import load_dotenv
 
+from utils.experiments import create_experiment_from_json
+
 load_dotenv(".env")  # Load environment variables from .env file
 
 
-# seed for reproducibility
-SEED = 39
+SEED = 39  # Seed for reproducibility
 
 
 class _EnvConfig:
@@ -90,6 +91,4 @@ class _EnvConfig:
 # Singleton pattern: only one instance of the Config class is created
 env_config = _EnvConfig()
 
-# TODO make the pipeline config into a pydantic class. This way, I can verify the parameters and types provided in the configuration
-with open("pipeline_parameters.json", "r") as f:
-    pipeline_config = json.load(f)
+pipeline_config = create_experiment_from_json(name="test", desc="first test experiment")

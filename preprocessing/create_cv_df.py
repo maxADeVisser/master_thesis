@@ -5,8 +5,8 @@ from sklearn.model_selection import StratifiedGroupKFold
 from project_config import SEED, pipeline_config
 from utils.common_imports import *
 
-SCRIPT_PARAMS = pipeline_config["nodule_dataset"]
-CV_N_FOLDS = SCRIPT_PARAMS["n_cv_folds"]
+# SCRIPT PARAMS:
+CV_N_FOLDS = pipeline_config.dataset.cross_validation_folds
 
 
 def create_cv_df(nodule_df: pd.DataFrame, cv: StratifiedGroupKFold) -> pd.DataFrame:
@@ -59,6 +59,9 @@ def add_cv_info(nodule_df: pd.DataFrame) -> None:
     created by create_nodule_df.py script. Function uses StratifiedGroupKFold
     to make sure that nodule from the same patient are in the same fold.
     """
+    if CV_N_FOLDS is None:
+        return nodule_df
+
     sgkf = StratifiedGroupKFold(n_splits=CV_N_FOLDS, shuffle=True, random_state=SEED)
     cv_df = create_cv_df(nodule_df, sgkf)
 

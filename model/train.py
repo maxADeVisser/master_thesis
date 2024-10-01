@@ -7,13 +7,14 @@ import torch.optim as optim
 
 from model.dataset import LIDC_IDRI_DATASET
 from model.MEDMnist.ResNet_baseline import ResNet50, convert_model_to_3d
-from project_config import SEED, env_config, pipeline_config
+from project_config import SEED, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 
-LR = 0.001
-NUM_EPOCHS = 10
-EPOCH_PRINT_INTERVAL = pipeline_config["training"]["epoch_print_interval"]
+# SCRIPT PARAMS:
+LR = pipeline_config.training.learning_rate
+NUM_EPOCHS = pipeline_config.training.num_epochs
+EPOCH_PRINT_INTERVAL = pipeline_config.training.epoch_print_interval
 
 
 def main() -> None:

@@ -14,13 +14,11 @@ from project_config import env_config, pipeline_config
 from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
 
-DATASET_CONFIG = pipeline_config["nodule_dataset"]
-CONTEXT_EXPERIMENT = pipeline_config["context_experiment"]
-IMAGE_DIM = DATASET_CONFIG["image_dim"]
-NODULE_SEGMENTATION = DATASET_CONFIG["segment_nodule"]
-CONSENSUS_LEVEL = DATASET_CONFIG["consensus_level"]
-BATCH_SIZE = pipeline_config["training"]["batch_size"]
-logger.info(f"Dataset config: {DATASET_CONFIG}")
+# SCRIPT_PARAMS:
+IMAGE_DIM = pipeline_config.dataset.image_dim
+NODULE_SEGMENTATION = pipeline_config.dataset.segment_nodule
+CONSENSUS_LEVEL = pipeline_config.dataset.consensus_level
+BATCH_SIZE = pipeline_config.training.batch_size
 
 
 class Nodule:
@@ -38,9 +36,6 @@ class Nodule:
         @nodule_context_size: the size of the nodule context to be used for the nodule ROI.
         @segmentation_setting determines if/how the nodule is segmented from the scan.
         """
-        assert (
-            nodule_context_size in CONTEXT_EXPERIMENT["image_dims"]
-        ), f"Invalid nodule context size. Must be one of {CONTEXT_EXPERIMENT['image_dims']}"
         self.patient_id = nodule_record["pid"]
         self.annotation_ids = nodule_record["nodule_annotation_ids"]
         self.pylidc_annotations = [

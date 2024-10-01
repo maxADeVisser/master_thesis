@@ -5,16 +5,12 @@ import itertools
 import math
 
 from preprocessing.create_cv_df import add_cv_info
-from project_config import SEED, env_config, pipeline_config
+from project_config import env_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 
-# from statistics import median_high
-
-
 # SCIPRT PARAMS:
-SCRIPT_PARAMS = pipeline_config["context_experiment"]
-IMAGE_DIMS = SCRIPT_PARAMS["image_dims"]
+IMAGE_DIMS = [8, 16, 32, 64, 128]  # TODO add to context window experiment
 CSV_FILE_NAME = f"nodule_df"
 verbose = False
 logger.info(
