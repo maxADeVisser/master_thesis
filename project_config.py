@@ -40,6 +40,7 @@ class _EnvConfig:
         self.dicom_encoding_mapping_file = "utils/dicom_encoding_mapping.pkl"
         self.meta_dataframe_file = "utils/meta_dataframe.parquet"
         self.nodule_df_file = "out/nodule_df.csv"
+        self.hold_out_pids = self._get_hold_out_pids()
         self.excluded_dicom_attributes = [
             "Acquisition DateTime",
             "Study Time",
@@ -86,6 +87,15 @@ class _EnvConfig:
             "Private tag data",
             "Specific Character Set",
         ]
+
+    def _get_hold_out_pids(self) -> list[str]:
+        """
+        Get the hold out patient ids from the hold_out_pids.json file
+        Refer to preprocessing/create_hold_out_set.py
+        """
+        with open(f"{self.OUT_DIR}/hold_out_pids.json", "r") as f:
+            hold_out_pids = json.load(f)["hold_out_pids"]
+        return hold_out_pids
 
 
 # Singleton pattern: only one instance of the Config class is created

@@ -5,7 +5,7 @@ import itertools
 import math
 
 from preprocessing.create_cv_df import add_cv_info
-from project_config import env_config
+from project_config import SEED, env_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 
@@ -13,6 +13,7 @@ from utils.logger_setup import logger
 # IMAGE_DIMS = [8, 16, 32, 64, 128]
 IMAGE_DIMS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 CSV_FILE_NAME = f"nodule_df"
+HOLD_OUT_PIDS = env_config.hold_out_pids
 verbose = False
 logger.info(
     f"Creating nodule df with image_dims: {IMAGE_DIMS} as {CSV_FILE_NAME}.csv ..."
@@ -208,8 +209,13 @@ def main() -> None:
     if max(nodule_df["nodule_annotation_ids"].apply(len)) > 4:
         logger.debug("There are nodules with more than 4 annotations")
 
+    # CREATE HOLD OUT SET:
+    # NOTE: uncomment two following lines to create the hold out set:
+    # hold_out_df = nodule_df[nodule_df["pid"].isin(HOLD_OUT_PIDS)].reset_index(drop=True)
+    # hold_out_df.to_csv(f"{env_config.OUT_DIR}/hold_out_nodule_df.csv", index=False)
+    nodule_df = nodule_df[~nodule_df["pid"].isin(HOLD_OUT_PIDS)].reset_index(drop=True)
+
     # ADD CROSS VALIDATION FOLDS:
-    # StratifiedGroupKFold
     nodule_df = add_cv_info(nodule_df)
 
     # WRITE FILE:
