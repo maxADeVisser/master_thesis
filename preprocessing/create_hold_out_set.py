@@ -19,7 +19,6 @@ from utils.logger_setup import logger
 
 nodule_df = pd.read_csv(f"{env_config.OUT_DIR}/nodule_df.csv")
 FOLDS = 10  # use ~10 percent of the data in the hold out set
-CSV_FILE_NAME = "hold_out_df"
 
 sgkf = StratifiedGroupKFold(n_splits=FOLDS, shuffle=True, random_state=SEED)
 

@@ -104,7 +104,6 @@ class Nodule:
         - Also show the segmentation mask of the nodule as defined by @annotation_idx.
         NOTE: this function needs to be run from the console in order to work interactively
         """
-        ann = self.pylidc_annotations[0]
         x, y, z = self.nodule_consensus_bbox
 
         # NOTE: pad is set to a large number to include the entire scan in the mask.
@@ -136,7 +135,9 @@ class LIDC_IDRI_DATASET(Dataset):
 
         try:
             # Read in the nodule dataframe and convert the string representations to python objects
-            self.nodule_df = pd.read_csv(f"out/nodule_df.csv")
+            self.nodule_df = pd.read_csv(
+                f"{env_config.OUT_DIR}/processed_nodule_df.csv"
+            )
             self.nodule_df[f"consensus_bbox_{IMAGE_DIM}"] = self.nodule_df[
                 f"consensus_bbox_{IMAGE_DIM}"
             ].apply(ast.literal_eval)

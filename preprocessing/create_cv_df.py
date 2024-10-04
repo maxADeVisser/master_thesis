@@ -59,9 +59,6 @@ def add_cv_info(nodule_df: pd.DataFrame) -> None:
     created by create_nodule_df.py script. Function uses StratifiedGroupKFold
     to make sure that nodule from the same patient are in the same fold.
     """
-    if CV_N_FOLDS is None:
-        return nodule_df
-
     sgkf = StratifiedGroupKFold(n_splits=CV_N_FOLDS, shuffle=True, random_state=SEED)
     cv_df = create_cv_df(nodule_df, sgkf)
 
