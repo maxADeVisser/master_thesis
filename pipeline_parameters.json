@@ -3,7 +3,7 @@
     "consensus_level": 0.5,
     "cross_validation_folds": 5,
     "dataset_desc": "LIDC-IDRI dataset",
-    "image_dim": 64,
+    "image_dim": 60,
     "normalisation_bounds": [
       -1000,
       400

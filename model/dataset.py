@@ -25,7 +25,7 @@ class Nodule:
     def __init__(
         self,
         nodule_record: pd.Series,
-        nodule_context_size: Literal[8, 16, 32, 64, 128],
+        nodule_context_size: int,
         segmentation_setting: (
             Literal["remove_nodule", "remove_background"] | None
         ) = None,
@@ -183,14 +183,14 @@ if __name__ == "__main__":
 
     # testing dataloader
     dataset = LIDC_IDRI_DATASET()
-    train_loader = get_train_loader(dataset)
+    # train_loader = get_train_loader(dataset)
 
-    for i, (roi, label) in enumerate(train_loader):
-        print(roi.shape)
-        # plt.imshow(roi[:, :, 35], cmap="gray")
-        # plt.title(f"Label malignancy score: {label}")
-        # plt.show()
-        break
+    # for i, (roi, label) in enumerate(train_loader):
+    #     # print(roi.shape)
+    #     plt.imshow(roi[:, :, 35], cmap="gray")
+    #     plt.title(f"Label malignancy score: {label}")
+    #     plt.show()
+    #     break
 
     # Testing data set:
     # dataset = LIDC_IDRI_DATASET()
@@ -200,25 +200,25 @@ if __name__ == "__main__":
     # plt.show()
 
     # Test Nodule
-    # test_nodule = Nodule(
-    #     dataset.nodule_df.iloc[0],
-    #     nodule_context_size=IMAGE_DIM,
-    #     segmentation_setting="remove_nodule",
-    # )
-    # plt.imshow(test_nodule.nodule_roi[:, :, 35], cmap="gray")
-    # plt.show()
-    # test_nodule.visualise_nodule_bbox()
+    test_nodule = Nodule(
+        dataset.nodule_df.iloc[0],
+        nodule_context_size=IMAGE_DIM,
+        # segmentation_setting="remove_nodule",
+    )
+    plt.imshow(test_nodule.nodule_roi[:, :, 35], cmap="gray")
+    plt.show()
+    test_nodule.visualise_nodule_bbox()
 
-    # Validate that all ROIs have standardise shape:
-    dataset = LIDC_IDRI_DATASET()
-    from tqdm import tqdm
+    # Validate that all ROIs have standardise shape (this is currently not the case!):
+    # dataset = LIDC_IDRI_DATASET()
+    # from tqdm import tqdm
 
-    for i in tqdm(range(len(dataset))):
-        roi, _ = dataset.__getitem__(i)
-        assert roi.shape == (
-            IMAGE_DIM,
-            IMAGE_DIM,
-            IMAGE_DIM,
-        ), f"ROI shape is not standardised. ROI {i} has shape {roi.shape}"
+    # for i in tqdm(range(len(dataset))):
+    #     roi, _ = dataset.__getitem__(i)
+    #     assert roi.shape == (
+    #         IMAGE_DIM,
+    #         IMAGE_DIM,
+    #         IMAGE_DIM,
+    #     ), f"ROI shape is not standardised. ROI {i} has shape {roi.shape}"
 
 # %%

@@ -154,14 +154,11 @@ def main() -> None:
 
     nodule_df = pd.DataFrame.from_dict(dict_df, orient="index").reset_index()
 
-    # CALCULATE CONSENSUS OF SCORES:
+    # CALCULATE CONSENSUS OF MALIGNANCY SCORES:
     nodule_df["malignancy_consensus"] = nodule_df["malignancy_scores"].apply(
         calculate_consensus
     )
     nodule_df["subtlety_consensus"] = nodule_df["subtlety_scores"].apply(
-        calculate_consensus
-    )
-    nodule_df["margin_consensus"] = nodule_df["margin_scores"].apply(
         calculate_consensus
     )
     nodule_df["cancer_label"] = nodule_df["malignancy_scores"].apply(
@@ -178,9 +175,10 @@ def main() -> None:
 
     # VERIFICATIONS:
     # Check that no annotations id are repeated (i.e. that the annotations are unique to each nodule)
-    # Flatten the list of annotation ids:
-    all_ids = list(itertools.chain.from_iterable(nodule_df["nodule_annotation_ids"]))
-    if not len(all_ids) == len(set(all_ids)):
+    all_ids_flattened = list(
+        itertools.chain.from_iterable(nodule_df["nodule_annotation_ids"])
+    )
+    if not len(all_ids_flattened) == len(set(all_ids_flattened)):
         logger.debug("Some nodule annotation IDs are repeated")
 
     # check that the dimensions of the nodule bbox are all the same (aligned with the image_dim):
@@ -202,7 +200,7 @@ def main() -> None:
                 "Some nodule bbox dimensions are not aligned with the image_dim"
             )
 
-    # verify that there are at most 4 annotations per nodule:
+    # validate that there are at most 4 annotations per nodule:
     if max(nodule_df["nodule_annotation_ids"].apply(len)) > 4:
         logger.debug("There are nodules with more than 4 annotations")
 
