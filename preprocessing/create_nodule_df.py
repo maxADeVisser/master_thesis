@@ -10,6 +10,10 @@ from utils.logger_setup import logger
 
 # SCIPRT PARAMS:
 IMAGE_DIMS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+MAX_IMG_DIM_USED = 70
+assert (
+    MAX_IMG_DIM_USED in IMAGE_DIMS
+), "The maximum image dimensions needs to be in the @image_dims list"
 CSV_FILE_NAME = f"nodule_df"
 verbose = False
 logger.info(
@@ -60,63 +64,52 @@ def compute_consensus_centroid(
 def compute_consensus_bbox(
     image_dim: int,
     consensus_centroid: tuple[int, int, int],
+    scan_dims: tuple[int, int, int],
 ) -> tuple[tuple[int]]:
     """
-    Returns the consensus bbox with standardise dimensions of size @image_dim
-    of the nodule based on @consensus_centroid of the annotations
+    Computes the POSSIBLE consensus bbox with standardise dimensions of size @image_dim. If the bbox along a axis exceeds the edge of the scan, it is cut off at that point. That is, there is not guarantee that the copmuted bbox will have standardised dimensions on all axes.
     """
-    # calculate the consensus bbox of the nodule
-    x_dim = (
-        consensus_centroid[0] - (image_dim // 2),
-        consensus_centroid[0] + (image_dim // 2),
-    )
-    y_dim = (
-        consensus_centroid[1] - (image_dim // 2),
-        consensus_centroid[1] + (image_dim // 2),
-    )
-    z_dim = (
-        consensus_centroid[2] - (image_dim // 2),
-        consensus_centroid[2] + (image_dim // 2),
-    )
+
+    def _compute_bbox_dim(
+        axis_centroid: int, axis_scan_dim: int, image_dim: int
+    ) -> tuple[int]:
+        """
+        Computes the bounding bbox dimension for a single axis
+        """
+        bbox_start_dim = axis_centroid - (image_dim // 2)
+        bbox_end_dim = axis_centroid + (image_dim // 2)
+
+        if bbox_start_dim < 0:
+            bbox_start_dim = 0
+        if axis_scan_dim < bbox_end_dim:
+            bbox_end_dim = axis_scan_dim
+        return (bbox_start_dim, bbox_end_dim)
+
+    x_centroid, y_centroid, z_centroid = consensus_centroid
+    x_scan_dim, y_scan_dim, z_scan_dim = scan_dims
+    x_dim = _compute_bbox_dim(x_centroid, x_scan_dim, image_dim)
+    y_dim = _compute_bbox_dim(y_centroid, y_scan_dim, image_dim)
+    z_dim = _compute_bbox_dim(z_centroid, z_scan_dim, image_dim)
+
     return (x_dim, y_dim, z_dim)
 
 
-def verify_bbox_within_scan(
-    scan_dims: tuple[int, int, int], consensus_bbox: tuple[tuple[int]]
-) -> bool:
-    """
-    Verify that the bbox (computed using @compute_consensus_bbox()) lies within the scan dimensions
-    """
-    return all(
-        [
-            (0 < consensus_bbox[0][1] < scan_dims[0]),
-            (0 < consensus_bbox[1][1] < scan_dims[1]),
-            (0 < consensus_bbox[2][1] < scan_dims[2]),
-        ]
-    )
-
-
-def main() -> None:
+def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> None:
     dict_df = {}
     for pid in tqdm(env_config.patient_ids, desc="Processing patients"):
         scan: list[pl.Scan] = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
         scan: pl.Scan = scan[0]
-        scan_dims = scan.to_volume(verbose=verbose).shape
+        scan_dims = scan.to_volume(verbose=verbose).shape if add_bbox else None
 
         # Get the annotations for the individual nodules in the scan:
         nodules_annotation: list[list[pl.Annotation]] = scan.cluster_annotations(
             verbose=verbose
         )
 
-        # TODO we can also exlude nodules if they only have a single annotation? (there are a significant portion)
         if len(nodules_annotation) >= 1:
             for nodule_idx, nodule_anns in enumerate(nodules_annotation):
-                consensus_centroid: tuple[int, int, int] = compute_consensus_centroid(
-                    nodule_anns
-                )
-
                 nodule_id = f"{nodule_idx}_{pid}"
                 dict_df[nodule_id] = {
                     "pid": pid,
@@ -129,28 +122,25 @@ def main() -> None:
                     "nodule_annotation_count": len(nodule_anns),
                     "malignancy_scores": tuple([ann.malignancy for ann in nodule_anns]),
                     "subtlety_scores": tuple([ann.subtlety for ann in nodule_anns]),
-                    "margin_scores": tuple([ann.margin for ann in nodule_anns]),
-                    "consensus_centroid": consensus_centroid,
                 }
 
-                for img_dim in IMAGE_DIMS:
-                    # Compute the bounding box at different dimensions:
-                    (x_dim, y_dim, z_dim) = compute_consensus_bbox(
-                        img_dim, consensus_centroid
+                if add_bbox:
+                    # Compute the consensus centroid and bbox for the nodule:
+                    consensus_centroid: tuple[int, int, int] = (
+                        compute_consensus_centroid(nodule_anns)
                     )
-                    dict_df[nodule_id][f"consensus_bbox_{img_dim}"] = (
-                        x_dim,
-                        y_dim,
-                        z_dim,
-                    )
+                    dict_df[nodule_id]["consensus_centroid"] = consensus_centroid
 
-                    # Record whether the nodule bbox is within the scan dimensions:
-                    dict_df[nodule_id][f"bbox_within_scan_{img_dim}"] = (
-                        verify_bbox_within_scan(scan_dims, (x_dim, y_dim, z_dim))
-                    )
-
-                # TODO might need to do some more processing here...
-                # i.e. check if the mask is too small to be included
+                    # Compute the consensus bbox at different img dimensions:
+                    for img_dim in IMAGE_DIMS:
+                        (x_dim, y_dim, z_dim) = compute_consensus_bbox(
+                            img_dim, consensus_centroid, scan_dims
+                        )
+                        dict_df[nodule_id][f"consensus_bbox_{img_dim}"] = (
+                            x_dim,
+                            y_dim,
+                            z_dim,
+                        )
 
     nodule_df = pd.DataFrame.from_dict(dict_df, orient="index").reset_index()
 
@@ -181,24 +171,23 @@ def main() -> None:
     if not len(all_ids_flattened) == len(set(all_ids_flattened)):
         logger.debug("Some nodule annotation IDs are repeated")
 
-    # check that the dimensions of the nodule bbox are all the same (aligned with the image_dim):
+    if add_bbox:
+        # Flag nodules where the dimensions of the bbox along all axis are not standardised (=image_dim):
+        for img_dim in IMAGE_DIMS:
+            _verify_image_dim = (
+                lambda roi_dim: img_dim
+                == roi_dim[0][1] - roi_dim[0][0]  # x_dim
+                == roi_dim[1][1] - roi_dim[1][0]  # y_dim
+                == roi_dim[2][1] - roi_dim[2][0]  # z_dim
+            )
+            nodule_df[f"bbox_{img_dim}_standardised"] = nodule_df[
+                f"consensus_bbox_{img_dim}"
+            ].apply(_verify_image_dim)
 
-    for img_dim in IMAGE_DIMS:
-        _verify_image_dim = (
-            lambda roi_dim: img_dim
-            == roi_dim[0][1] - roi_dim[0][0]  # x_dim
-            == roi_dim[1][1] - roi_dim[1][0]  # y_dim
-            == roi_dim[2][1] - roi_dim[2][0]  # z_dim
+        # log how many nodules bboxes that do not have standardised img dimensions at max_img:
+        logger.debug(
+            f"Number of standardised nodule bboxes at {MAX_IMG_DIM_USED} bbox sizes:\n{nodule_df[f'bbox_{MAX_IMG_DIM_USED}_standardised'].value_counts()}"
         )
-        if not all(
-            list(nodule_df[f"consensus_bbox_{img_dim}"].apply(_verify_image_dim))
-        ):
-            logger.debug(
-                "Some nodule bbox dimensions are not aligned with the image_dim"
-            )
-            raise ValueError(
-                "Some nodule bbox dimensions are not aligned with the image_dim"
-            )
 
     # validate that there are at most 4 annotations per nodule:
     if max(nodule_df["nodule_annotation_ids"].apply(len)) > 4:
@@ -206,11 +195,12 @@ def main() -> None:
 
     # WRITE FILE:
     try:
-        nodule_df.to_csv(f"{env_config.OUT_DIR}/{CSV_FILE_NAME}.csv", index=False)
+        nodule_df.to_csv(f"{env_config.OUT_DIR}/{file_name}.csv", index=False)
+        logger.info(f"nodule_df saved to:\n{env_config.OUT_DIR}/{file_name}.csv")
     except Exception as e:
         logger.error(f"Error saving nodule_df dataframe: {e}")
 
 
 # %%
 if __name__ == "__main__":
-    main()
+    create_nodule_df()
