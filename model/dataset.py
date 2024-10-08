@@ -1,16 +1,13 @@
 # %%
 import ast
-from typing import Literal
 
-import numpy as np
-import pandas as pd
-import pylidc as pl
 import torch
 from pylidc.utils import consensus, volume_viewer
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 
 from model.processing import clip_and_normalise_volume
 from project_config import env_config, pipeline_config
+from utils.common_imports import *
 from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
 
@@ -26,9 +23,7 @@ class Nodule:
         self,
         nodule_record: pd.Series,
         nodule_context_size: int,
-        segmentation_setting: (
-            Literal["remove_nodule", "remove_background"] | None
-        ) = None,
+        segmentation_setting: Literal["none", "remove_nodule", "remove_background"],
     ) -> None:
         """
         Helper class to store and manipulate nodule information from nodule df created by create_nodule_df.py script.
@@ -53,6 +48,12 @@ class Nodule:
             self.nodule_roi = self.segment_nodule(invert=False)
         elif segmentation_setting == "remove_nodule":
             self.nodule_roi = self.segment_nodule(invert=True)
+        elif segmentation_setting == "none":
+            pass
+        else:
+            raise ValueError(
+                f"Segmentation setting {segmentation_setting} not recognised. Please choose one of: ['none', 'remove_nodule', 'remove_background']"
+            )
 
     def get_nodule_roi(self) -> torch.Tensor:
         """Returns the nodule region of interest from the scan based on the consensus bbox from the 4 annotators"""
@@ -145,6 +146,10 @@ class LIDC_IDRI_DATASET(Dataset):
                 "nodule_annotation_ids"
             ].apply(ast.literal_eval)
 
+            logger.info(
+                f"Nodule dataframe loaded successfully with parameters:\nIMG_DIM: {IMAGE_DIM}\nSEGMENTATION: {NODULE_SEGMENTATION}\nBATCH_SIZE: {BATCH_SIZE}"
+            )
+
         except FileNotFoundError:
             raise FileNotFoundError(
                 "The nodule dataframe was not found. Please run the create_nodule_df.py script first."
@@ -168,13 +173,17 @@ class LIDC_IDRI_DATASET(Dataset):
 
         return nodule.nodule_roi, nodule.malignancy_consensus
 
-
-def get_train_loader(dataset: LIDC_IDRI_DATASET) -> DataLoader:
-    return DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
-
-
-def get_test_loader(self):
-    pass
+    def get_dataloader(
+        self,
+        data_sampler: Optional[SubsetRandomSampler] = None,
+    ) -> DataLoader:
+        """
+        Returns a DataLoader object for the LIDC-IDRI dataset.
+        @data_sampler is used for cross-validation to create train and test sets
+        """
+        return DataLoader(
+            self, batch_size=BATCH_SIZE, shuffle=True, sampler=data_sampler
+        )
 
 
 # %%
@@ -183,14 +192,15 @@ if __name__ == "__main__":
 
     # testing dataloader
     dataset = LIDC_IDRI_DATASET()
-    # train_loader = get_train_loader(dataset)
+    train_loader = dataset.get_train_loader()
 
-    # for i, (roi, label) in enumerate(train_loader):
-    #     # print(roi.shape)
-    #     plt.imshow(roi[:, :, 35], cmap="gray")
-    #     plt.title(f"Label malignancy score: {label}")
-    #     plt.show()
-    #     break
+    for i, (roi, label) in enumerate(train_loader):
+        print(roi.shape)
+        middle_slice = roi.shape[-1] // 2
+        plt.imshow(roi[0][:, :, middle_slice], cmap="gray")
+        plt.title(f"Label malignancy score: {label[0]}")
+        plt.show()
+        break
 
     # Testing data set:
     # dataset = LIDC_IDRI_DATASET()
@@ -200,14 +210,14 @@ if __name__ == "__main__":
     # plt.show()
 
     # Test Nodule
-    test_nodule = Nodule(
-        dataset.nodule_df.iloc[0],
-        nodule_context_size=IMAGE_DIM,
-        # segmentation_setting="remove_nodule",
-    )
-    plt.imshow(test_nodule.nodule_roi[:, :, 35], cmap="gray")
-    plt.show()
-    test_nodule.visualise_nodule_bbox()
+    # test_nodule = Nodule(
+    #     dataset.nodule_df.iloc[0],
+    #     nodule_context_size=IMAGE_DIM,
+    #     # segmentation_setting="remove_nodule",
+    # )
+    # plt.imshow(test_nodule.nodule_roi[:, :, 35], cmap="gray")
+    # plt.show()
+    # test_nodule.visualise_nodule_bbox()
 
     # Validate that all ROIs have standardise shape (this is currently not the case!):
     # dataset = LIDC_IDRI_DATASET()
