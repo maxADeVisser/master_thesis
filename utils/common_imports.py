@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np

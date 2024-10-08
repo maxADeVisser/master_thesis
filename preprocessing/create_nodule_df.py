@@ -204,3 +204,6 @@ def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> N
 # %%
 if __name__ == "__main__":
     create_nodule_df()
+
+    # For creating the annotations df used for agreement analysis:
+    # create_nodule_df(file_name="annotation_df", add_bbox=False)

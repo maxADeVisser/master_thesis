@@ -11,27 +11,6 @@ from utils.common_imports import *
 from utils.logger_setup import logger
 from utils.utils import get_ct_scan_slice_paths
 
-# NO LONGER USED
-# def _get_dicom_vals(dicom_file: pydicom.dataset.FileDataset) -> list[Any]:
-#     """Returns the values of the dicom image in a clean format.
-#     Util func for @parse_dicom_to_dict"""
-#     vals = list(dicom_file.to_json_dict().values())
-#     return_vals = []
-#     for v in vals:
-#         if "Value" not in v:
-#             # handle empty values
-#             return_vals.append(None)
-#             continue
-
-#         if len(v["Value"]) == 1:
-#             # if there is only one value, return the value itself (not as a list):
-#             return_vals.append(v["Value"][0])
-#         else:
-#             # if there are multiple values, return them as a list:
-#             return_vals.append(v["Value"])
-
-#     return return_vals
-
 
 def _get_dicom_keys(dicom_file: pydicom.dataset.FileDataset):
     """Returns the keys of the dicom image in a clean format.
