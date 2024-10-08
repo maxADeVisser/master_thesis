@@ -64,8 +64,8 @@ class Nodule:
             y_bounds[0] : y_bounds[1],
             z_bounds[0] : z_bounds[1],
         ]
-        # Convert to pytorch tensor
-        nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).float()
+        # Convert to pytorch tensor and add channel dimension
+        nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).unsqueeze(0).float()
         return nodule_roi
 
     def get_consensus_mask(
@@ -181,9 +181,10 @@ class LIDC_IDRI_DATASET(Dataset):
         Returns a DataLoader object for the LIDC-IDRI dataset.
         @data_sampler is used for cross-validation to create train and test sets
         """
-        return DataLoader(
-            self, batch_size=BATCH_SIZE, shuffle=True, sampler=data_sampler
-        )
+        if data_sampler:
+            return DataLoader(self, batch_size=BATCH_SIZE, sampler=data_sampler)
+        else:
+            return DataLoader(self, batch_size=BATCH_SIZE, shuffle=True)
 
 
 # %%
@@ -203,8 +204,8 @@ if __name__ == "__main__":
         break
 
     # Testing data set:
-    # dataset = LIDC_IDRI_DATASET()
-    # roi_consensus, label = dataset.__getitem__(0)
+    dataset = LIDC_IDRI_DATASET()
+    roi_consensus, label = dataset.__getitem__(0)
     # plt.imshow(roi_consensus[:, :, 35], cmap="gray")
     # plt.title(f"Label malignancy score: {label}")
     # plt.show()

@@ -11,6 +11,12 @@ import torch.nn.functional as F
 from acsconv.converters import Conv3dConverter
 from torch.autograd import Variable
 
+from project_config import SEED, pipeline_config
+
+NUM_CLASSES = pipeline_config.model.num_classes
+IN_CHANNELS = pipeline_config.model.in_channels
+torch.manual_seed(SEED)
+
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -76,10 +82,12 @@ class ResNet(nn.Module):
     def __init__(
         self,
         num_blocks: list[int],  # list of number of blocks in each layer
-        in_channels: int = 1,  # number of input channels (1 for grayscale)
-        num_classes: int = 2,
+        in_channels: int = IN_CHANNELS,  # number of input channels (1 for grayscale)
+        num_classes: int = NUM_CLASSES,
     ):
-        """ResNet Architecture Class"""
+        """
+        ResNet Architecture Class altered so it is fit to use the CORN loss for ordinal regression
+        """
         super(ResNet, self).__init__()
         self.in_planes = 64
 
@@ -94,8 +102,8 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(512, num_blocks[3], stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.linear = nn.Linear(
-            in_features=512 * Bottleneck.expansion, out_features=num_classes
+        self.corn_output_layer = nn.Linear(
+            in_features=512 * Bottleneck.expansion, out_features=num_classes - 1
         )
 
     def _make_layer(self, planes: int, num_blocks: int, stride: int):
@@ -126,9 +134,9 @@ class ResNet(nn.Module):
         # out = F.avg_pool2d(out, 4)
         # out = F.adaptive_avg_pool3d(out, output_size=4)
         out = self.avgpool(out)
-        out = out.view(out.size(0), -1)  # flatten
-        out = self.linear(out)
-        return out
+        flattened = out.view(out.size(0), -1)
+        logits = self.corn_output_layer(flattened)
+        return logits
 
 
 def ResNet50(in_channels, num_classes):
@@ -164,17 +172,15 @@ if __name__ == "__main__":
     model = ResNet50(channels, num_classes=n_classes).to(device)
     # model
 
-    # Test 3D input
-    # test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim, img_dim))
-
     # Test 2D input
     test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim))
     output = model(test_input)
     print(output.shape)
     output
 
+    # Test 3D input
     model = ResNet50(in_channels=1, num_classes=5)  # 2D model
     model = convert_model_to_3d(model)  # 3D model
-    test_input = torch.randn(8, 1, 64, 64, 64)  # ranodm 3D input (8 batches)
+    test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
     output = model(test_input)
     output

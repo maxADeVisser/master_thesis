@@ -28,6 +28,7 @@ mypy = "^1.11.2"
 pydantic = "^2.9.2"
 mlflow = "^2.16.2"
 acsconv = {git = "https://github.com/M3DV/ACSConv"}
+coral-pytorch = "^1.4.0"
 
 [tool.poetry.group.medvis.dependencies]
 streamlit = "^1.38.0"

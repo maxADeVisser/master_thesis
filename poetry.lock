@@ -832,6 +832,24 @@ test = ["Pillow", "contourpy[test-no-images]", "matplotlib"]
 test-no-images = ["pytest", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "wurlitzer"]
 
 [[package]]
+name = "coral-pytorch"
+version = "1.4.0"
+description = "CORAL ordinal regression for PyTorch"
+optional = false
+python-versions = "*"
+files = [
+    {file = "coral_pytorch-1.4.0-py2.py3-none-any.whl", hash = "sha256:79912119327d1f341fe01e1753b11c34c1b81ca8fff747884f3e9edd4c9653cd"},
+    {file = "coral_pytorch-1.4.0.tar.gz", hash = "sha256:212e94deeee17dc582aaba0c121fc1ef2a4324fa6c4a2a44aec148a783a7554b"},
+]
+
+[package.dependencies]
+setuptools = "*"
+
+[package.extras]
+docs = ["mkdocs"]
+testing = ["pytest"]
+
+[[package]]
 name = "cycler"
 version = "0.12.1"
 description = "Composable style cycles"
@@ -6547,4 +6565,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f2fbedad31790bc0bef59d283bf89a3c14eea7e9d16531962b870608543b8d14"
+content-hash = "b6122b995bc80ff9fbf7bf1467c7724840a976ecba5ec452bcebdbdd22720fe1"

@@ -1,7 +1,6 @@
 {
   "dataset": {
     "consensus_level": 0.5,
-    "cross_validation_folds": 5,
     "dataset_desc": "LIDC-IDRI dataset",
     "image_dim": 70,
     "normalisation_bounds": [
@@ -21,11 +20,13 @@
   },
   "model": {
     "description": "Test configuration",
+    "in_channels": 1,
     "name": "test_model",
-    "num_classes": 2
+    "num_classes": 5
   },
   "training": {
     "batch_size": 2,
+    "cross_validation_folds": 5,
     "epoch_print_interval": 10,
     "learning_rate": 0.001,
     "num_epochs": 10

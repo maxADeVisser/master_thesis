@@ -1,6 +1,5 @@
 """Project config file"""
 
-import json
 import os
 
 from dotenv import load_dotenv
@@ -91,4 +90,6 @@ class _EnvConfig:
 # Singleton pattern: only one instance of the Config class is created
 env_config = _EnvConfig()
 
-pipeline_config = create_experiment_from_json(name="test", desc="first test experiment")
+pipeline_config = create_experiment_from_json(
+    name="test", desc="first test experiment", out_dir=env_config.OUT_DIR
+)
