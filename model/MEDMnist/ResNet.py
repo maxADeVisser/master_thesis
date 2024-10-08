@@ -94,7 +94,9 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(512, num_blocks[3], stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.linear = nn.Linear(512 * Bottleneck.expansion, num_classes)
+        self.linear = nn.Linear(
+            in_features=512 * Bottleneck.expansion, out_features=num_classes
+        )
 
     def _make_layer(self, planes: int, num_blocks: int, stride: int):
         """
@@ -173,5 +175,6 @@ if __name__ == "__main__":
 
     model = ResNet50(in_channels=1, num_classes=5)  # 2D model
     model = convert_model_to_3d(model)  # 3D model
-    test_input = torch.randn(8, 1, 64, 64, 64)  # 3D input
-    model(test_input)
+    test_input = torch.randn(8, 1, 64, 64, 64)  # ranodm 3D input (8 batches)
+    output = model(test_input)
+    output

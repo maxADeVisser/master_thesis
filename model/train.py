@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from model.dataset import LIDC_IDRI_DATASET
-from model.MEDMnist.ResNet_baseline import ResNet50, convert_model_to_3d
+from model.MEDMnist.ResNet import ResNet50, convert_model_to_3d
 from project_config import SEED, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
