@@ -165,22 +165,30 @@ def convert_model_to_3d(model: nn.Module) -> nn.Module:
 if __name__ == "__main__":
     img_dim = 64  # 64x64x64; depth, height, width
     channels = 1  # 1 for grayscale (or one-dimensional data)
-    batch_size = 8
+    batch_size = 2
     n_classes = 5
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = ResNet50(channels, num_classes=n_classes).to(device)
-    # model
-
     # Test 2D input
-    test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim))
-    output = model(test_input)
-    print(output.shape)
-    output
+    # model = ResNet50(channels, num_classes=n_classes)
+    # test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim))
+    # output = model(test_input)
+    # print(output.shape)
+    # output
 
     # Test 3D input
+    from coral_pytorch.dataset import corn_label_from_logits
+
     model = ResNet50(in_channels=1, num_classes=5)  # 2D model
     model = convert_model_to_3d(model)  # 3D model
     test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
-    output = model(test_input)
-    output
+    logits = model(test_input)
+
+    # Get predicted rank probabilities
+    with torch.no_grad():
+        probas = torch.sigmoid(logits)
+        probas = torch.cumprod(probas, dim=1)
+        print(probas)
+
+    # Get predicted labels
+    predicted_outputs = corn_label_from_logits(logits).float()
+    predicted_outputs

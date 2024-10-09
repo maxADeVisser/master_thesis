@@ -175,6 +175,7 @@ class LIDC_IDRI_DATASET(Dataset):
 
     def get_dataloader(
         self,
+        batch_size: int = BATCH_SIZE,
         data_sampler: Optional[SubsetRandomSampler] = None,
     ) -> DataLoader:
         """
@@ -182,9 +183,9 @@ class LIDC_IDRI_DATASET(Dataset):
         @data_sampler is used for cross-validation to create train and test sets
         """
         if data_sampler:
-            return DataLoader(self, batch_size=BATCH_SIZE, sampler=data_sampler)
+            return DataLoader(self, batch_size=batch_size, sampler=data_sampler)
         else:
-            return DataLoader(self, batch_size=BATCH_SIZE, shuffle=True)
+            return DataLoader(self, batch_size=batch_size, shuffle=True)
 
 
 # %%
