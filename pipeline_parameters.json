@@ -10,14 +10,6 @@
     "segment_nodule": "none",
     "validation_split": 0.2
   },
-  "evaluation": {
-    "eval_metrics": [
-      "accuracy",
-      "precision",
-      "recall",
-      "f1"
-    ]
-  },
   "model": {
     "description": "Test configuration",
     "in_channels": 1,

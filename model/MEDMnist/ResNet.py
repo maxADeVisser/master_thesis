@@ -149,13 +149,13 @@ def ResNet50(in_channels, num_classes):
 
 def predict_rank_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
-    Given output logits, return the malignancy rank
+    Given output logits, return the malignancy rank.
     """
     with torch.no_grad():
         probas = torch.sigmoid(logits)
         probas = torch.cumprod(probas, dim=1)
-        predicted_ranks = torch.sum(probas > 0.5, dim=1)
-    return predicted_ranks.float()
+        predicted_rank = torch.sum(probas > 0.5, dim=1) + 1
+    return predicted_rank.float()
 
 
 def predict_binary_from_logits(
@@ -198,6 +198,7 @@ if __name__ == "__main__":
     model = convert_model_to_3d(model)  # 3D model
     test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
     logits = model(test_input)
+    logits
 
     # Get predicted rank probabilities
     # from coral_pytorch.dataset import corn_label_from_logits
