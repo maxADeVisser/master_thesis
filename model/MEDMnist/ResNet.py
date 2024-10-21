@@ -147,6 +147,31 @@ def ResNet50(in_channels, num_classes):
     )
 
 
+def predict_rank_from_logits(logits: torch.Tensor) -> torch.Tensor:
+    """
+    Given output logits, return the malignancy rank
+    """
+    with torch.no_grad():
+        probas = torch.sigmoid(logits)
+        probas = torch.cumprod(probas, dim=1)
+        predicted_ranks = torch.sum(probas > 0.5, dim=1)
+    return predicted_ranks.float()
+
+
+def predict_binary_from_logits(
+    logits: torch.Tensor, classification_threshold: float = 0.5
+) -> torch.Tensor:
+    """
+    Given output logits, return the binary classification based on the classification threshold
+    """
+    with torch.no_grad():
+        probas = torch.sigmoid(logits)
+        probas = torch.cumprod(probas, dim=1)
+        greater_than_3_idx = 2  # P(y > 3)
+        binary_prediction = classification_threshold <= probas[:, greater_than_3_idx]
+    return binary_prediction.float()
+
+
 def convert_model_to_3d(model: nn.Module) -> nn.Module:
     """
     Uses the ACSConv library to convert a 2D model to its 3D counterpart
@@ -168,27 +193,16 @@ if __name__ == "__main__":
     batch_size = 2
     n_classes = 5
 
-    # Test 2D input
-    # model = ResNet50(channels, num_classes=n_classes)
-    # test_input = Variable(torch.randn(batch_size, channels, img_dim, img_dim))
-    # output = model(test_input)
-    # print(output.shape)
-    # output
-
     # Test 3D input
-    from coral_pytorch.dataset import corn_label_from_logits
-
     model = ResNet50(in_channels=1, num_classes=5)  # 2D model
     model = convert_model_to_3d(model)  # 3D model
     test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
     logits = model(test_input)
 
     # Get predicted rank probabilities
-    with torch.no_grad():
-        probas = torch.sigmoid(logits)
-        probas = torch.cumprod(probas, dim=1)
-        print(probas)
+    # from coral_pytorch.dataset import corn_label_from_logits
+    # corn_label_from_logits(logits).float()
+    predict_rank_from_logits(logits)
 
-    # Get predicted labels
-    predicted_outputs = corn_label_from_logits(logits).float()
-    predicted_outputs
+    # Binary inference (this gives the binary classification)
+    predict_binary_from_logits(logits)

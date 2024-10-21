@@ -1,19 +1,25 @@
 """Script for training a model"""
 
+# %%
 import datetime as dt
 
-# import mlflow
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from coral_pytorch.dataset import corn_label_from_logits
 from coral_pytorch.losses import CornLoss
-from sklearn.metrics import roc_auc_score
+
+# import mlflow
+from sklearn.metrics import accuracy_score, f1_score, precision_score, roc_auc_score
 from sklearn.model_selection import StratifiedGroupKFold
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
 from model.dataset import LIDC_IDRI_DATASET
-from model.MEDMnist.ResNet import ResNet50, convert_model_to_3d
+from model.MEDMnist.ResNet import (
+    ResNet50,
+    convert_model_to_3d,
+    predict_binary_from_logits,
+    predict_rank_from_logits,
+)
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
@@ -28,19 +34,22 @@ NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 BATCH_SIZE = pipeline_config.training.batch_size
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def validate_model(
     model: nn.Module, data_loader: DataLoader, device: Literal["cuda", "cpu"]
 ) -> None:
     """Validates the model with @data_loader on @device"""
+def validate_model(model: nn.Module, data_loader: DataLoader) -> dict:
+    """Validates the model with @data_loader"""
+    model.to(DEVICE)
     model.eval()
 
     # Containers for all predicted and true labels
-    all_predicted_labels = []
+    all_binary_predictions = []
+    all_rank_predictions = []
     all_true_labels = []
-    classification_threshold = 0.5
-    greater_than_3_idx = 2
 
     c = 0
     with torch.no_grad():  # No gradient calculation during validation
@@ -48,16 +57,16 @@ def validate_model(
             print(f"Processing batch: {batch_idx}/{len(data_loader)}")
             logits = model(inputs)
 
-            # Get predicted rank probabilities:
-            rank_probas = torch.sigmoid(logits)
-            rank_probas = torch.cumprod(rank_probas, dim=1)
-
-            # Make prediction binary:
-            binary_prediction = (
-                classification_threshold <= rank_probas[:, greater_than_3_idx]
+            # Get binary prediction
+            binary_prediction = predict_binary_from_logits(
+                logits, classification_threshold=0.5
             )
+            all_binary_predictions.extend(binary_prediction.cpu())
 
-            all_predicted_labels.extend(binary_prediction.cpu())
+            # Get rank prediction
+            rank_prediction = predict_rank_from_logits(logits)
+            all_rank_predictions.extend(rank_prediction.cpu())
+
             all_true_labels.extend(labels.cpu())
             c += 1
 
@@ -66,14 +75,38 @@ def validate_model(
 
     # convert to int
     all_true_labels = [int(x) for x in all_true_labels]
-    all_predicted_labels = [int(x) for x in all_predicted_labels]
+    all_rank_predictions = [int(x) for x in all_rank_predictions]
 
-    return roc_auc_score(y_true=all_true_labels, y_score=all_predicted_labels)
+    # Filter out ambiguous cases for binary (AUC) evaluation:
+    non_ambiguous_idxs = [i for i, label in enumerate(all_true_labels) if label != 3]
+    binary_predictions_filtered = [
+        int(all_binary_predictions[i]) for i in non_ambiguous_idxs
+    ]
+    labels_filtered = [all_true_labels[i] for i in non_ambiguous_idxs]
+    binary_labels = [1 if label > 3 else 0 for label in labels_filtered]
+
+    metrics = {
+        "precision": precision_score(
+            y_true=all_true_labels,
+            y_pred=all_rank_predictions,
+            average="weighted",
+            zero_division=0,
+        ),
+        "accuracy": accuracy_score(y_true=all_true_labels, y_pred=all_rank_predictions),
+        "f1": f1_score(
+            y_true=all_true_labels, y_pred=all_rank_predictions, average="weighted"
+        ),
+        "AUC_filtered": roc_auc_score(
+            y_true=binary_labels, y_score=binary_predictions_filtered
+        ),
+    }
+    return metrics
 
 
 def train_model(experiment_name: str, cv: bool = False) -> None:
     """
     Trains the model.
+    @experiment_name: name of the experiment.
     @cv: whether to train the model using cross-validation.
     """
     # Log experiment
@@ -84,21 +117,21 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
     logger.info(
         f"""
         Running experiment '{experiment.name}'
-        START TIME: {start_time}
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
+        BATCH_SIZE: {BATCH_SIZE}
         """
     )
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = convert_model_to_3d(
         ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
-    ).to(device)
+    ).to(DEVICE)
     criterion = CornLoss(num_classes=NUM_CLASSES)
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
     dataset = LIDC_IDRI_DATASET()
 
+    # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
     cv_fold_losses = {}
     for fold, (train_ids, test_ids) in enumerate(
@@ -120,14 +153,14 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
 
         all_epoch_losses = []
 
-        # Training loop
+        # --- Training loop ---
         for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc=f"Epoch"):
             model.train()
             epoch_loss = 0.0
 
             for batch_idx, (inputs, labels) in enumerate(train_loader):
                 print(f"Batch {batch_idx}")
-                inputs, labels = inputs.to(device), labels.to(device)
+                inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
 
                 # Zero the parameter gradients
                 optimizer.zero_grad()
@@ -165,9 +198,10 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
     experiment.duration = experiment.end_time - experiment.start_time
     # experiment.evaluation.metrics_results = {}  # TODO add more metrics
     experiment.cv_epoch_losses = cv_fold_losses
-    experiment.write_experiment_to_json(out_dir=f"{env_config.OUT_DIR}")
+    experiment.write_experiment_to_json(out_dir=f"{env_config.OUT_DIR}/model_runs")
 
 
+# %%
 if __name__ == "__main__":
     # train_model(experiment_name="Testing training flow", cv=False)
 
