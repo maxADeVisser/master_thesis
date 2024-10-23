@@ -169,8 +169,6 @@ class LIDC_IDRI_DATASET(Dataset):
             nodule_context_size=IMAGE_DIM,
         )
 
-        # TODO implement random translation of the nodule in the scan to augment the dataset
-
         return nodule.nodule_roi, nodule.malignancy_consensus
 
     def get_dataloader(
@@ -183,9 +181,11 @@ class LIDC_IDRI_DATASET(Dataset):
         @data_sampler is used for cross-validation to create train and test sets
         """
         if data_sampler:
-            return DataLoader(self, batch_size=batch_size, sampler=data_sampler)
+            return DataLoader(
+                self, batch_size=batch_size, sampler=data_sampler, num_workers=4
+            )
         else:
-            return DataLoader(self, batch_size=batch_size, shuffle=True)
+            return DataLoader(self, batch_size=batch_size, shuffle=True, num_workers=4)
 
 
 # %%

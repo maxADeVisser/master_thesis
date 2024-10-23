@@ -1,5 +1,6 @@
 # %%
 import torch
+from coral_pytorch.dataset import corn_label_from_logits
 
 from utils.common_imports import *
 
@@ -19,10 +20,10 @@ def plot_prediction(rank_predictions: list[float]) -> None:
     plt.show()
 
 
-out1 = [0.8, 0.7, 0.4, 0.3]
+out1 = [-0.6, 0.7, 0.4, 0.3]
 out2 = [0.7, 0.6, 0.5, 0.4]
 predictions_threshold = 0.5
-output = torch.Tensor(
+logits = torch.Tensor(
     [
         out1,
         out2,
@@ -47,7 +48,11 @@ def binary_inference(model_output):
 
 binary_inference(out2)
 
-output[:, 2] >= predictions_threshold
+# corn_label_from_logits(output)
+probas = torch.sigmoid(logits)
+probas = torch.cumprod(probas, dim=1)
+predict_levels = probas > 0.5
+predicted_labels = torch.sum(predict_levels, dim=1)
 
 plot_prediction(out2)
 

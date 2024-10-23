@@ -21,7 +21,7 @@ class ExperimentDataset(BaseModel):
         le=1,
         description="Consensus level used for computing the consensus mask of the segmentations",
     )
-    normalisation_bounds: tuple[int, int] = Field(
+    normalisation_bounds: list[int, int] = Field(
         [-1000, 400],
         description="Bounds for normalisation of Hounsfield Units in the CT scans. Default corresponds to air (lowerbound) and bone (upperbound)",
     )
@@ -60,18 +60,11 @@ class ExperimentTraining(BaseModel):
         None, description="If provided, determines number of CV folds. If None, no CV."
     )
 
-    # TODO add for moving around nodule?
-    # augmentation: bool = Field(False, description="Whether to apply data augmentation.")
 
-
-class ExperimentEvaluation(BaseModel):
+class ExperimentResults(BaseModel):
     """Base Experiment Evaluation for input validation"""
 
-    eval_metrics: list[str] = Field(
-        ..., description="List of evaluation metrics to use."
-    )
-    metrics_results: dict = Field({}, description="Results of the evaluation.")
-    cv_epoch_losses: dict = Field({}, description="List of epoch losses.")
+    cv_results: dict = Field(..., description="Cross-validation results.")
 
 
 class BaseExperimentConfig(BaseModel):
@@ -94,15 +87,13 @@ class BaseExperimentConfig(BaseModel):
     dataset: ExperimentDataset = Field(..., description="Dataset configuration.")
     model: ExperimentModel = Field(..., description="Model configuration.")
     training: ExperimentTraining = Field(..., description="Training configuration.")
-    evaluation: ExperimentEvaluation = Field(
-        ..., description="Evaluation configuration."
-    )
+    results: ExperimentResults | None = Field(None, description="Experiment Results.")
 
     def write_experiment_to_json(self, out_dir: str) -> None:
         """Write the experiment configuration to a JSON file."""
-        experiment_file_name = self.start_time.strftime("%d/%m/%Y-%H:%M:%S")
-        with open(f"{out_dir}/{experiment_file_name}", "w") as f:
-            json.dump(self.model_dump(), f)
+        experiment_file_name = self.start_time.strftime("%d-%m-%Y-%H:%M:%S")
+        with open(f"{out_dir}/run_{experiment_file_name}.json", "w") as f:
+            json.dump(self.model_dump_json(), f)
 
 
 def create_experiment_from_json(
