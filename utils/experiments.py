@@ -1,7 +1,4 @@
-# %%
 import datetime as dt
-import os
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -56,7 +53,7 @@ class ExperimentTraining(BaseModel):
     epoch_print_interval: int = Field(
         10, description="Interval for printing epoch info."
     )
-    cross_validation_folds: Optional[int] = Field(
+    cross_validation_folds: int | None = Field(
         None, description="If provided, determines number of CV folds. If None, no CV."
     )
 
@@ -73,6 +70,10 @@ class BaseExperimentConfig(BaseModel):
     # Experiment metadata
     name: str = Field(..., description="Name of the experiment.")
     description: str = Field(..., description="Description of the experiment.")
+    id: str | None = Field(
+        None,
+        description="Unique identifier of the experiment. Has format NAME_DDMMYYYY_HHMMSS",
+    )
     start_time: dt.datetime = Field(
         dt.datetime.now(), description="Start time of the experiment."
     )
@@ -108,12 +109,7 @@ def create_experiment_from_json(
     return BaseExperimentConfig(name=name, description=desc, out_dir=out_dir, **config)
 
 
-class ContextExperimentConfig(BaseExperimentConfig):
-    """Context Experiment Configuration"""
+# class ContextExperimentConfig(BaseExperimentConfig):
+#     """Context Experiment Configuration"""
 
-    image_dims: list[int] = [8, 16, 32, 64, 128]
-
-
-# %%
-if __name__ == "__main__":
-    experiment1 = create_experiment_from_json(name="test", desc="first test experiment")
+#     image_dims: list[int] = [8, 16, 32, 64, 128]

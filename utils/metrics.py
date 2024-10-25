@@ -86,3 +86,16 @@ def classwise_ECE(y_true, probs, classes_list, power=1, bins=10, print_ece=False
 
     return class_eces
     # Right now, not printing the average class-wise calibration error
+
+
+def compute_aes(y_true: list[int], y_pred: list[int]) -> list:
+    """Returns the absolute errors between true and predicted values."""
+    assert len(y_true) == len(y_pred)
+    return np.abs(np.array(y_true) - np.array(y_pred)).tolist()
+
+
+if __name__ == "__main__":
+    test1 = [1, 2, 3, 4, 5]
+    test2 = [5, 1, 3, 2, 5]
+
+    compute_aes(test2, test1)

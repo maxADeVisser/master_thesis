@@ -9,7 +9,13 @@ import torch.optim as optim
 from coral_pytorch.losses import CornLoss
 
 # import mlflow
-from sklearn.metrics import accuracy_score, f1_score, precision_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    mean_absolute_error,
+    roc_auc_score,
+    root_mean_squared_error,
+)
 from sklearn.model_selection import StratifiedGroupKFold
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
@@ -23,6 +29,7 @@ from model.MEDMnist.ResNet import (
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
+from utils.metrics import compute_aes
 
 torch.manual_seed(SEED)
 
@@ -37,41 +44,68 @@ BATCH_SIZE = pipeline_config.training.batch_size
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def validate_model(
-    model: nn.Module, data_loader: DataLoader, device: Literal["cuda", "cpu"]
-) -> None:
-    """Validates the model with @data_loader on @device"""
-def validate_model(model: nn.Module, data_loader: DataLoader) -> dict:
-    """Validates the model with @data_loader"""
+def train_epoch(
+    model: nn.Module,
+    train_loader: DataLoader,
+    optimizer: optim.Optimizer,
+    criterion: nn.Module,
+) -> float:
+    """
+    Trains the model for one epoch.
+    Returns the average loss for the epoch.
+    """
+    model.to(DEVICE)
+    model.train()
+    epoch_loss = 0.0
+
+    for batch_idx, (inputs, labels) in enumerate(train_loader):
+        print(f"Batch {batch_idx}")  # DEBUGGING
+        inputs, labels = inputs.float().to(DEVICE), labels.float().to(DEVICE)
+
+        # Zero the parameter gradients
+        optimizer.zero_grad()
+
+        # Forward pass and loss calculation
+        logits = model(inputs)
+        loss = criterion(logits, labels)
+
+        # Backward pass and optimisation
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss.item()
+
+    # TODO Also calculate metrics for training set??
+    average_epoch_loss = epoch_loss / len(train_loader)
+    return average_epoch_loss
+
+
+def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
+    """Validates the model according performance metrics using the provided data loader."""
+    print("Validating model ...")
     model.to(DEVICE)
     model.eval()
 
-    # Containers for all predicted and true labels
     all_binary_predictions = []
     all_rank_predictions = []
     all_true_labels = []
 
-    c = 0
     with torch.no_grad():  # No gradient calculation during validation
-        for batch_idx, (inputs, labels) in enumerate(data_loader):
-            print(f"Processing batch: {batch_idx}/{len(data_loader)}")
+        for batch_idx, (inputs, labels) in enumerate(validation_loader):
+            print(f"Batch: {batch_idx + 1}/{len(validation_loader)}")
             logits = model(inputs)
+            logits = logits.cpu()
 
             # Get binary prediction
-            binary_prediction = predict_binary_from_logits(
-                logits, classification_threshold=0.5
+            all_binary_predictions.extend(
+                predict_binary_from_logits(logits, classification_threshold=0.5)
             )
-            all_binary_predictions.extend(binary_prediction.cpu())
 
             # Get rank prediction
-            rank_prediction = predict_rank_from_logits(logits)
-            all_rank_predictions.extend(rank_prediction.cpu())
+            all_rank_predictions.extend(predict_rank_from_logits(logits))
 
+            # Get true labels
             all_true_labels.extend(labels.cpu())
-            c += 1
-
-            if c == 10:  # DEBUGGING
-                break
 
     # convert to int
     all_true_labels = [int(x) for x in all_true_labels]
@@ -85,13 +119,8 @@ def validate_model(model: nn.Module, data_loader: DataLoader) -> dict:
     labels_filtered = [all_true_labels[i] for i in non_ambiguous_idxs]
     binary_labels = [1 if label > 3 else 0 for label in labels_filtered]
 
-    metrics = {
-        "precision": precision_score(
-            y_true=all_true_labels,
-            y_pred=all_rank_predictions,
-            average="weighted",
-            zero_division=0,
-        ),
+    # Compute all metrics
+    metric_results = {
         "accuracy": accuracy_score(y_true=all_true_labels, y_pred=all_rank_predictions),
         "f1": f1_score(
             y_true=all_true_labels, y_pred=all_rank_predictions, average="weighted"
@@ -99,8 +128,14 @@ def validate_model(model: nn.Module, data_loader: DataLoader) -> dict:
         "AUC_filtered": roc_auc_score(
             y_true=binary_labels, y_score=binary_predictions_filtered
         ),
+        "AUC_n_samples": len(binary_labels),
+        "mae": mean_absolute_error(y_true=all_true_labels, y_pred=all_rank_predictions),
+        "aes": compute_aes(y_true=all_true_labels, y_pred=all_rank_predictions),
+        "rmse": root_mean_squared_error(
+            y_true=all_true_labels, y_pred=all_rank_predictions
+        ),
     }
-    return metrics
+    return metric_results
 
 
 def train_model(experiment_name: str, cv: bool = False) -> None:
@@ -122,18 +157,17 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
         BATCH_SIZE: {BATCH_SIZE}
         """
     )
+    experiment.id = f"{experiment.name}_{start_time.strftime('%d%m_%H%M')}"
+    exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
 
-    model = convert_model_to_3d(
-        ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
-    ).to(DEVICE)
-    criterion = CornLoss(num_classes=NUM_CLASSES)
-    optimizer = optim.Adam(model.parameters(), lr=LR)
+    if not os.path.exists(exp_out_dir):
+        os.makedirs(exp_out_dir)
 
     dataset = LIDC_IDRI_DATASET()
 
     # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
-    cv_fold_losses = {}
+    cv_results = {}
     for fold, (train_ids, test_ids) in enumerate(
         sgkf.split(
             X=dataset.nodule_df,
@@ -141,91 +175,85 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
             groups=dataset.nodule_df["pid"],
         )
     ):
-        logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
+        model = convert_model_to_3d(
+            ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
+        ).to(DEVICE)
+        criterion = CornLoss(num_classes=NUM_CLASSES)
+        optimizer = optim.Adam(model.parameters(), lr=LR)
 
-        train_subsampler = SubsetRandomSampler(train_ids)
-        test_subsampler = SubsetRandomSampler(test_ids)
+        logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
+        cv_fold_info = {}
+
+        # Define train and test loaders
+        train_subsampler = SubsetRandomSampler(indices=train_ids)
         train_loader = dataset.get_dataloader(data_sampler=train_subsampler)
+        test_subsampler = SubsetRandomSampler(indices=test_ids)
         test_loader = dataset.get_dataloader(data_sampler=test_subsampler)
         logger.info(
             f"Train batch size: {len(train_loader)} | Test batch size: {len(test_loader)}"
         )
 
-        all_epoch_losses = []
+        avg_fold_epoch_losses = []
 
-        # --- Training loop ---
+        # --- Training Loop ---
         for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc=f"Epoch"):
-            model.train()
-            epoch_loss = 0.0
-
-            for batch_idx, (inputs, labels) in enumerate(train_loader):
-                print(f"Batch {batch_idx}")
-                inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
-
-                # Zero the parameter gradients
-                optimizer.zero_grad()
-
-                # Forward pass, backward pass, and optimize
-                logits = model(inputs)
-                loss = criterion(logits, labels)
-
-                # Backward pass and optimisation
-                loss.backward()
-                optimizer.step()
-
-                epoch_loss += loss.item()
-
-            average_epoch_loss = epoch_loss / len(train_loader)
-            all_epoch_losses.append(average_epoch_loss)
+            average_epoch_loss = train_epoch(model, train_loader, optimizer, criterion)
+            avg_fold_epoch_losses.append(average_epoch_loss)
 
             if epoch % EPOCH_PRINT_INTERVAL == 0:
-                # Print statistics
-                logger.info(f"Epoch {epoch} | Average Loss: {average_epoch_loss:.4f}")
+                # Print training info ...
+                metrics = validate_model(model, test_loader)
+                logger.info(
+                    f"Epoch {epoch} | Average Loss: {average_epoch_loss:.4f} | F1: {metrics['f1']:.4f} | AUC: {metrics['AUC_filtered']:.4f}"
+                )
 
-                # Evaluate model on test set
-                model.eval()
-                all_preds = []
+        # Save fold model
+        torch.save(model.state_dict(), f"{exp_out_dir}/model_fold_{fold}.pth")
 
-        cv_fold_losses[fold] = all_epoch_losses
+        # Save fold results
+        cv_fold_info["cv_epoch_losses"] = avg_fold_epoch_losses
+        cv_fold_info["eval_metrics"] = metrics
+        cv_results[fold] = cv_fold_info
 
         if not cv:
-            # only train for one fold
-            # TODO save model
+            # only train for one fold (do not do CV)
             break
 
     # Log results of experiment:
     experiment.end_time = dt.datetime.now()
     experiment.duration = experiment.end_time - experiment.start_time
-    # experiment.evaluation.metrics_results = {}  # TODO add more metrics
-    experiment.cv_epoch_losses = cv_fold_losses
+    experiment.results = cv_results
     experiment.write_experiment_to_json(out_dir=f"{env_config.OUT_DIR}/model_runs")
 
 
 # %%
 if __name__ == "__main__":
-    # train_model(experiment_name="Testing training flow", cv=False)
+    train_model(experiment_name="testing_training_flow", cv=False)
 
-    dataset = LIDC_IDRI_DATASET()
-    sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
-    cv_fold_losses = {}
-    for fold, (train_ids, test_ids) in enumerate(
-        sgkf.split(
-            X=dataset.nodule_df,
-            y=dataset.nodule_df["malignancy_consensus"],
-            groups=dataset.nodule_df["pid"],
-        )
-    ):
-        logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
+    # dataset = LIDC_IDRI_DATASET()
+    # sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
+    # cv_fold_losses = {}
+    # for fold, (train_ids, test_ids) in enumerate(
+    #     sgkf.split(
+    #         X=dataset.nodule_df,
+    #         y=dataset.nodule_df["malignancy_consensus"],
+    #         groups=dataset.nodule_df["pid"],
+    #     )
+    # ):
+    #     logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
 
-        train_subsampler = SubsetRandomSampler(train_ids)
-        test_subsampler = SubsetRandomSampler(test_ids)
-        train_loader = dataset.get_dataloader(data_sampler=train_subsampler)
-        test_loader = dataset.get_dataloader(data_sampler=test_subsampler)
-        break
+    #     train_subsampler = SubsetRandomSampler(train_ids)
+    #     test_subsampler = SubsetRandomSampler(test_ids)
+    #     train_loader = dataset.get_dataloader(data_sampler=train_subsampler)
+    #     test_loader = dataset.get_dataloader(data_sampler=test_subsampler)
+    #     break
 
-    # Testing validation:
-    model = convert_model_to_3d(
-        ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
-    )
-    auc = validate_model(model, test_loader, "cpu")
-    auc
+    # # Testing validation:
+    # model = convert_model_to_3d(
+    #     ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
+    # )
+    # metrics = validate_model(model, test_loader)
+    # metrics
+
+    # plt.hist(metrics["aes"], bins=5)
+    # plt.title("Absolute Errors")
