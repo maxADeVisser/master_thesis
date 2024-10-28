@@ -146,6 +146,28 @@ def ResNet50(in_channels, num_classes):
     )
 
 
+def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
+    """
+    Given the logits, compute the class probabilities (used for model calibration)
+    """
+    with torch.no_grad():
+        sigmoid_output = torch.sigmoid(logits)
+        cum_probas = torch.cumprod(sigmoid_output, dim=1)
+        class_probas = torch.stack(
+            [
+                1 - cum_probas[:, 0],  # P(y = 1) = 1 - P(y > 1)
+                cum_probas[:, 0] - cum_probas[:, 1],  # P(y = 2) = P(y > 1) - P(y > 2)
+                cum_probas[:, 1] - cum_probas[:, 2],  # P(y = 3) = P(y > 2) - P(y > 3)
+                cum_probas[:, 2] - cum_probas[:, 3],  # P(y = 4) = P(y > 3) - P(y > 4)
+                cum_probas[:, 3],  # P(y = 5) = P(y > 4)
+            ],
+            dim=1,
+        )
+        # DEBUGGING:
+        # torch.sum(class_probas, dim=1)
+        return class_probas
+
+
 def predict_rank_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given output logits, return the malignancy rank.
