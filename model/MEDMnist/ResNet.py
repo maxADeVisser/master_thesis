@@ -148,7 +148,8 @@ def ResNet50(in_channels, num_classes):
 
 def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
-    Given the logits, compute the class probabilities (used for model calibration)
+    Given the logits, compute the class probabilities.
+    Returns tensor of shape (batch_size, 5)
     """
     with torch.no_grad():
         sigmoid_output = torch.sigmoid(logits)
@@ -227,4 +228,6 @@ if __name__ == "__main__":
     predict_rank_from_logits(logits)
 
     # Binary inference (this gives the binary classification)
-    predict_binary_from_logits(logits)
+    # predict_binary_from_logits(logits)
+
+    pred_class_probas = compute_class_probs_from_logits(logits)

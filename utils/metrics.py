@@ -7,23 +7,27 @@ import numpy as np
 
 
 def binary_ECE(
-    y_true: np.ndarray, probas: np.ndarray, power: int = 1, bins: int = 10
+    y_true: np.ndarray,
+    probas: np.ndarray,
+    power: int = 1,  # L1-norm
+    bins: int = 10,
+    cumulate: bool = True,
 ) -> float:
     """
     Binary Expected Calibration Error (ECE)
 
-    Parameters
-    ----------
-    y_true : indicator vector (n_samples, )
+    Params:
+    ---
+    @y_true : indicator vector (n_samples, )
         True labels.
-    probs : matrix (n_samples, )
+    @probs : matrix (n_samples, )
         Predicted probabilities for positive class.
-    power : int (default=1)
-        Power to raise the calibration error. Using a higher power gives more weight to larger errors (?????).
+    @power: Power to raise the calibration error. Using a higher power gives more weight to larger errors (which Norm to use).
 
-    Returns
-    -------
-    score : float
+    Returns:
+    ---
+    @total_bin_ece : float
+        The binary ECE score.
     """
 
     def _bin_ece(
@@ -48,21 +52,25 @@ def binary_ECE(
         bin_sample_count = np.sum(idx_bins)
         total_sample_count = len(pred_probas)
         bin_ece = bin_calibration_error * (bin_sample_count / total_sample_count)
-        return bin_ece
+        return round(float(bin_ece), 4)
 
     # Get the indices of the bins to which each value in input array belongs:
     create_bins = np.linspace(start=0, stop=1, num=bins + 1)
     idx_bins = np.digitize(x=probas, bins=create_bins) - 1
 
     # Cumulate the binary ECE for each specified bin:
-    total_bin_ece = 0
+    bin_eces = []
     for i in np.unique(idx_bins):
-        total_bin_ece += _bin_ece(y_true, probas, idx_bins == i)
+        bin_eces.append(_bin_ece(y_true, probas, idx_bins == i))
 
-    return total_bin_ece
+    if not cumulate:
+        return bin_eces
+    return np.sum(bin_eces)
 
 
-def classwise_ECE(y_true, probs, classes_list, power=1, bins=10, print_ece=False):
+def classwise_ECE(
+    y_true, probs, classes_list, power=1, bins=10, print_ece=False
+) -> list[float]:
     """Class-wise Expected Calibration Error
 
     Parameters
@@ -79,10 +87,10 @@ def classwise_ECE(y_true, probs, classes_list, power=1, bins=10, print_ece=False
 
     n_classes = len(classes_list)
 
-    # Computing the binary ECE for each class
+    # Compute binary ECE for each class
     class_eces = []
-    for c in range(n_classes):  # Looping through the classes
-        binary_ece = binary_ECE(y_true[:, c], probs[:, c], power=power, bins=bins)
+    for c in range(n_classes):
+        binary_ece = binary_ECE(y_true[:, c], probs[:, c], power, bins)
         if print_ece:
             print("ECE for {}: {}".format(classes_list[c], round(binary_ece, 3)))
         class_eces.append(binary_ece)
@@ -92,7 +100,6 @@ def classwise_ECE(y_true, probs, classes_list, power=1, bins=10, print_ece=False
     # print('Average Class-Wise ECE: ', round(np.mean(class_eces), 3))
 
     return class_eces
-    # Right now, not printing the average class-wise calibration error
 
 
 def compute_aes(y_true: list[int], y_pred: list[int]) -> list:
@@ -102,7 +109,23 @@ def compute_aes(y_true: list[int], y_pred: list[int]) -> list:
 
 
 if __name__ == "__main__":
-    test1 = [1, 2, 3, 4, 5]
-    test2 = [5, 1, 3, 2, 5]
+    # test1 = [1, 2, 3, 4, 5]
+    # test2 = [5, 1, 3, 2, 5]
+    # compute_aes(test2, test1)
 
-    compute_aes(test2, test1)
+    import matplotlib.pyplot as plt
+
+    bins = 10
+    test_sample_size = 100
+    y_true = np.random.randint(0, 2, test_sample_size)
+    mean = 0.0
+    std_dev = 0.1
+    gaussian_noise = np.random.normal(mean, std_dev, y_true.shape)
+    y_preds = y_true + gaussian_noise
+    y_preds = (y_preds - np.min(y_preds)) / (np.max(y_preds) - np.min(y_preds))
+
+    # y_preds = np.random.rand(test_sample_size)
+    bin_eces = binary_ECE(y_true, y_preds, power=1, bins=bins, cumulate=False)
+
+    plt.hist(y_preds)
+    plt.bar(x=np.arange(start=1, step=1, stop=bins), height=bin_eces)
