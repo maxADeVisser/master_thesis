@@ -6,9 +6,11 @@ source: https://github.com/trer2547/LabelReliability_and_PathologyDetection_in_C
 import numpy as np
 
 
-def binary_ECE(y_true, probs, power=1, bins=10):
-    r"""
-    Binary Expected Calibration Error
+def binary_ECE(
+    y_true: np.ndarray, probas: np.ndarray, power: int = 1, bins: int = 10
+) -> float:
+    """
+    Binary Expected Calibration Error (ECE)
 
     Parameters
     ----------
@@ -16,47 +18,52 @@ def binary_ECE(y_true, probs, power=1, bins=10):
         True labels.
     probs : matrix (n_samples, )
         Predicted probabilities for positive class.
+    power : int (default=1)
+        Power to raise the calibration error. Using a higher power gives more weight to larger errors (?????).
 
     Returns
     -------
     score : float
     """
 
-    create_bins = np.linspace(
-        start=0, stop=1, num=bins + 1
-    )  # Returns 'num' evenly spaced samples, calculated over the interval [start, stop]
-    # print('bins created: ', create_bins)
-    idx_bins = np.digitize(
-        x=probs, bins=create_bins
-    )  # Return the indices of the bins to which each value in input array belongs
-    idx_bins -= 1  # Need to subtract 1 from the bin indices to start at 0
+    def _bin_ece(
+        observed_probas: list[float], pred_probas: list[float], idx_bins: list[bool]
+    ) -> float:
+        """
+        Util func for computing the ECE for a single bin.
+        @idx_bins: boolean array indicating which indices belong to the current bin.
 
-    # Function for computing the ECE for one bin
-    def bin_func(y, p, idx_bins):
-        probs_bin_mean = np.mean(p[idx_bins])  # Mean of probs in bin i
-        true_bin_mean = np.mean(y[idx_bins])  # Mean of true values in bin i
-        diff = np.abs(
-            probs_bin_mean - true_bin_mean
-        )  # Absolute difference between the two bin means
-        diff_power = (
-            diff**power
-        )  # Raising the diff according to the L_p calibration error specified, typically power = 1
-        ece = (
-            diff_power * np.sum(idx_bins) / len(p)
-        )  # Multiplying by the fraction of probs in that bin
-        return ece
+        Return value @bin_ece represents the error for the bin, adjusted by its sample size relative to the entire dataset.
+        """
+        pred_probs_bin_mean = np.mean(pred_probas[idx_bins])
+        true_freq_bin_mean = np.mean(observed_probas[idx_bins])
 
-    # Computing the binary ECE for each bin and summing them
-    ece = 0
+        # Absolute difference between the two bin means and
+        # raising the diff according to the L_p calibration error specified, typically power = 1:
+        bin_calibration_error = (
+            np.abs(pred_probs_bin_mean - true_freq_bin_mean) ** power
+        )
 
-    for i in np.unique(idx_bins):  # Looping through the unique bins (len(bins))
-        ece += bin_func(y_true, probs, idx_bins == i)  # Summing the error for each bin
+        # weight by bin sample count and normalise by total sample count:
+        bin_sample_count = np.sum(idx_bins)
+        total_sample_count = len(pred_probas)
+        bin_ece = bin_calibration_error * (bin_sample_count / total_sample_count)
+        return bin_ece
 
-    return ece
+    # Get the indices of the bins to which each value in input array belongs:
+    create_bins = np.linspace(start=0, stop=1, num=bins + 1)
+    idx_bins = np.digitize(x=probas, bins=create_bins) - 1
+
+    # Cumulate the binary ECE for each specified bin:
+    total_bin_ece = 0
+    for i in np.unique(idx_bins):
+        total_bin_ece += _bin_ece(y_true, probas, idx_bins == i)
+
+    return total_bin_ece
 
 
 def classwise_ECE(y_true, probs, classes_list, power=1, bins=10, print_ece=False):
-    r"""Classwise Expected Calibration Error
+    """Class-wise Expected Calibration Error
 
     Parameters
     ----------
