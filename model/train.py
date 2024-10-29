@@ -28,7 +28,7 @@ from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.early_stopping import EarlyStopping
 from utils.logger_setup import logger
-from utils.metrics import compute_aes
+from utils.metrics import compute_aes, compute_filtered_AUC
 
 torch.manual_seed(SEED)
 
@@ -87,7 +87,7 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
     model.to(DEVICE)
     model.eval()
 
-    all_binary_predictions = []
+    all_binary_prob_predictions = []
     all_rank_predictions = []
     all_true_labels = []
 
@@ -97,9 +97,9 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
             logits = model(inputs)
             logits = logits.cpu()
 
-            # Get binary prediction
-            all_binary_predictions.extend(
-                predict_binary_from_logits(logits, classification_threshold=0.5)
+            # Process logits
+            all_binary_prob_predictions.extend(
+                predict_binary_from_logits(logits, return_probabilites=True)
             )
 
             # Get rank prediction
@@ -129,7 +129,9 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
         "AUC_filtered": roc_auc_score(
             y_true=binary_labels, y_score=binary_predictions_filtered
         ),
-        "AUC_n_samples": len(binary_labels),
+        "AUC_binary": compute_filtered_AUC(
+            all_true_labels, all_binary_prob_predictions
+        ),
         "mae": mean_absolute_error(y_true=all_true_labels, y_pred=all_rank_predictions),
         "aes": compute_aes(y_true=all_true_labels, y_pred=all_rank_predictions),
         "rmse": root_mean_squared_error(

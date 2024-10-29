@@ -20,7 +20,7 @@ torch.manual_seed(SEED)
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, in_channels: int, out_channels: int, stride: int = 1):
+    def __init__(self, in_channels: int, out_channels: int, stride: int = 1) -> None:
         """
         Stride 1 means no downsampling, stride higher than 1 means downsampling
         When expansion = 4, the number of output channels is 4 times the number of input channels
@@ -68,7 +68,7 @@ class Bottleneck(nn.Module):
                 # nn.GroupNorm(num_groups=2, num_channels=self.expansion*planes)
             )
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = F.relu(self.bn1(self.conv1(x)))
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
@@ -83,7 +83,7 @@ class ResNet(nn.Module):
         num_blocks: list[int],  # list of number of blocks in each layer
         in_channels: int = IN_CHANNELS,  # number of input channels (1 for grayscale)
         num_classes: int = NUM_CLASSES,
-    ):
+    ) -> None:
         """
         ResNet Architecture Class altered so it is fit to use the CORN loss for ordinal regression
         """
@@ -138,7 +138,7 @@ class ResNet(nn.Module):
         return logits
 
 
-def ResNet50(in_channels, num_classes):
+def ResNet50(in_channels, num_classes) -> ResNet:
     return ResNet(
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
@@ -149,7 +149,7 @@ def ResNet50(in_channels, num_classes):
 def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given the logits, compute the class probabilities.
-    Returns tensor of shape (batch_size, 5)
+    Returns tensor of shape (batch_size, num_classes)
     """
     with torch.no_grad():
         sigmoid_output = torch.sigmoid(logits)
@@ -164,34 +164,58 @@ def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
             ],
             dim=1,
         )
-        # DEBUGGING:
-        # torch.sum(class_probas, dim=1)
         return class_probas
 
 
 def predict_rank_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given output logits, return the malignancy rank.
+
+    Params
+    ---
+    @logits: The model's output logits
+        tensor of shape (batch_size, num_classes)
+
+    Returns
+    ---
+    @predicted_rank: The predicted rank
+        tensor of shape (batch_size,)
     """
     with torch.no_grad():
         probas = torch.sigmoid(logits)
         probas = torch.cumprod(probas, dim=1)
         predicted_rank = torch.sum(probas > 0.5, dim=1) + 1
-    return predicted_rank.float()
+    return predicted_rank.float().tolist()
 
 
 def predict_binary_from_logits(
-    logits: torch.Tensor, classification_threshold: float = 0.5
-) -> torch.Tensor:
+    logits: torch.Tensor,
+    return_probabilites: bool = False,
+) -> list[int] | list[float]:
     """
     Given output logits, return the binary classification based on the classification threshold
+
+    Params
+    ---
+    @logits: The model's output logits
+        tensor of shape (batch_size, num_classes)
+    @classification_threshold: The threshold for binary classification
+
+    Returns
+    ---
+    @binary_prediction: The binary prediction
+        list of length (batch_size,)
     """
     with torch.no_grad():
         probas = torch.sigmoid(logits)
         probas = torch.cumprod(probas, dim=1)
-        greater_than_3_idx = 2  # P(y > 3)
-        binary_prediction = classification_threshold <= probas[:, greater_than_3_idx]
-    return binary_prediction.float()
+        greater_than_3_idx = 2  # P(y > 3) - threshold for binary classification
+        if return_probabilites:
+            binary_prediction = probas[:, greater_than_3_idx]
+            return binary_prediction.tolist()
+        else:
+            binary_prediction = 0.5 <= probas[:, greater_than_3_idx]
+            return binary_prediction.float().tolist()
 
 
 def convert_model_to_3d(model: nn.Module) -> nn.Module:
@@ -230,4 +254,4 @@ if __name__ == "__main__":
     # Binary inference (this gives the binary classification)
     # predict_binary_from_logits(logits)
 
-    pred_class_probas = compute_class_probs_from_logits(logits)
+    compute_class_probs_from_logits(logits)
