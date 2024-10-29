@@ -56,6 +56,16 @@ class ExperimentTraining(BaseModel):
     cross_validation_folds: int | None = Field(
         None, description="If provided, determines number of CV folds. If None, no CV."
     )
+    patience: int | None = Field(
+        5,
+        ge=1,
+        description="Early stopping parameter: number of epochs to wait for improvement.",
+    )
+    min_delta: float | None = Field(
+        0.5,
+        ge=0,
+        description="Early stopping parameter: minimum change in the monitored metric to qualify as an improvement.",
+    )
 
 
 class ExperimentResults(BaseModel):

@@ -7,8 +7,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from coral_pytorch.losses import CornLoss
-
-# import mlflow
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -28,6 +26,7 @@ from model.MEDMnist.ResNet import (
 )
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
+from utils.early_stopping import EarlyStopping
 from utils.logger_setup import logger
 from utils.metrics import compute_aes
 
@@ -41,6 +40,8 @@ NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 BATCH_SIZE = pipeline_config.training.batch_size
+PATIENCE = pipeline_config.training.patience
+MIN_DELTA = pipeline_config.training.min_delta
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -52,7 +53,7 @@ def train_epoch(
 ) -> float:
     """
     Trains the model for one epoch.
-    Returns the average loss for the epoch.
+    Returns the average batch loss for the epoch.
     """
     model.to(DEVICE)
     model.train()
@@ -193,12 +194,23 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
             f"Train batch size: {len(train_loader)} | Test batch size: {len(test_loader)}"
         )
 
+        es = EarlyStopping(
+            checkpoint_path=f"{exp_out_dir}/model_fold_{fold}.pth",
+            patience=PATIENCE,
+            min_delta=MIN_DELTA,
+        )
+
         avg_fold_epoch_losses = []
 
         # --- Training Loop ---
         for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc=f"Epoch"):
             average_epoch_loss = train_epoch(model, train_loader, optimizer, criterion)
             avg_fold_epoch_losses.append(average_epoch_loss)
+
+            es(val_loss=average_epoch_loss, model=model)
+            if es.early_stop:
+                logger.info("Early stopping ...")
+                break
 
             if epoch % EPOCH_PRINT_INTERVAL == 0:
                 # Print training info ...
@@ -208,7 +220,8 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
                 )
 
         # Save fold model
-        torch.save(model.state_dict(), f"{exp_out_dir}/model_fold_{fold}.pth")
+        # this is now done by the EarlyStopping class
+        # torch.save(model.state_dict(), f"{exp_out_dir}/model_fold_{fold}.pth")
 
         # Save fold results
         cv_fold_info["cv_epoch_losses"] = avg_fold_epoch_losses

@@ -21,6 +21,8 @@
     "cross_validation_folds": 10,
     "epoch_print_interval": 10,
     "learning_rate": 0.001,
-    "num_epochs": 10
+    "min_delta": 0.01,
+    "num_epochs": 10,
+    "patience": 5
   }
 }
