@@ -5,6 +5,7 @@ import torch
 from pylidc.utils import consensus, volume_viewer
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 
+from model.data_augmentations import apply_augmentations
 from model.processing import clip_and_normalise_volume
 from project_config import env_config, pipeline_config
 from utils.common_imports import *
@@ -12,7 +13,6 @@ from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
 
 # SCRIPT_PARAMS:
-NODULE_SEGMENTATION = pipeline_config.dataset.segment_nodule
 CONSENSUS_LEVEL = pipeline_config.dataset.consensus_level
 BATCH_SIZE = pipeline_config.training.batch_size
 
@@ -136,8 +136,10 @@ class LIDC_IDRI_DATASET(Dataset):
         segmentation_configuration: Literal[
             "none", "remove_background", "remove_nodule"
         ] = "none",
+        augment_scans: bool = True,
     ) -> None:
         self.img_dim = img_dim
+        self.augment_scans = augment_scans
         self.segmentation_configuration = segmentation_configuration
         self.patient_ids = env_config.patient_ids
 
@@ -174,6 +176,8 @@ class LIDC_IDRI_DATASET(Dataset):
             segmentation_setting=self.segmentation_configuration,
             nodule_context_size=self.img_dim,
         )
+        if self.augment_scans:
+            nodule.nodule_roi = apply_augmentations(nodule.nodule_roi)
 
         return nodule.nodule_roi, nodule.malignancy_consensus
 
@@ -200,7 +204,7 @@ if __name__ == "__main__":
 
     # testing dataloader
     dataset = LIDC_IDRI_DATASET(
-        img_dim=50, segmentation_configuration="remove_background"
+        img_dim=70, segmentation_configuration="none", augment_scans=True
     )
     train_loader = dataset.get_dataloader(2)
 
