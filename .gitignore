@@ -6,6 +6,7 @@ max/
 logs/*
 mlruns/
 mlartifacts/
+hpc/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
