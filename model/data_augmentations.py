@@ -1,6 +1,11 @@
 import torch
 import torchio as tio
 
+from project_config import SEED
+
+torch.manual_seed(SEED)
+
+
 transforms = tio.Compose(
     [
         # tio.RandomElasticDeformation(num_control_points=7, locked_borders=2, p=1.0),

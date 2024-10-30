@@ -4,9 +4,11 @@
 import itertools
 import math
 
-from project_config import env_config
+from project_config import SEED, env_config
 from utils.common_imports import *
 from utils.logger_setup import logger
+
+np.random.seed(SEED)
 
 # SCIPRT PARAMS:
 IMAGE_DIMS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]

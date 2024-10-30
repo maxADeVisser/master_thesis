@@ -3,9 +3,11 @@ source: https://keras.io/examples/vision/3D_image_classification/"""
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 
-from project_config import pipeline_config
+from project_config import SEED, pipeline_config
+
+torch.manual_seed(SEED)
+np.random.seed(SEED)
 
 LOWER_BOUND, HIGHER_BOUND = pipeline_config.dataset.normalisation_bounds
 

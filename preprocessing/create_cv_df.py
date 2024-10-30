@@ -7,6 +7,7 @@ from utils.common_imports import *
 
 # SCRIPT PARAMS:
 CV_N_FOLDS = pipeline_config.dataset.cross_validation_folds
+np.random.seed(SEED)
 
 
 def create_cv_df(nodule_df: pd.DataFrame, cv: StratifiedGroupKFold) -> pd.DataFrame:

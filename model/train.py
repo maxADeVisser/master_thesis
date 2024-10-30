@@ -31,6 +31,7 @@ from utils.logger_setup import logger
 from utils.metrics import compute_aes, compute_filtered_AUC
 
 torch.manual_seed(SEED)
+np.random.seed(SEED)
 
 # SCRIPT PARAMS:
 LR = pipeline_config.training.learning_rate

@@ -6,9 +6,13 @@ import torch
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_auc_score
 
+from project_config import SEED
+
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+
 
 def compute_aes(y_true: list[int], y_pred: list[int]) -> list:
-    """Returns the absolute errors between true and predicted values."""
     assert len(y_true) == len(y_pred)
     return np.abs(np.array(y_true) - np.array(y_pred)).tolist()
 

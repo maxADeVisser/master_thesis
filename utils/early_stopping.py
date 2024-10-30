@@ -1,6 +1,10 @@
 import numpy as np
 import torch
 
+from project_config import SEED
+
+torch.manual_seed(SEED)
+
 
 class EarlyStopping:
     def __init__(

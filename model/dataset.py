@@ -7,10 +7,13 @@ from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 
 from model.data_augmentations import apply_augmentations
 from model.processing import clip_and_normalise_volume
-from project_config import env_config, pipeline_config
+from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
+
+torch.manual_seed(SEED)
+np.random.seed(SEED)
 
 # SCRIPT_PARAMS:
 CONSENSUS_LEVEL = pipeline_config.dataset.consensus_level

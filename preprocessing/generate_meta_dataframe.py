@@ -3,9 +3,11 @@ import pickle
 from collections import Counter
 
 from adhoc.lidc_dataset.meta_data_distribution import collect_meta_fields_pr_scan
-from project_config import env_config
+from project_config import SEED, env_config
 from utils.common_imports import *
 from utils.utils import get_ct_scan_slice_paths
+
+np.random.seed(SEED)
 
 
 def main() -> None:
