@@ -12,25 +12,25 @@ from utils.logger_setup import logger
 from utils.utils import get_scans_by_patient_id
 
 # SCRIPT_PARAMS:
-IMAGE_DIM = pipeline_config.dataset.image_dim
 NODULE_SEGMENTATION = pipeline_config.dataset.segment_nodule
 CONSENSUS_LEVEL = pipeline_config.dataset.consensus_level
 BATCH_SIZE = pipeline_config.training.batch_size
 
 
 class Nodule:
+    """
+    Helper class to store and manipulate nodule information from nodule df created by create_nodule_df.py script.
+    @nodule_record: a single row from the nodule dataframe.
+    @nodule_context_size: the size of the nodule context to be used for the nodule ROI.
+    @segmentation_setting determines if/how the nodule is segmented from the scan.
+    """
+
     def __init__(
         self,
         nodule_record: pd.Series,
         nodule_context_size: int,
-        segmentation_setting: Literal["none", "remove_nodule", "remove_background"],
+        segmentation_setting: Literal["none", "remove_background", "remove_nodule"],
     ) -> None:
-        """
-        Helper class to store and manipulate nodule information from nodule df created by create_nodule_df.py script.
-        @nodule_record: a single row from the nodule dataframe.
-        @nodule_context_size: the size of the nodule context to be used for the nodule ROI.
-        @segmentation_setting determines if/how the nodule is segmented from the scan.
-        """
         self.patient_id = nodule_record["pid"]
         self.annotation_ids = nodule_record["nodule_annotation_ids"]
         self.pylidc_annotations = [
@@ -130,8 +130,15 @@ class LIDC_IDRI_DATASET(Dataset):
     The file is saved in the projects out/ directory as "nodule_df_all.csv"
     """
 
-    def __init__(self, dataset_dir_path: str = env_config.DATA_DIR) -> None:
-        self.dataset_dir_path = dataset_dir_path
+    def __init__(
+        self,
+        img_dim: Literal[10, 20, 30, 40, 50, 60, 70],
+        segmentation_configuration: Literal[
+            "none", "remove_background", "remove_nodule"
+        ] = "none",
+    ) -> None:
+        self.img_dim = img_dim
+        self.segmentation_configuration = segmentation_configuration
         self.patient_ids = env_config.patient_ids
 
         try:
@@ -139,17 +146,16 @@ class LIDC_IDRI_DATASET(Dataset):
             self.nodule_df = pd.read_csv(
                 f"{env_config.OUT_DIR}/processed_nodule_df.csv"
             )
-            self.nodule_df[f"consensus_bbox_{IMAGE_DIM}"] = self.nodule_df[
-                f"consensus_bbox_{IMAGE_DIM}"
+            self.nodule_df[f"consensus_bbox_{self.img_dim}"] = self.nodule_df[
+                f"consensus_bbox_{self.img_dim}"
             ].apply(ast.literal_eval)
             self.nodule_df["nodule_annotation_ids"] = self.nodule_df[
                 "nodule_annotation_ids"
             ].apply(ast.literal_eval)
 
             logger.info(
-                f"Nodule dataframe loaded successfully with parameters:\nIMG_DIM: {IMAGE_DIM}\nSEGMENTATION: {NODULE_SEGMENTATION}\nBATCH_SIZE: {BATCH_SIZE}"
+                f"\nNodule dataframe loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}\nBATCH_SIZE: {BATCH_SIZE}"
             )
-
         except FileNotFoundError:
             raise FileNotFoundError(
                 "The nodule dataframe was not found. Please run the create_nodule_df.py script first."
@@ -165,8 +171,8 @@ class LIDC_IDRI_DATASET(Dataset):
         """
         nodule = Nodule(
             self.nodule_df.iloc[idx],
-            segmentation_setting=NODULE_SEGMENTATION,
-            nodule_context_size=IMAGE_DIM,
+            segmentation_setting=self.segmentation_configuration,
+            nodule_context_size=self.img_dim,
         )
 
         return nodule.nodule_roi, nodule.malignancy_consensus
@@ -193,19 +199,20 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # testing dataloader
-    dataset = LIDC_IDRI_DATASET()
-    train_loader = dataset.get_train_loader()
+    dataset = LIDC_IDRI_DATASET(
+        img_dim=50, segmentation_configuration="remove_background"
+    )
+    train_loader = dataset.get_dataloader(2)
 
-    for i, (roi, label) in enumerate(train_loader):
-        print(roi.shape)
-        middle_slice = roi.shape[-1] // 2
-        plt.imshow(roi[0][:, :, middle_slice], cmap="gray")
-        plt.title(f"Label malignancy score: {label[0]}")
-        plt.show()
-        break
+    roi, label = next(iter(train_loader))
+    print(roi.shape)
+    middle_slice = roi.shape[-1] // 2
+    plt.imshow(roi[0][0][:, :, middle_slice], cmap="gray")
+    plt.title(f"Label malignancy score: {label[0]}")
+    plt.show()
 
     # Testing data set:
-    dataset = LIDC_IDRI_DATASET()
+    dataset = LIDC_IDRI_DATASET(img_dim=30)
     roi_consensus, label = dataset.__getitem__(0)
     # plt.imshow(roi_consensus[:, :, 35], cmap="gray")
     # plt.title(f"Label malignancy score: {label}")
