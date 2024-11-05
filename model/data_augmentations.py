@@ -15,10 +15,19 @@ transforms = tio.Compose(
         #     axes=["Anterior", "Posterior"],  # flip along the y-axis
         #     flip_probability=0.5,
         # ),
-        tio.RandomFlip(
-            axes=["Left", "Right", "Anterior", "Posterior", "Posteior", "Superior"],
-            flip_probability=0.4,
-        ),
+        # tio.RandomFlip(
+        #     axes=["Left", "Right", "Anterior", "Posterior", "Posteior", "Superior"],
+        #     flip_probability=0.4,
+        # ),
+        # fixed 90 degree rotation along each axis
+        # tio.RandomAffine(
+        #     scales=1,  # No scaling
+        #     degrees=(90, 90, 90),  # 90 degree rotation along each axis
+        #     isotropic=False,
+        #     default_pad_value=0,
+        #     translation=0,
+        #     center="image",
+        # )
     ]
 )
 
@@ -32,7 +41,9 @@ if __name__ == "__main__":
 
     from model.dataset import LIDC_IDRI_DATASET
 
-    dataset = LIDC_IDRI_DATASET(img_dim=70, segmentation_configuration="none")
+    dataset = LIDC_IDRI_DATASET(
+        img_dim=70, segmentation_configuration="none", augment_scans=False
+    )
     feature, label = dataset.__getitem__(0)
     feature.shape
     middle_slice = feature.shape[-1] // 2
