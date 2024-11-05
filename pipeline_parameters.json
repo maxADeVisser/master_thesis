@@ -1,8 +1,15 @@
 {
   "dataset": {
-    "consensus_level": 0.5,
     "dataset_desc": "LIDC-IDRI dataset",
-    "image_dim": 70,
+    "image_dims": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70
+    ],
     "normalisation_bounds": [
       -1000,
       400

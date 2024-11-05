@@ -61,8 +61,8 @@ def show_segmentation_consensus(
 def plot_scan_hounsfield_histogram(
     pids: list[str],
     bounds: tuple[int, int] = (
-        pipeline_config.dataset.normalisation_bounds[0],
-        pipeline_config.dataset.normalisation_bounds[1],
+        pipeline_config.dataset.clipping_bounds[0],
+        pipeline_config.dataset.clipping_bounds[1],
     ),
     bins: int = 80,
 ) -> None:

@@ -9,16 +9,10 @@ class ExperimentDataset(BaseModel):
     """Base Experiment Dataset for input validation"""
 
     dataset_desc: str = Field(..., description="Description of the dataset.")
-    image_dim: int = Field(
+    image_dims: list[int] = Field(
         ..., description="Uniform dimensions of the images: (H, W, D)"
     )
-    consensus_level: float = Field(
-        0.5,
-        ge=0,
-        le=1,
-        description="Consensus level used for computing the consensus mask of the segmentations",
-    )
-    normalisation_bounds: list[int, int] = Field(
+    clipping_bounds: list[int, int] = Field(
         [-1000, 400],
         description="Bounds for normalisation of Hounsfield Units in the CT scans. Default corresponds to air (lowerbound) and bone (upperbound)",
     )

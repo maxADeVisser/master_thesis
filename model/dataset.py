@@ -6,7 +6,7 @@ from pylidc.utils import consensus, volume_viewer
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 
 from model.data_augmentations import apply_augmentations
-from model.processing import clip_and_normalise_volume
+from preprocessing.processing import clip_and_normalise_volume
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
@@ -16,7 +16,6 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 # SCRIPT_PARAMS:
-CONSENSUS_LEVEL = pipeline_config.dataset.consensus_level
 BATCH_SIZE = pipeline_config.training.batch_size
 
 
@@ -71,14 +70,12 @@ class Nodule:
         nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).unsqueeze(0).float()
         return nodule_roi
 
-    def get_consensus_mask(
-        self, consensus_level: float = CONSENSUS_LEVEL
-    ) -> torch.Tensor:
+    def get_consensus_mask(self) -> torch.Tensor:
         """Returns the consensus mask of the nodule based on the annotations of the 4 radiologists. Refer to the documentation of pylidc.utils.consensus for more info."""
         # NOTE: Using 100_000 as padding to include the entire scan in the mask (for alignment with the nodule consensus bbox)
         consensus_mask, _ = consensus(
             self.pylidc_annotations,
-            clevel=consensus_level,
+            clevel=0.5,
             pad=100_000,
             ret_masks=False,
         )

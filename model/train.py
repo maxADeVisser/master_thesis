@@ -33,7 +33,7 @@ from utils.metrics import compute_aes, compute_filtered_AUC
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
-# SCRIPT PARAMS:
+# LOAD SCRIPT PARAMS:
 LR = pipeline_config.training.learning_rate
 NUM_EPOCHS = pipeline_config.training.num_epochs
 EPOCH_PRINT_INTERVAL = pipeline_config.training.epoch_print_interval
