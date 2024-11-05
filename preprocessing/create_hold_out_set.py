@@ -9,31 +9,33 @@ run once without filtering out the hold out set. And then the create_nodule_df.p
 script should be run again with the hold out set filtered out.
 """
 
-import json
+# I think the notebook is used instead of this script (process_nodule_df.ipynb)
 
-from sklearn.model_selection import StratifiedGroupKFold
+# import json
 
-from project_config import SEED, env_config
-from utils.common_imports import *
-from utils.logger_setup import logger
+# from sklearn.model_selection import StratifiedGroupKFold
 
-nodule_df = pd.read_csv(f"{env_config.OUT_DIR}/nodule_df.csv")
-FOLDS = 10  # use ~10 percent of the data in the hold out set
+# from project_config import SEED, env_config
+# from utils.common_imports import *
+# from utils.logger_setup import logger
 
-sgkf = StratifiedGroupKFold(n_splits=FOLDS, shuffle=True, random_state=SEED)
+# nodule_df = pd.read_csv(f"{env_config.OUT_DIR}/nodule_df.csv")
+# FOLDS = 10  # use ~10 percent of the data in the hold out set
 
-for fold, (train_idxs, test_idxs) in enumerate(
-    sgkf.split(
-        X=nodule_df, y=nodule_df["malignancy_consensus"], groups=nodule_df["pid"]
-    )
-):
-    hold_out_pids = {
-        "hold_out_pids": nodule_df.iloc[test_idxs]["pid"].unique().tolist()
-    }
+# sgkf = StratifiedGroupKFold(n_splits=FOLDS, shuffle=True, random_state=SEED)
 
-    with open(f"{env_config.OUT_DIR}/hold_out_pids.json", "w") as f:
-        json.dump(hold_out_pids, f)
-    logger.info(
-        f"Saved {len(nodule_df.query(f'pid in {hold_out_pids}'))} hold out pids to {env_config.OUT_DIR}/hold_out_pids.json"
-    )
-    break
+# for fold, (train_idxs, test_idxs) in enumerate(
+#     sgkf.split(
+#         X=nodule_df, y=nodule_df["malignancy_consensus"], groups=nodule_df["pid"]
+#     )
+# ):
+#     hold_out_pids = {
+#         "hold_out_pids": nodule_df.iloc[test_idxs]["pid"].unique().tolist()
+#     }
+
+#     with open(f"{env_config.OUT_DIR}/hold_out_pids.json", "w") as f:
+#         json.dump(hold_out_pids, f)
+#     logger.info(
+#         f"Saved {len(nodule_df.query(f'pid in {hold_out_pids}'))} hold out pids to {env_config.OUT_DIR}/hold_out_pids.json"
+#     )
+#     break
