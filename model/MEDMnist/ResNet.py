@@ -81,8 +81,8 @@ class ResNet(nn.Module):
     def __init__(
         self,
         num_blocks: list[int],  # list of number of blocks in each layer
-        in_channels: int = IN_CHANNELS,  # number of input channels (1 for grayscale)
-        num_classes: int = NUM_CLASSES,
+        in_channels: int,  # number of input channels (1 for grayscale)
+        num_classes: int,
     ) -> None:
         """
         ResNet Architecture Class altered so it is fit to use the CORN loss for ordinal regression
