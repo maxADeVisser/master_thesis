@@ -80,7 +80,7 @@ def train_epoch(
 
         epoch_loss += loss.item()
 
-    # TODO Also calculate metrics for training set??
+    # TODO Also calculate metrics for training set
     average_epoch_loss = epoch_loss / len(train_loader)
     return average_epoch_loss
 
@@ -91,33 +91,30 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
     model.to(DEVICE)
     model.eval()
 
+    # Probability predictions
     all_binary_prob_predictions = []
+    all_class_proba_preds = []
+
+    # Rank predictions
     all_rank_predictions = []
-    all_proba_predictions = []
     all_true_labels = []
 
-    # DEBUGGING
-    # c = 0
-    with torch.no_grad():  # No gradient calculation during validation
+    with torch.no_grad():  # No gradient calculations needed during validation
         for batch_idx, (inputs, labels) in enumerate(validation_loader):
             print(f"Batch: {batch_idx + 1}/{len(validation_loader)}")
+            inputs, labels = inputs.float().to(DEVICE), labels.float().to(DEVICE)
             logits = model(inputs)
-            logits = logits.cpu()
 
-            # Process logits
+            # Get predictions
             all_binary_prob_predictions.extend(
                 predict_binary_from_logits(logits, return_probabilites=True)
             )
             all_rank_predictions.extend(get_pred_malignancy_score_from_logits(logits))
-            all_proba_predictions.extend(compute_class_probs_from_logits(logits))
+            all_class_proba_preds.extend(compute_class_probs_from_logits(logits))
             all_true_labels.extend(labels.tolist())
 
-            # c += 1
-            # if c == 4:
-            #     break
-
     # Get class probabilities and binary predictions for each class (for AUC OvR):
-    all_proba_predictions = np.stack(all_proba_predictions)
+    all_class_proba_preds = np.stack(all_class_proba_preds)
     y_true_binary = label_binarize(all_true_labels, classes=[1, 2, 3, 4, 5])
 
     # convert to int
@@ -132,7 +129,7 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
         ),
         "AUC_ovr": roc_auc_score(
             y_true=y_true_binary,
-            y_score=all_proba_predictions,
+            y_score=all_class_proba_preds,
             multi_class="ovr",
             average="weighted",
         ),

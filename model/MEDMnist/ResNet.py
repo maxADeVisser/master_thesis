@@ -139,7 +139,11 @@ class ResNet(nn.Module):
             return self.features(x).view(x.size(0), -1)
 
 
-def ResNet50(in_channels, num_classes) -> ResNet:
+def ResNet50(in_channels: int, num_classes: int) -> ResNet:
+    """
+    Return a ResNet50 model for the given number of input channels and classes.
+    The ResNet50 model has 3 layers with 3, 4, 6, and 3 blocks each.
+    """
     return ResNet(
         num_blocks=[3, 4, 6, 3],
         in_channels=in_channels,
@@ -210,13 +214,13 @@ def get_pred_malignancy_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
     # NOTE: i think that the +1 is not added in the @corn_label_from_logits function, because the function
     # returns the rank index, and not the rank value itself. But we can do this here, since we are predicting a
     # score from 1 to 5
-    return predicted_rank.float().tolist()
+    return predicted_rank
 
 
 def predict_binary_from_logits(
     logits: torch.Tensor,
     return_probabilites: bool = False,
-) -> list[int] | list[float]:
+) -> torch.Tensor:
     """
     Given output logits, return the binary classification based on the classification threshold
 
@@ -228,17 +232,17 @@ def predict_binary_from_logits(
 
     Returns
     ---
-    @binary_prediction: The binary prediction
-        list of length (batch_size,)
+    @binary_prediction: The binary prediction (0 or 1) or the probability of the positive class (P(y > 3))
+        tensor of size (batch_size,)
     """
     uncond_probas = get_unconditional_probas(logits)
     greater_than_3_idx = 2  # P(y > 3) - threshold for binary classification
     if return_probabilites:
         binary_prediction = uncond_probas[:, greater_than_3_idx]
-        return binary_prediction.tolist()
+        return binary_prediction
     else:
         binary_prediction = 0.5 <= uncond_probas[:, greater_than_3_idx]
-        return binary_prediction.float().tolist()
+        return binary_prediction.float()
 
 
 def convert_model_to_3d(model: nn.Module) -> nn.Module:
