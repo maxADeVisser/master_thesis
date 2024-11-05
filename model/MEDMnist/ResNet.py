@@ -147,28 +147,50 @@ def ResNet50(in_channels, num_classes) -> ResNet:
     )
 
 
+def get_conditional_probas(logits: torch.Tensor) -> torch.Tensor:
+    """
+    Process the output logits to obtain the conditional probabilities for each rank.
+    That is, the probability of the rank being greater than or equal to the current rank,
+    given that it is greater than the previous rank:
+    For node k in the output layer, the probability of the rank being k or greater for input x is:
+    f_k(x_i) = P(y_i > r_k | y_i > r_k-1)
+    """
+    return torch.sigmoid(logits)
+
+
+def get_unconditional_probas(logits: torch.Tensor) -> torch.Tensor:
+    """
+    Obtain the unconditional probabilities for each rank using the conditional probabilities
+    and the chain rule of probability.
+    That is, return P(y_i > r_k) for each rank k.
+    """
+    conditional_probas = get_conditional_probas(logits)
+    # chain rule of probability:
+    unconditional_probas = torch.cumprod(conditional_probas, dim=1)
+    # (ensure that rank-monotonicity is maintained)
+    return unconditional_probas
+
+
 def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
-    Given the logits, compute the class probabilities.
+    Given the logits, return the class probabilities.
     Returns tensor of shape (batch_size, num_classes)
     """
-    with torch.no_grad():
-        sigmoid_output = torch.sigmoid(logits)
-        cum_probas = torch.cumprod(sigmoid_output, dim=1)
-        class_probas = torch.stack(
-            [
-                1 - cum_probas[:, 0],  # P(y = 1) = 1 - P(y > 1)
-                cum_probas[:, 0] - cum_probas[:, 1],  # P(y = 2) = P(y > 1) - P(y > 2)
-                cum_probas[:, 1] - cum_probas[:, 2],  # P(y = 3) = P(y > 2) - P(y > 3)
-                cum_probas[:, 2] - cum_probas[:, 3],  # P(y = 4) = P(y > 3) - P(y > 4)
-                cum_probas[:, 3],  # P(y = 5) = P(y > 4)
-            ],
-            dim=1,
-        )
-        return class_probas
+    uncond_probas = get_unconditional_probas(logits)
+    class_probas = torch.stack(
+        [
+            1 - uncond_probas[:, 0],  # P(y = 1) = 1 - P(y > 1)
+            uncond_probas[:, 0] - uncond_probas[:, 1],  # P(y = 2) = P(y > 1) - P(y > 2)
+            uncond_probas[:, 1] - uncond_probas[:, 2],  # P(y = 3) = P(y > 2) - P(y > 3)
+            uncond_probas[:, 2] - uncond_probas[:, 3],  # P(y = 4) = P(y > 3) - P(y > 4)
+            uncond_probas[:, 3],  # P(y = 5) = P(y > 4)
+        ],
+        dim=1,
+    )
+    return class_probas
 
 
-def predict_rank_from_logits(logits: torch.Tensor) -> torch.Tensor:
+def get_pred_malignancy_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given output logits, return the malignancy rank.
 
@@ -182,10 +204,12 @@ def predict_rank_from_logits(logits: torch.Tensor) -> torch.Tensor:
     @predicted_rank: The predicted rank
         tensor of shape (batch_size,)
     """
-    with torch.no_grad():
-        probas = torch.sigmoid(logits)
-        probas = torch.cumprod(probas, dim=1)
-        predicted_rank = torch.sum(probas > 0.5, dim=1) + 1
+    uncond_probas = get_unconditional_probas(logits)
+    predicted_levels = 0.5 <= uncond_probas
+    predicted_rank = torch.sum(predicted_levels, dim=1) + 1
+    # NOTE: i think that the +1 is not added in the @corn_label_from_logits function, because the function
+    # returns the rank index, and not the rank value itself. But we can do this here, since we are predicting a
+    # score from 1 to 5
     return predicted_rank.float().tolist()
 
 
@@ -207,16 +231,14 @@ def predict_binary_from_logits(
     @binary_prediction: The binary prediction
         list of length (batch_size,)
     """
-    with torch.no_grad():
-        probas = torch.sigmoid(logits)
-        probas = torch.cumprod(probas, dim=1)
-        greater_than_3_idx = 2  # P(y > 3) - threshold for binary classification
-        if return_probabilites:
-            binary_prediction = probas[:, greater_than_3_idx]
-            return binary_prediction.tolist()
-        else:
-            binary_prediction = 0.5 <= probas[:, greater_than_3_idx]
-            return binary_prediction.float().tolist()
+    uncond_probas = get_unconditional_probas(logits)
+    greater_than_3_idx = 2  # P(y > 3) - threshold for binary classification
+    if return_probabilites:
+        binary_prediction = uncond_probas[:, greater_than_3_idx]
+        return binary_prediction.tolist()
+    else:
+        binary_prediction = 0.5 <= uncond_probas[:, greater_than_3_idx]
+        return binary_prediction.float().tolist()
 
 
 def convert_model_to_3d(model: nn.Module) -> nn.Module:
@@ -235,7 +257,7 @@ def convert_model_to_3d(model: nn.Module) -> nn.Module:
 
 # %%
 if __name__ == "__main__":
-    img_dim = 64  # 64x64x64; depth, height, width
+    img_dim = 70
     channels = 1  # 1 for grayscale (or one-dimensional data)
     batch_size = 2
     n_classes = 5
@@ -244,6 +266,7 @@ if __name__ == "__main__":
     model = ResNet50(in_channels=1, num_classes=5)  # 2D model
     model = convert_model_to_3d(model)  # 3D model
     test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
+    test_input.shape
 
     features = model.get_feature_vector(test_input)
 
@@ -253,7 +276,10 @@ if __name__ == "__main__":
     # Get predicted rank probabilities
     # from coral_pytorch.dataset import corn_label_from_logits
     # corn_label_from_logits(logits).float()
-    predict_rank_from_logits(logits)
+
+    get_unconditional_probas(logits)
+
+    get_pred_malignancy_score_from_logits(logits)
 
     # Binary inference (this gives the binary classification)
     # predict_binary_from_logits(logits)

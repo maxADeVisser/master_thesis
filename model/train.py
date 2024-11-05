@@ -15,14 +15,16 @@ from sklearn.metrics import (
     root_mean_squared_error,
 )
 from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.preprocessing import label_binarize
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
 from model.dataset import LIDC_IDRI_DATASET
 from model.MEDMnist.ResNet import (
     ResNet50,
+    compute_class_probs_from_logits,
     convert_model_to_3d,
+    get_pred_malignancy_score_from_logits,
     predict_binary_from_logits,
-    predict_rank_from_logits,
 )
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
@@ -36,6 +38,7 @@ np.random.seed(SEED)
 # LOAD SCRIPT PARAMS:
 LR = pipeline_config.training.learning_rate
 NUM_EPOCHS = pipeline_config.training.num_epochs
+IMAGE_DIMS = pipeline_config.dataset.image_dims
 EPOCH_PRINT_INTERVAL = pipeline_config.training.epoch_print_interval
 NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
@@ -90,8 +93,11 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
 
     all_binary_prob_predictions = []
     all_rank_predictions = []
+    all_proba_predictions = []
     all_true_labels = []
 
+    # DEBUGGING
+    # c = 0
     with torch.no_grad():  # No gradient calculation during validation
         for batch_idx, (inputs, labels) in enumerate(validation_loader):
             print(f"Batch: {batch_idx + 1}/{len(validation_loader)}")
@@ -102,24 +108,21 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
             all_binary_prob_predictions.extend(
                 predict_binary_from_logits(logits, return_probabilites=True)
             )
+            all_rank_predictions.extend(get_pred_malignancy_score_from_logits(logits))
+            all_proba_predictions.extend(compute_class_probs_from_logits(logits))
+            all_true_labels.extend(labels.tolist())
 
-            # Get rank prediction
-            all_rank_predictions.extend(predict_rank_from_logits(logits))
+            # c += 1
+            # if c == 4:
+            #     break
 
-            # Get true labels
-            all_true_labels.extend(labels.cpu())
+    # Get class probabilities and binary predictions for each class (for AUC OvR):
+    all_proba_predictions = np.stack(all_proba_predictions)
+    y_true_binary = label_binarize(all_true_labels, classes=[1, 2, 3, 4, 5])
 
     # convert to int
     all_true_labels = [int(x) for x in all_true_labels]
     all_rank_predictions = [int(x) for x in all_rank_predictions]
-
-    # Filter out ambiguous cases for binary (AUC) evaluation:
-    non_ambiguous_idxs = [i for i, label in enumerate(all_true_labels) if label != 3]
-    binary_predictions_filtered = [
-        int(all_binary_predictions[i]) for i in non_ambiguous_idxs
-    ]
-    labels_filtered = [all_true_labels[i] for i in non_ambiguous_idxs]
-    binary_labels = [1 if label > 3 else 0 for label in labels_filtered]
 
     # Compute all metrics
     metric_results = {
@@ -127,8 +130,11 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
         "f1": f1_score(
             y_true=all_true_labels, y_pred=all_rank_predictions, average="weighted"
         ),
-        "AUC_filtered": roc_auc_score(
-            y_true=binary_labels, y_score=binary_predictions_filtered
+        "AUC_ovr": roc_auc_score(
+            y_true=y_true_binary,
+            y_score=all_proba_predictions,
+            multi_class="ovr",
+            average="weighted",
         ),
         "AUC_binary": compute_filtered_AUC(
             all_true_labels, all_binary_prob_predictions
@@ -244,32 +250,34 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
 
 # %%
 if __name__ == "__main__":
-    train_model(experiment_name="testing_training_flow", cv=False)
+    # train_model(experiment_name="testing_training_flow", cv=False)
 
-    # dataset = LIDC_IDRI_DATASET()
-    # sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
-    # cv_fold_losses = {}
-    # for fold, (train_ids, test_ids) in enumerate(
-    #     sgkf.split(
-    #         X=dataset.nodule_df,
-    #         y=dataset.nodule_df["malignancy_consensus"],
-    #         groups=dataset.nodule_df["pid"],
-    #     )
-    # ):
-    #     logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
+    dataset = LIDC_IDRI_DATASET(
+        img_dim=IMAGE_DIMS[-1], segmentation_configuration="none", augment_scans=False
+    )
+    sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
+    cv_fold_losses = {}
+    for fold, (train_ids, test_ids) in enumerate(
+        sgkf.split(
+            X=dataset.nodule_df,
+            y=dataset.nodule_df["malignancy_consensus"],
+            groups=dataset.nodule_df["pid"],
+        )
+    ):
+        logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
 
-    #     train_subsampler = SubsetRandomSampler(train_ids)
-    #     test_subsampler = SubsetRandomSampler(test_ids)
-    #     train_loader = dataset.get_dataloader(data_sampler=train_subsampler)
-    #     test_loader = dataset.get_dataloader(data_sampler=test_subsampler)
-    #     break
+        train_subsampler = SubsetRandomSampler(train_ids)
+        test_subsampler = SubsetRandomSampler(test_ids)
+        train_loader = dataset.get_dataloader(BATCH_SIZE, data_sampler=train_subsampler)
+        test_loader = dataset.get_dataloader(BATCH_SIZE, data_sampler=test_subsampler)
+        break
 
-    # # Testing validation:
-    # model = convert_model_to_3d(
-    #     ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
-    # )
-    # metrics = validate_model(model, test_loader)
-    # metrics
+    # Testing validation:
+    model = convert_model_to_3d(
+        ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
+    )
+    metrics = validate_model(model, test_loader)
+    metrics
 
-    # plt.hist(metrics["aes"], bins=5)
-    # plt.title("Absolute Errors")
+    plt.hist(metrics["aes"], bins=5)
+    plt.title("Absolute Errors")
