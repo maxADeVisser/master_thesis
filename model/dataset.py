@@ -15,9 +15,6 @@ from utils.utils import get_scans_by_patient_id
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
-# SCRIPT_PARAMS:
-BATCH_SIZE = pipeline_config.training.batch_size
-
 
 class Nodule:
     """
@@ -156,7 +153,7 @@ class LIDC_IDRI_DATASET(Dataset):
             ].apply(ast.literal_eval)
 
             logger.info(
-                f"\nNodule dataframe loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}\nBATCH_SIZE: {BATCH_SIZE}"
+                f"\nNodule dataframe loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}\nAUGMENT_SCANS: {self.augment_scans}"
             )
         except FileNotFoundError:
             raise FileNotFoundError(
@@ -183,7 +180,7 @@ class LIDC_IDRI_DATASET(Dataset):
 
     def get_dataloader(
         self,
-        batch_size: int = BATCH_SIZE,
+        batch_size: int,
         data_sampler: Optional[SubsetRandomSampler] = None,
     ) -> DataLoader:
         """
