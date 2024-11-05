@@ -7,6 +7,7 @@ logs/*
 mlruns/
 mlartifacts/
 hpc/
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
