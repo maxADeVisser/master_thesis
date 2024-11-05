@@ -6,12 +6,19 @@ from project_config import SEED
 torch.manual_seed(SEED)
 
 
+# flip along each axis:
+# probability of flipping is computed for each axis independently
+# see https://torchio.readthedocs.io/transforms/augmentation.html#randomflip
 transforms = tio.Compose(
     [
-        # tio.RandomElasticDeformation(num_control_points=7, locked_borders=2, p=1.0),
+        # tio.RandomFlip(
+        #     axes=["Anterior", "Posterior"],  # flip along the y-axis
+        #     flip_probability=0.5,
+        # ),
         tio.RandomFlip(
-            axes=["Anterior", "Posterior"], flip_probability=0.5
-        ),  # flip along the y-axis (get front and back views)
+            axes=["Left", "Right", "Anterior", "Posterior", "Posteior", "Superior"],
+            flip_probability=0.4,
+        ),
     ]
 )
 
@@ -21,7 +28,6 @@ def apply_augmentations(nodule_roi: torch.Tensor) -> torch.Tensor:
 
 
 if __name__ == "__main__":
-    # Testing:
     import matplotlib.pyplot as plt
 
     from model.dataset import LIDC_IDRI_DATASET
@@ -30,4 +36,5 @@ if __name__ == "__main__":
     feature, label = dataset.__getitem__(0)
     feature.shape
     middle_slice = feature.shape[-1] // 2
+    plt.imshow(feature[0][:, :, middle_slice], cmap="gray")
     plt.imshow(apply_augmentations(feature)[0][:, :, middle_slice], cmap="gray")
