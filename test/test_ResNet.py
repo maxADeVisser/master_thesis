@@ -58,7 +58,7 @@ class TestPredictBinaryFromLogits(unittest.TestCase):
             [[0.8, 0.7, 0.4, 0.2], [0.95, 0.9, 0.85, 0.5]]
         )
         expected_output = torch.tensor([0.4, 0.85])
-        output = predict_binary_from_logits(self.logits, return_probabilites=True)
+        output = predict_binary_from_logits(self.logits, return_probs=True)
         self.assertAlmostEqual(output[0], expected_output[0], places=4)
         self.assertAlmostEqual(output[1], expected_output[1], places=4)
         mock_get_unconditional_probas.assert_called_once_with(self.logits)

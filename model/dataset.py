@@ -3,7 +3,7 @@ import ast
 
 import torch
 from pylidc.utils import consensus, volume_viewer
-from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
+from torch.utils.data import DataLoader, Dataset
 
 from model.data_augmentations import apply_augmentations
 from preprocessing.processing import clip_and_normalise_volume
@@ -178,22 +178,6 @@ class LIDC_IDRI_DATASET(Dataset):
 
         return nodule.nodule_roi, nodule.malignancy_consensus
 
-    def get_dataloader(
-        self,
-        batch_size: int,
-        data_sampler: Optional[SubsetRandomSampler] = None,
-    ) -> DataLoader:
-        """
-        Returns a DataLoader object for the LIDC-IDRI dataset.
-        @data_sampler is used for cross-validation to create train and test sets
-        """
-        if data_sampler:
-            return DataLoader(
-                self, batch_size=batch_size, sampler=data_sampler, num_workers=4
-            )
-        else:
-            return DataLoader(self, batch_size=batch_size, shuffle=True, num_workers=4)
-
 
 # %%
 if __name__ == "__main__":
@@ -203,7 +187,9 @@ if __name__ == "__main__":
     dataset = LIDC_IDRI_DATASET(
         img_dim=70, segmentation_configuration="none", augment_scans=True
     )
-    train_loader = dataset.get_dataloader(2)
+    train_loader = DataLoader(
+        dataset, batch_size=1, shuffle=True, num_workers=4, pin_memory=True
+    )
 
     roi, label = next(iter(train_loader))
     print(roi.shape)

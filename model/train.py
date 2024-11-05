@@ -2,6 +2,7 @@
 
 # %%
 import datetime as dt
+from typing import Callable
 
 import torch
 import torch.nn as nn
@@ -16,7 +17,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.preprocessing import label_binarize
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader, Subset
 
 from model.dataset import LIDC_IDRI_DATASET
 from model.MEDMnist.ResNet import (
@@ -61,7 +62,7 @@ def train_epoch(
     """
     model.to(DEVICE)
     model.train()
-    epoch_loss = 0.0
+    running_epoch_loss = 0.0
 
     for batch_idx, (inputs, labels) in enumerate(train_loader):
         print(f"Batch {batch_idx}")  # DEBUGGING
@@ -78,43 +79,70 @@ def train_epoch(
         loss.backward()
         optimizer.step()
 
-        epoch_loss += loss.item()
+        running_epoch_loss += loss.item()
 
-    # TODO Also calculate metrics for training set
-    average_epoch_loss = epoch_loss / len(train_loader)
+    # TODO Also calculate basic metrics for training set
+    average_epoch_loss = running_epoch_loss / len(train_loader)
     return average_epoch_loss
 
 
-def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
+def validate_model(
+    model: nn.Module,
+    loss_func: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+    validation_loader: DataLoader,
+) -> dict:
     """Validates the model according performance metrics using the provided data loader."""
     print("Validating model ...")
     model.to(DEVICE)
     model.eval()
 
-    # Probability predictions
-    all_binary_prob_predictions = []
-    all_class_proba_preds = []
+    # Preallocate tensors for storing predictions and labels:
+    num_val_samples = len(validation_loader.dataset)
+    all_binary_prob_predictions = torch.empty(num_val_samples, dtype=torch.float).cpu()
+    all_rank_predictions = torch.empty(num_val_samples, dtype=torch.float).cpu()
+    all_class_proba_preds = torch.empty(
+        num_val_samples, NUM_CLASSES, dtype=torch.float
+    ).cpu()
+    all_true_labels = torch.empty(num_val_samples, dtype=torch.float).cpu()
 
-    # Rank predictions
-    all_rank_predictions = []
-    all_true_labels = []
+    start_idx = 0  # start index for storing predictions
 
-    with torch.no_grad():  # No gradient calculations needed during validation
+    running_val_loss = 0.0
+    number_of_batches = len(validation_loader)
+
+    with torch.no_grad():  # (no gradient calculations needed during validation)
         for batch_idx, (inputs, labels) in enumerate(validation_loader):
-            print(f"Batch: {batch_idx + 1}/{len(validation_loader)}")
+            print(f"Batch: {batch_idx + 1}/{number_of_batches}")
             inputs, labels = inputs.float().to(DEVICE), labels.float().to(DEVICE)
             logits = model(inputs)
 
-            # Get predictions
-            all_binary_prob_predictions.extend(
-                predict_binary_from_logits(logits, return_probabilites=True)
-            )
-            all_rank_predictions.extend(get_pred_malignancy_score_from_logits(logits))
-            all_class_proba_preds.extend(compute_class_probs_from_logits(logits))
-            all_true_labels.extend(labels.tolist())
+            # Compute loss
+            loss = loss_func(logits, labels)
+            running_val_loss += loss.item()
 
+            # Get predictions and labels (on CPU):
+            binary_probas = predict_binary_from_logits(logits, return_probs=True).cpu()
+            malignancy_scores = get_pred_malignancy_score_from_logits(logits).cpu()
+            class_probas = compute_class_probs_from_logits(logits).cpu()
+            labels = labels.cpu()
+
+            # Fill the preallocated tensors with the predictions and labels
+            batch_size = inputs.size(0)
+            end_idx = start_idx + batch_size
+            all_binary_prob_predictions[start_idx:end_idx] = binary_probas
+            all_rank_predictions[start_idx:end_idx] = malignancy_scores
+            all_class_proba_preds[start_idx:end_idx] = class_probas
+            all_true_labels[start_idx:end_idx] = labels
+
+            start_idx += batch_size
+
+    # --- COMPUTE METRICS ---
+    avg_validation_loss = running_val_loss / number_of_batches
+
+    # TODO make sure the metrics funcs return tensors
+    # TODO move all metric calculations to the metrics.py file
     # Get class probabilities and binary predictions for each class (for AUC OvR):
-    all_class_proba_preds = np.stack(all_class_proba_preds)
+    # all_class_proba_preds = np.stack(all_class_proba_preds)
     y_true_binary = label_binarize(all_true_labels, classes=[1, 2, 3, 4, 5])
 
     # convert to int
@@ -123,6 +151,7 @@ def validate_model(model: nn.Module, validation_loader: DataLoader) -> dict:
 
     # Compute all metrics
     metric_results = {
+        "avg_validation_loss": avg_validation_loss,
         "accuracy": accuracy_score(y_true=all_true_labels, y_pred=all_rank_predictions),
         "f1": f1_score(
             y_true=all_true_labels, y_pred=all_rank_predictions, average="weighted"
@@ -170,7 +199,7 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
     if not os.path.exists(exp_out_dir):
         os.makedirs(exp_out_dir)
 
-    dataset = LIDC_IDRI_DATASET()
+    dataset = LIDC_IDRI_DATASET()  # TODO add params
 
     # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
@@ -192,10 +221,10 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
         cv_fold_info = {}
 
         # Define train and test loaders
-        train_subsampler = SubsetRandomSampler(indices=train_ids)
-        train_loader = dataset.get_dataloader(data_sampler=train_subsampler)
-        test_subsampler = SubsetRandomSampler(indices=test_ids)
-        test_loader = dataset.get_dataloader(data_sampler=test_subsampler)
+        train_subset = Subset(dataset, indices=train_ids)
+        train_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=True)
+        test_subset = Subset(dataset, indices=test_ids)
+        test_loader = DataLoader(test_subset, batch_size=BATCH_SIZE, shuffle=False)
         logger.info(
             f"Train batch size: {len(train_loader)} | Test batch size: {len(test_loader)}"
         )
@@ -219,8 +248,8 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
                 break
 
             if epoch % EPOCH_PRINT_INTERVAL == 0:
-                # Print training info ...
-                metrics = validate_model(model, test_loader)
+                # Log training info ...
+                metrics = validate_model(model, criterion, test_loader)
                 logger.info(
                     f"Epoch {epoch} | Average Loss: {average_epoch_loss:.4f} | F1: {metrics['f1']:.4f} | AUC: {metrics['AUC_filtered']:.4f}"
                 )
@@ -249,11 +278,11 @@ def train_model(experiment_name: str, cv: bool = False) -> None:
 if __name__ == "__main__":
     # train_model(experiment_name="testing_training_flow", cv=False)
 
+    # TESTING:
     dataset = LIDC_IDRI_DATASET(
-        img_dim=IMAGE_DIMS[-1], segmentation_configuration="none", augment_scans=False
+        img_dim=IMAGE_DIMS[2], segmentation_configuration="none", augment_scans=False
     )
     sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
-    cv_fold_losses = {}
     for fold, (train_ids, test_ids) in enumerate(
         sgkf.split(
             X=dataset.nodule_df,
@@ -261,20 +290,15 @@ if __name__ == "__main__":
             groups=dataset.nodule_df["pid"],
         )
     ):
-        logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
-
-        train_subsampler = SubsetRandomSampler(train_ids)
-        test_subsampler = SubsetRandomSampler(test_ids)
-        train_loader = dataset.get_dataloader(BATCH_SIZE, data_sampler=train_subsampler)
-        test_loader = dataset.get_dataloader(BATCH_SIZE, data_sampler=test_subsampler)
+        # logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
+        val_subset = Subset(dataset, test_ids)
+        val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
         break
 
     # Testing validation:
     model = convert_model_to_3d(
         ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
     )
-    metrics = validate_model(model, test_loader)
+    criterion = CornLoss(num_classes=NUM_CLASSES)
+    metrics = validate_model(model, criterion, val_loader)
     metrics
-
-    plt.hist(metrics["aes"], bins=5)
-    plt.title("Absolute Errors")

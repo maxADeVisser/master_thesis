@@ -219,7 +219,7 @@ def get_pred_malignancy_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
 
 def predict_binary_from_logits(
     logits: torch.Tensor,
-    return_probabilites: bool = False,
+    return_probs: bool = False,
 ) -> torch.Tensor:
     """
     Given output logits, return the binary classification based on the classification threshold
@@ -228,7 +228,6 @@ def predict_binary_from_logits(
     ---
     @logits: The model's output logits
         tensor of shape (batch_size, num_classes)
-    @classification_threshold: The threshold for binary classification
 
     Returns
     ---
@@ -237,7 +236,7 @@ def predict_binary_from_logits(
     """
     uncond_probas = get_unconditional_probas(logits)
     greater_than_3_idx = 2  # P(y > 3) - threshold for binary classification
-    if return_probabilites:
+    if return_probs:
         binary_prediction = uncond_probas[:, greater_than_3_idx]
         return binary_prediction
     else:
