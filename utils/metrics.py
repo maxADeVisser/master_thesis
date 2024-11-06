@@ -37,6 +37,14 @@ def compute_mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return round(float(np.mean((y_true - y_pred) ** 2)), DECIMAL_PLACES)
 
 
+def compute_mae(errors: np.ndarray) -> float:
+    """
+    Computes the mean absolute error (MAE).
+    @errors are computed from the @compute_errors function.
+    """
+    return round(float(np.mean(np.abs(errors))), DECIMAL_PLACES)
+
+
 def compute_ovr_AUC(
     all_true_labels: np.ndarray, all_class_proba_preds: np.ndarray
 ) -> float:

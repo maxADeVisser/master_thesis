@@ -5,6 +5,8 @@ Adapted from kuangliu/pytorch-cifar.
 """
 
 # %%
+from typing import Literal
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -139,16 +141,29 @@ class ResNet(nn.Module):
             return self.features(x).view(x.size(0), -1)
 
 
-def ResNet50(in_channels: int, num_classes: int) -> ResNet:
+def ResNet50(
+    in_channels: int, num_classes: int, dims: Literal["2D", "3D"] = "3D"
+) -> ResNet:
     """
     Return a ResNet50 model for the given number of input channels and classes.
     The ResNet50 model has 3 layers with 3, 4, 6, and 3 blocks each.
     """
-    return ResNet(
-        num_blocks=[3, 4, 6, 3],
-        in_channels=in_channels,
-        num_classes=num_classes,
-    )
+    if dims == "3D":
+        return convert_model_to_3d(
+            ResNet(
+                num_blocks=[3, 4, 6, 3],
+                in_channels=in_channels,
+                num_classes=num_classes,
+            )
+        )
+    elif dims == "2D":
+        return ResNet(
+            num_blocks=[3, 4, 6, 3],
+            in_channels=in_channels,
+            num_classes=num_classes,
+        )
+    else:
+        raise ValueError("Invalid value for dims. Must be '2D' or '3D'")
 
 
 def get_conditional_probas(logits: torch.Tensor) -> torch.Tensor:
@@ -260,14 +275,13 @@ def convert_model_to_3d(model: nn.Module) -> nn.Module:
 
 # %%
 if __name__ == "__main__":
-    img_dim = 70
+    img_dim = 10
     channels = 1  # 1 for grayscale (or one-dimensional data)
     batch_size = 2
     n_classes = 5
 
     # Test 3D input
-    model = ResNet50(in_channels=1, num_classes=5)  # 2D model
-    model = convert_model_to_3d(model)  # 3D model
+    model = ResNet50(in_channels=1, num_classes=5, dims="3D")
     test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
     test_input.shape
 

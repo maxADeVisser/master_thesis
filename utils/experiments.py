@@ -8,7 +8,6 @@ from utils.common_imports import *
 class ExperimentDataset(BaseModel):
     """Base Experiment Dataset for input validation"""
 
-    dataset_desc: str = Field(..., description="Description of the dataset.")
     image_dims: list[int] = Field(
         ..., description="Uniform dimensions of the images: (H, W, D)"
     )
@@ -18,9 +17,6 @@ class ExperimentDataset(BaseModel):
     )
     segment_nodule: Literal["none", "remove_background", "remove_nodule"] = Field(
         "none", description="Segmentation setting for the nodules."
-    )
-    validation_split: float = Field(  # TODO not used yet ...
-        0.2, description="Fraction of data to use for validation split."
     )
 
 
@@ -44,9 +40,6 @@ class ExperimentTraining(BaseModel):
         ..., gt=0, description="Learning rate for the optimizer."
     )
     num_epochs: int = Field(..., ge=1, description="Number of epochs for training.")
-    epoch_print_interval: int = Field(
-        10, description="Interval for printing epoch info."
-    )
     cross_validation_folds: int | None = Field(
         None, description="If provided, determines number of CV folds. If None, no CV."
     )
@@ -71,7 +64,6 @@ class ExperimentResults(BaseModel):
 class BaseExperimentConfig(BaseModel):
     """Base Experiment Configuration for input validation"""
 
-    # Experiment metadata
     name: str = Field(..., description="Name of the experiment.")
     description: str = Field(..., description="Description of the experiment.")
     id: str | None = Field(
@@ -87,8 +79,6 @@ class BaseExperimentConfig(BaseModel):
     duration: dt.timedelta | None = Field(
         None, description="Duration of the experiment."
     )
-    # TODO add logs from the experiment
-    # logs: dict = Field({}, description="Logs of the experiment.")
     dataset: ExperimentDataset = Field(..., description="Dataset configuration.")
     model: ExperimentModel = Field(..., description="Model configuration.")
     training: ExperimentTraining = Field(..., description="Training configuration.")
@@ -96,7 +86,7 @@ class BaseExperimentConfig(BaseModel):
 
     def write_experiment_to_json(self, out_dir: str) -> None:
         """Write the experiment configuration to a JSON file."""
-        experiment_file_name = self.start_time.strftime("%d-%m-%Y-%H:%M:%S")
+        experiment_file_name = self.start_time.strftime("%d%m%Y_%H%M")
         with open(f"{out_dir}/run_{experiment_file_name}.json", "w") as f:
             json.dump(self.model_dump_json(), f)
 
@@ -111,9 +101,3 @@ def create_experiment_from_json(
     with open(config_json_path, "r") as f:
         config = json.load(f)
     return BaseExperimentConfig(name=name, description=desc, out_dir=out_dir, **config)
-
-
-# class ContextExperimentConfig(BaseExperimentConfig):
-#     """Context Experiment Configuration"""
-
-#     image_dims: list[int] = [8, 16, 32, 64, 128]

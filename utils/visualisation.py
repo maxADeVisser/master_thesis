@@ -9,6 +9,36 @@ from project_config import env_config, pipeline_config
 from utils.utils import get_scans_by_patient_id
 
 
+def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> None:
+    """Plots the distribution of validation errors."""
+    plt.hist(validation_erros)
+    plt.axvline(
+        x=np.mean(validation_erros),
+        color="r",
+        linestyle="--",
+        label=f"Mean Error: {np.mean(validation_erros):.2f}",
+    )
+    plt.axvline(
+        x=np.median(validation_erros),
+        color="b",
+        linestyle="--",
+        label=f"Median Error: {np.median(validation_erros):.2f}",
+    )
+    plt.legend()
+    plt.xlabel("Validation Error")
+    plt.savefig(f"{out_dir}/loss_plot.png")
+
+
+def plot_loss(avg_epoch_losses: list[float], val_loss, out_dir: str) -> None:
+    """Plots the training and validation loss across epochs."""
+    plt.plot(avg_epoch_losses, label="train_loss", color="red")
+    plt.plot(val_loss, label="val_loss", color="blue")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.savefig(f"{out_dir}/loss_plot.png")
+
+
 def show_segmentation_consensus(
     scan: pl.Scan, nodule_idx: int, clevel: float = 0.5
 ) -> None:

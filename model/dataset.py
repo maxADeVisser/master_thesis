@@ -133,7 +133,7 @@ class LIDC_IDRI_DATASET(Dataset):
         segmentation_configuration: Literal[
             "none", "remove_background", "remove_nodule"
         ] = "none",
-        augment_scans: bool = True,
+        augment_scans: bool = False,
     ) -> None:
         self.img_dim = img_dim
         self.augment_scans = augment_scans
