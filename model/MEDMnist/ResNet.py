@@ -191,7 +191,7 @@ def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
         ],
         dim=1,
     )
-    return class_probas
+    return class_probas.float()
 
 
 def get_pred_malignancy_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
@@ -214,7 +214,7 @@ def get_pred_malignancy_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
     # NOTE: i think that the +1 is not added in the @corn_label_from_logits function, because the function
     # returns the rank index, and not the rank value itself. But we can do this here, since we are predicting a
     # score from 1 to 5
-    return predicted_rank
+    return predicted_rank.int()
 
 
 def predict_binary_from_logits(
@@ -235,13 +235,13 @@ def predict_binary_from_logits(
         tensor of size (batch_size,)
     """
     uncond_probas = get_unconditional_probas(logits)
-    greater_than_3_idx = 2  # P(y > 3) - threshold for binary classification
+    greater_than_3_idx = 2  # index for P(y > 3)
     if return_probs:
         binary_prediction = uncond_probas[:, greater_than_3_idx]
-        return binary_prediction
+        return binary_prediction.float()
     else:
         binary_prediction = 0.5 <= uncond_probas[:, greater_than_3_idx]
-        return binary_prediction.float()
+        return binary_prediction.int()
 
 
 def convert_model_to_3d(model: nn.Module) -> nn.Module:

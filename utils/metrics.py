@@ -3,35 +3,81 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.calibration import calibration_curve
-from sklearn.metrics import roc_auc_score
+from sklearn.calibration import calibration_curve, label_binarize
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 from project_config import SEED
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
+DECIMAL_PLACES = 4
 
-def compute_aes(y_true: list[int], y_pred: list[int]) -> list:
+
+def compute_errors(
+    y_true: np.ndarray, y_pred: np.ndarray, absolute: bool = False
+) -> np.ndarray:
     """
-    Returns the absolute errors between the true and predicted labels.
+    Returns the absolute errors between the true and predicted labels. The mean of this is the MAE.
+    We do not aggregate them here, as we can plot the distribution of the errors and descriptive statistics.
+    @absolute: If True, returns the absolute errors.
     """
-    assert len(y_true) == len(y_pred)
-    return np.abs(np.array(y_true) - np.array(y_pred)).tolist()
+    # since the labels are 1-indexed, we subtract 1 to get the correct index
+    y_true = y_true - 1
+    y_pred = y_pred - 1
+    if absolute:
+        return np.abs(y_true - y_pred)
+    return y_true - y_pred
+
+
+def compute_mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Computes the mean squared error (MSE).
+    """
+    return round(float(np.mean((y_true - y_pred) ** 2)), DECIMAL_PLACES)
+
+
+def compute_ovr_AUC(
+    all_true_labels: np.ndarray, all_class_proba_preds: np.ndarray
+) -> float:
+    """
+    Computes the one-vs-rest AUC.
+    """
+    y_true_binary = label_binarize(all_true_labels, classes=[1, 2, 3, 4, 5])
+    ovr_AUC = roc_auc_score(
+        y_true=y_true_binary,
+        y_score=all_class_proba_preds,
+        multi_class="ovr",
+        average="weighted",
+    )
+    return round(float(ovr_AUC), DECIMAL_PLACES)
+
+
+def compute_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Computes the accuracy of the model.
+    """
+    return round(float(accuracy_score(y_true, y_pred)), DECIMAL_PLACES)
 
 
 def compute_filtered_AUC(
-    all_true_labels: list[int], all_binary_prob_predictions: list[float]
+    all_true_labels: np.ndarray, all_binary_prob_predictions: np.ndarray
 ) -> float:
-    """Calculate binary AUC for non-ambiguous cases."""
-    # Filter out ambiguous cases for binary AUC evaluation:
-    non_ambiguous_idxs = [i for i, label in enumerate(all_true_labels) if label != 3]
-    binary_predictions_filtered = [
-        all_binary_prob_predictions[i] for i in non_ambiguous_idxs
-    ]
-    labels_filtered = [all_true_labels[i] for i in non_ambiguous_idxs]
-    binary_labels = [1 if label > 3 else 0 for label in labels_filtered]
-    return roc_auc_score(y_true=binary_labels, y_score=binary_predictions_filtered)
+    """Calculate binary AUC for non-ambiguous cases only."""
+    # Filter out labels equal to 3
+    non_ambiguous_mask = all_true_labels != 3
+
+    # Filtered predictions and labels using boolean indexing
+    binary_predictions_filtered = all_binary_prob_predictions[non_ambiguous_mask]
+    labels_filtered = all_true_labels[non_ambiguous_mask]
+
+    # Create binary labels (1 if label > 3, else 0):
+    binary_labels = (labels_filtered > 3).astype(int)
+
+    return round(
+        float(roc_auc_score(y_true=binary_labels, y_score=binary_predictions_filtered)),
+        DECIMAL_PLACES,
+    )
 
 
 # NOTE: NOT USED

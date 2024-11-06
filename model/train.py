@@ -8,15 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from coral_pytorch.losses import CornLoss
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    mean_absolute_error,
-    roc_auc_score,
-    root_mean_squared_error,
-)
 from sklearn.model_selection import StratifiedGroupKFold
-from sklearn.preprocessing import label_binarize
 from torch.utils.data import DataLoader, Subset
 
 from model.dataset import LIDC_IDRI_DATASET
@@ -31,7 +23,13 @@ from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.early_stopping import EarlyStopping
 from utils.logger_setup import logger
-from utils.metrics import compute_aes, compute_filtered_AUC
+from utils.metrics import (
+    compute_accuracy,
+    compute_errors,
+    compute_filtered_AUC,
+    compute_mse,
+    compute_ovr_AUC,
+)
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
@@ -63,9 +61,10 @@ def train_epoch(
     model.to(DEVICE)
     model.train()
     running_epoch_loss = 0.0
+    n_batches = len(train_loader)
 
     for batch_idx, (inputs, labels) in enumerate(train_loader):
-        print(f"Batch {batch_idx}")  # DEBUGGING
+        print(f"Batch {batch_idx + 1}/{n_batches}")  # DEBUGGING
         inputs, labels = inputs.float().to(DEVICE), labels.float().to(DEVICE)
 
         # Zero the parameter gradients
@@ -73,7 +72,9 @@ def train_epoch(
 
         # Forward pass and loss calculation
         logits = model(inputs)
-        loss = criterion(logits, labels)
+        # TODO class labels should start at 0 according to documentation:
+        # https://raschka-research-group.github.io/coral-pytorch/api_subpackages/coral_pytorch.losses/
+        loss = criterion(logits, labels - 1)
 
         # Backward pass and optimisation
         loss.backward()
@@ -88,7 +89,7 @@ def train_epoch(
 
 def validate_model(
     model: nn.Module,
-    loss_func: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+    criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
     validation_loader: DataLoader,
 ) -> dict:
     """Validates the model according performance metrics using the provided data loader."""
@@ -96,41 +97,47 @@ def validate_model(
     model.to(DEVICE)
     model.eval()
 
-    # Preallocate tensors for storing predictions and labels:
+    # Preallocate tensors for storing predictions and labels (on the CPU):
     num_val_samples = len(validation_loader.dataset)
-    all_binary_prob_predictions = torch.empty(num_val_samples, dtype=torch.float).cpu()
-    all_rank_predictions = torch.empty(num_val_samples, dtype=torch.float).cpu()
+    all_true_labels = torch.empty(num_val_samples, dtype=torch.int, device="cpu")
+    all_binary_prob_predictions = torch.empty(
+        num_val_samples, dtype=torch.float, device="cpu"
+    )
+    all_malignancy_predictions = torch.empty(
+        num_val_samples, dtype=torch.int, device="cpu"
+    )
     all_class_proba_preds = torch.empty(
-        num_val_samples, NUM_CLASSES, dtype=torch.float
-    ).cpu()
-    all_true_labels = torch.empty(num_val_samples, dtype=torch.float).cpu()
+        num_val_samples, NUM_CLASSES, dtype=torch.float, device="cpu"
+    )
 
     start_idx = 0  # start index for storing predictions
 
     running_val_loss = 0.0
     number_of_batches = len(validation_loader)
 
-    with torch.no_grad():  # (no gradient calculations needed during validation)
-        for batch_idx, (inputs, labels) in enumerate(validation_loader):
-            print(f"Batch: {batch_idx + 1}/{number_of_batches}")
-            inputs, labels = inputs.float().to(DEVICE), labels.float().to(DEVICE)
+    # (no gradient calculations needed during validation)
+    with torch.no_grad():
+        for inputs, labels in validation_loader:
+            # move features and labels to GPU, get logits and compute loss:
+            inputs, labels = inputs.to(DEVICE).float(), labels.to(DEVICE).int()
             logits = model(inputs)
-
-            # Compute loss
-            loss = loss_func(logits, labels)
+            # (class labels should start at 0 according to corn loss documentation)
+            loss = criterion(logits, labels - 1)
             running_val_loss += loss.item()
 
-            # Get predictions and labels (on CPU):
-            binary_probas = predict_binary_from_logits(logits, return_probs=True).cpu()
-            malignancy_scores = get_pred_malignancy_score_from_logits(logits).cpu()
-            class_probas = compute_class_probs_from_logits(logits).cpu()
-            labels = labels.cpu()
+            # move to CPU for metrics calculations:
+            logits, labels = logits.cpu().float(), labels.cpu().int()
+
+            # Get predictions and labels:
+            binary_probas = predict_binary_from_logits(logits, return_probs=True)
+            malignancy_scores = get_pred_malignancy_score_from_logits(logits)
+            class_probas = compute_class_probs_from_logits(logits)
 
             # Fill the preallocated tensors with the predictions and labels
             batch_size = inputs.size(0)
             end_idx = start_idx + batch_size
             all_binary_prob_predictions[start_idx:end_idx] = binary_probas
-            all_rank_predictions[start_idx:end_idx] = malignancy_scores
+            all_malignancy_predictions[start_idx:end_idx] = malignancy_scores
             all_class_proba_preds[start_idx:end_idx] = class_probas
             all_true_labels[start_idx:end_idx] = labels
 
@@ -139,37 +146,22 @@ def validate_model(
     # --- COMPUTE METRICS ---
     avg_validation_loss = running_val_loss / number_of_batches
 
-    # TODO make sure the metrics funcs return tensors
-    # TODO move all metric calculations to the metrics.py file
-    # Get class probabilities and binary predictions for each class (for AUC OvR):
-    # all_class_proba_preds = np.stack(all_class_proba_preds)
-    y_true_binary = label_binarize(all_true_labels, classes=[1, 2, 3, 4, 5])
-
-    # convert to int
-    all_true_labels = [int(x) for x in all_true_labels]
-    all_rank_predictions = [int(x) for x in all_rank_predictions]
+    # convert to numpy:
+    all_true_labels = all_true_labels.numpy()
+    all_binary_prob_predictions = all_binary_prob_predictions.numpy()
+    all_malignancy_predictions = all_malignancy_predictions.numpy()
+    all_class_proba_preds = all_class_proba_preds.numpy()
 
     # Compute all metrics
     metric_results = {
         "avg_validation_loss": avg_validation_loss,
-        "accuracy": accuracy_score(y_true=all_true_labels, y_pred=all_rank_predictions),
-        "f1": f1_score(
-            y_true=all_true_labels, y_pred=all_rank_predictions, average="weighted"
-        ),
-        "AUC_ovr": roc_auc_score(
-            y_true=y_true_binary,
-            y_score=all_class_proba_preds,
-            multi_class="ovr",
-            average="weighted",
-        ),
-        "AUC_binary": compute_filtered_AUC(
+        "errors": compute_errors(all_true_labels, all_malignancy_predictions),
+        "accuracy": compute_accuracy(all_true_labels, all_malignancy_predictions),
+        "AUC_ovr": compute_ovr_AUC(all_true_labels, all_class_proba_preds),
+        "AUC_filtered": compute_filtered_AUC(
             all_true_labels, all_binary_prob_predictions
         ),
-        "mae": mean_absolute_error(y_true=all_true_labels, y_pred=all_rank_predictions),
-        "aes": compute_aes(y_true=all_true_labels, y_pred=all_rank_predictions),
-        "rmse": root_mean_squared_error(
-            y_true=all_true_labels, y_pred=all_rank_predictions
-        ),
+        "mse": compute_mse(all_true_labels, all_malignancy_predictions),
     }
     return metric_results
 
@@ -280,7 +272,7 @@ if __name__ == "__main__":
 
     # TESTING:
     dataset = LIDC_IDRI_DATASET(
-        img_dim=IMAGE_DIMS[2], segmentation_configuration="none", augment_scans=False
+        img_dim=IMAGE_DIMS[0], segmentation_configuration="none", augment_scans=False
     )
     sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
     for fold, (train_ids, test_ids) in enumerate(

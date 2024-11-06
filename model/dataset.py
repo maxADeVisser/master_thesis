@@ -153,7 +153,7 @@ class LIDC_IDRI_DATASET(Dataset):
             ].apply(ast.literal_eval)
 
             logger.info(
-                f"\nNodule dataframe loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}\nAUGMENT_SCANS: {self.augment_scans}"
+                f"\nLIDC-IDRI dataset loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}\nAUGMENT_SCANS: {self.augment_scans}"
             )
         except FileNotFoundError:
             raise FileNotFoundError(

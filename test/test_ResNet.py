@@ -88,7 +88,10 @@ class TestComputeClassProbsFromLogits(unittest.TestCase):
                 [0.1, 0.1, 0.1, 0.1, 0.6],
             ]
         )
+        batch_size = self.logits.size(0)
+        n_classes = self.logits.size(1) + 1
         output = compute_class_probs_from_logits(self.logits)
+        self.assertEqual(output.size(), (batch_size, n_classes))
         self.assertTrue(torch.allclose(torch.sum(output, dim=1), torch.ones(2)))
         self.assertTrue(torch.allclose(output, expected_output, atol=1e-4))
         mock_get_unconditional_probas.assert_called_once_with(self.logits)
