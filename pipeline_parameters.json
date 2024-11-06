@@ -1,6 +1,9 @@
 {
   "dataset": {
-    "dataset_desc": "LIDC-IDRI dataset",
+    "clipping_bounds": [
+      -1000,
+      400
+    ],
     "image_dims": [
       10,
       20,
@@ -10,12 +13,7 @@
       60,
       70
     ],
-    "normalisation_bounds": [
-      -1000,
-      400
-    ],
-    "segment_nodule": "none",
-    "validation_split": 0.2
+    "segment_nodule": "none"
   },
   "model": {
     "description": "Test configuration",
@@ -26,10 +24,9 @@
   "training": {
     "batch_size": 8,
     "cross_validation_folds": 10,
-    "epoch_print_interval": 10,
     "learning_rate": 0.001,
     "min_delta": 0.01,
-    "num_epochs": 10,
+    "num_epochs": 1,
     "patience": 5
   }
 }
