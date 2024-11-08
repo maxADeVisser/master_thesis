@@ -43,6 +43,10 @@ class ExperimentTraining(BaseModel):
     cross_validation_folds: int | None = Field(
         None, description="If provided, determines number of CV folds. If None, no CV."
     )
+    cv_train_folds: int = Field(
+        ...,
+        description="Number of folds to train. If train on all folds, set equal to cross_validation_folds.",
+    )
     patience: int | None = Field(
         5,
         ge=1,

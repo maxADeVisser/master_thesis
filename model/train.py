@@ -42,6 +42,7 @@ IMAGE_DIMS = pipeline_config.dataset.image_dims
 NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
 CV_FOLDS = pipeline_config.training.cross_validation_folds
+CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
 PATIENCE = pipeline_config.training.patience
 MIN_DELTA = pipeline_config.training.min_delta
@@ -181,9 +182,16 @@ def train_model(
     experiment.name = model_name
     start_time = dt.datetime.now()
     experiment.start_time = start_time
+    experiment.id = f"{experiment.name}_{start_time.strftime('%d%m_%H%M')}"
+
+    # Create output directory for experiment:
+    exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
+    if not os.path.exists(exp_out_dir):
+        os.makedirs(exp_out_dir)
+
     logger.info(
         f"""
-        Training model '{experiment.name}'
+        Training model: {experiment.name}
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
         BATCH_SIZE: {BATCH_SIZE}
@@ -191,14 +199,10 @@ def train_model(
         CROSS_VALIDATION: {cross_validation}
         ES_PATIENCE: {PATIENCE}
         ES_MIN_DELTA: {MIN_DELTA}
+
+        Output directory: {exp_out_dir}
         """
     )
-    experiment.id = f"{experiment.name}_{start_time.strftime('%d%m_%H%M')}"
-
-    # Create output directory for experiment:
-    exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
-    if not os.path.exists(exp_out_dir):
-        os.makedirs(exp_out_dir)
 
     # Create dataset for training:
     dataset = LIDC_IDRI_DATASET(
@@ -227,7 +231,7 @@ def train_model(
         criterion = CornLoss(num_classes=NUM_CLASSES)
         optimizer = optim.Adam(model.parameters(), lr=LR)
 
-        # Define train and test loaders
+        # Define train and validation loaders
         train_subset = Subset(dataset, indices=train_ids)
         train_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=True)
         val_subset = Subset(dataset, indices=val_ids)
@@ -264,7 +268,7 @@ def train_model(
             # Logging training info ...
             # TODO can we plot when training on HCP?
             plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
-            # plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
+            plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
 
             # Log epoch results:
             logger.info(
@@ -292,7 +296,11 @@ def train_model(
         cv_results[fold + 1] = fold_results
 
         if not cross_validation:
-            # do not do cross-validation (only train on one fold)
+            # do not do cross-validation (only train on one fold only)
+            break
+
+        if fold + 1 == CV_TRAIN_FOLDS:
+            # train on a specified subset of the folds only
             break
 
     # Log results of experiment:

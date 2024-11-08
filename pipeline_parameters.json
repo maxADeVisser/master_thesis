@@ -22,8 +22,9 @@
     "num_classes": 5
   },
   "training": {
-    "batch_size": 8,
+    "batch_size": 64,
     "cross_validation_folds": 10,
+    "cv_train_folds": 10,
     "learning_rate": 0.001,
     "min_delta": 0.01,
     "num_epochs": 1,

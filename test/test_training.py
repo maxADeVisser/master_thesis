@@ -3,12 +3,14 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import torch
+from coral_pytorch.losses import CornLoss
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
 
 from model.train import (
     get_pred_malignancy_score_from_logits,
     train_epoch,
+    train_model,
     validate_model,
 )
 from project_config import env_config
@@ -19,17 +21,16 @@ class TestTrainEpoch(TestCase):
     def setUp(self):
         global DEVICE
         DEVICE = "cpu"
-        self.dummy_model = nn.Linear(10, 1)
+        self.n_classes = 5
+        self.dummy_model = nn.Linear(10, self.n_classes - 1)
 
         # Set up a simple dataset and dataloader
         inputs = torch.randn(100, 10)  # 100 samples, 10 features
-        labels = torch.randn(100, 1)  # 100 labels
+        labels = torch.randint(1, 6, (100,))
         dataset = TensorDataset(inputs, labels)
         self.train_loader = DataLoader(dataset, batch_size=10)
-
-        # Define optimizer and loss criterion
         self.optimizer = optim.SGD(self.dummy_model.parameters(), lr=0.01)
-        self.criterion = nn.MSELoss()
+        self.criterion = CornLoss(num_classes=self.n_classes)
 
         self.train_func_args = (
             self.dummy_model,
@@ -154,3 +155,18 @@ class TestEarlyStopping(TestCase):
             improved_loss,
             "Best loss should update to the improved loss.",
         )
+
+
+# TODO finish this test:
+# @patch("model.MEDMnist.ResNet.predict_binary_from_logits")
+# @patch("model.MEDMnist.ResNet.get_pred_malignancy_score_from_logits")
+# @patch("model.MEDMnist.ResNet.compute_class_probs_from_logits")
+# class TestValidateModel(TestCase):
+#     def setUp(self):
+#         global DEVICE
+
+#         # Set up a simple dataset and dataloader
+#         inputs = torch.randn(100, 10)  # 100 samples, 10 features
+#         labels = torch.randn(100, 1)  # 100 labels
+#         dataset = TensorDataset(inputs, labels)
+#         self.test_loader = DataLoader(dataset, batch_size=10)
