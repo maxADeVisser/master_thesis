@@ -273,6 +273,19 @@ def convert_model_to_3d(model: nn.Module) -> nn.Module:
     return Conv3dConverter(model)
 
 
+def load_resnet_model(
+    weights_path: str,
+    in_channels: int,
+    dims: Literal["2D", "2.5D" "3D"],
+) -> nn.Module:
+    """
+    Load a ResNet model from a checkpoint file.
+    """
+    model = ResNet50(in_channels=in_channels, num_classes=5, dims=dims)
+    model.load_state_dict(torch.load(weights_path))
+    return model
+
+
 # %%
 if __name__ == "__main__":
     img_dim = 10
@@ -302,3 +315,20 @@ if __name__ == "__main__":
     # predict_binary_from_logits(logits)
 
     compute_class_probs_from_logits(logits)
+
+    # Model only trained for 1 epoch
+    model = load_resnet_model(
+        "out/model_runs/testing_training_flow_0811_1113/model_fold_0.pth",
+        in_channels=1,
+        dims="3D",
+    )
+    logits = model(test_input)
+
+    with torch.no_grad():
+        uncond = get_unconditional_probas(logits)
+        preds = get_pred_malignancy_score_from_logits(logits)
+        class_probas = compute_class_probs_from_logits(logits)
+
+    uncond
+    preds
+    class_probas
