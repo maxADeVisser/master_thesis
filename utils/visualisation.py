@@ -11,7 +11,12 @@ from utils.utils import get_scans_by_patient_id
 
 def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> None:
     """Plots the distribution of validation errors."""
-    plt.hist(validation_erros)
+    plt.hist(
+        validation_erros,
+        bins=range(min(validation_erros), max(validation_erros) + 2),
+        edgecolor="black",
+        align="left",
+    )
     plt.axvline(
         x=np.mean(validation_erros),
         color="r",
