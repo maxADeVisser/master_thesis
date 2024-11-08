@@ -60,13 +60,13 @@ class BaseExperimentConfig(BaseModel):
 
     name: str = Field(..., description="Name of the experiment.")
     id: str | None = Field(None, description="ID of the experiment.")
-    start_time: dt.datetime = Field(
+    start_time: dt.datetime | str = Field(
         dt.datetime.now(), description="Start time of the experiment."
     )
-    end_time: dt.datetime | None = Field(
+    end_time: dt.datetime | str | None = Field(
         None, description="End time of the experiment."
     )
-    duration: dt.timedelta | None = Field(
+    duration: dt.timedelta | str | None = Field(
         None, description="Duration of the experiment."
     )
     dataset: ExperimentDataset = Field(..., description="Dataset configuration.")
@@ -75,10 +75,9 @@ class BaseExperimentConfig(BaseModel):
     results: dict | None = Field(None, description="Results")
 
     def write_experiment_to_json(self, out_dir: str) -> None:
-        """Write the experiment configuration to a JSON file."""
-        experiment_file_name = self.start_time.strftime("%d%m%Y_%H%M")
-        with open(f"{out_dir}/run_{experiment_file_name}.json", "w") as f:
-            json.dump(self.model_dump_json(), f)
+        """Write the experiment to a JSON file."""
+        with open(f"{out_dir}/run_{self.id}.json", "w") as f:
+            json.dump(self.model_dump(), f)
 
 
 def create_experiment_from_json(
@@ -90,6 +89,15 @@ def create_experiment_from_json(
     with open(config_json_path, "r") as f:
         config = json.load(f)
     return BaseExperimentConfig(name=name, out_dir=out_dir, **config)
+
+
+def load_experiment_from_json(
+    experiment_file: str,
+) -> BaseExperimentConfig:
+    """Load the configuration from the pipeline parameters JSON file."""
+    with open(experiment_file, "r") as f:
+        config = json.load(f)
+    return BaseExperimentConfig(**config)
 
 
 # %%
