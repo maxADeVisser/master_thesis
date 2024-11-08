@@ -15,7 +15,6 @@ from model.dataset import LIDC_IDRI_DATASET
 from model.MEDMnist.ResNet import (
     ResNet50,
     compute_class_probs_from_logits,
-    convert_model_to_3d,
     get_pred_malignancy_score_from_logits,
     predict_binary_from_logits,
 )
@@ -27,9 +26,11 @@ from utils.metrics import (
     compute_accuracy,
     compute_errors,
     compute_filtered_AUC,
+    compute_mae,
     compute_mse,
     compute_ovr_AUC,
 )
+from utils.visualisation import plot_loss, plot_val_error_distribution
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
@@ -38,7 +39,6 @@ np.random.seed(SEED)
 LR = pipeline_config.training.learning_rate
 NUM_EPOCHS = pipeline_config.training.num_epochs
 IMAGE_DIMS = pipeline_config.dataset.image_dims
-EPOCH_PRINT_INTERVAL = pipeline_config.training.epoch_print_interval
 NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
 CV_FOLDS = pipeline_config.training.cross_validation_folds
@@ -58,21 +58,21 @@ def train_epoch(
     Trains the model for one epoch.
     Returns the average batch loss for the epoch.
     """
-    model.to(DEVICE)
+    model.to(DEVICE)  # move model to GPU
     model.train()
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
 
-    for batch_idx, (inputs, labels) in enumerate(train_loader):
-        print(f"Batch {batch_idx + 1}/{n_batches}")  # DEBUGGING
-        inputs, labels = inputs.float().to(DEVICE), labels.float().to(DEVICE)
+    for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
+        # Move data to GPU (if available):
+        inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
 
         # Zero the parameter gradients
         optimizer.zero_grad()
 
         # Forward pass and loss calculation
         logits = model(inputs)
-        # TODO class labels should start at 0 according to documentation:
+        # class labels should start at 0 according to documentation:
         # https://raschka-research-group.github.io/coral-pytorch/api_subpackages/coral_pytorch.losses/
         loss = criterion(logits, labels - 1)
 
@@ -82,8 +82,7 @@ def train_epoch(
 
         running_epoch_loss += loss.item()
 
-    # TODO Also calculate basic metrics for training set
-    average_epoch_loss = running_epoch_loss / len(train_loader)
+    average_epoch_loss = running_epoch_loss / n_batches
     return average_epoch_loss
 
 
@@ -143,154 +142,199 @@ def validate_model(
 
             start_idx += batch_size
 
-    # --- COMPUTE METRICS ---
-    avg_validation_loss = running_val_loss / number_of_batches
-
     # convert to numpy:
     all_true_labels = all_true_labels.numpy()
     all_binary_prob_predictions = all_binary_prob_predictions.numpy()
     all_malignancy_predictions = all_malignancy_predictions.numpy()
     all_class_proba_preds = all_class_proba_preds.numpy()
 
-    # Compute all metrics
-    metric_results = {
-        "avg_validation_loss": avg_validation_loss,
-        "errors": compute_errors(all_true_labels, all_malignancy_predictions),
+    # --- COMPUTE METRICS ---
+    errors = compute_errors(all_true_labels, all_malignancy_predictions)
+    val_metrics = {
+        "avg_val_loss": running_val_loss / number_of_batches,
         "accuracy": compute_accuracy(all_true_labels, all_malignancy_predictions),
         "AUC_ovr": compute_ovr_AUC(all_true_labels, all_class_proba_preds),
         "AUC_filtered": compute_filtered_AUC(
             all_true_labels, all_binary_prob_predictions
         ),
+        "errors": errors,
+        "mae": compute_mae(errors),
         "mse": compute_mse(all_true_labels, all_malignancy_predictions),
     }
-    return metric_results
+    return val_metrics
 
 
-def train_model(experiment_name: str, cv: bool = False) -> None:
+def train_model(
+    model_name: str, context_window_size: int, cross_validation: bool = False
+) -> None:
     """
     Trains the model.
-    @experiment_name: name of the experiment.
-    @cv: whether to train the model using cross-validation.
+
+    Params
+    ---
+        @model_name: name of the model trained.
+        @context_window_size: size of the context window of the nodule ROI used for training.
+        @cv: whether to train the model using cross-validation.
     """
-    # Log experiment
+    # Log experiment:
     experiment = pipeline_config.model_copy()
-    experiment.name = experiment_name
+    experiment.name = model_name
     start_time = dt.datetime.now()
     experiment.start_time = start_time
     logger.info(
         f"""
-        Running experiment '{experiment.name}'
+        Training model '{experiment.name}'
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
         BATCH_SIZE: {BATCH_SIZE}
+        CONTEXT_WINDOW_SIZE: {context_window_size}
+        CROSS_VALIDATION: {cross_validation}
+        ES_PATIENCE: {PATIENCE}
+        ES_MIN_DELTA: {MIN_DELTA}
         """
     )
     experiment.id = f"{experiment.name}_{start_time.strftime('%d%m_%H%M')}"
-    exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
 
+    # Create output directory for experiment:
+    exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
     if not os.path.exists(exp_out_dir):
         os.makedirs(exp_out_dir)
 
-    dataset = LIDC_IDRI_DATASET()  # TODO add params
+    # Create dataset for training:
+    dataset = LIDC_IDRI_DATASET(
+        img_dim=context_window_size,
+        segmentation_configuration="none",
+        augment_scans=False,
+    )
 
     # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
     cv_results = {}
-    for fold, (train_ids, test_ids) in enumerate(
+    for fold, (train_ids, val_ids) in enumerate(
         sgkf.split(
             X=dataset.nodule_df,
             y=dataset.nodule_df["malignancy_consensus"],
             groups=dataset.nodule_df["pid"],
         )
     ):
-        model = convert_model_to_3d(
-            ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
+        logger.info(f"\nStarting Fold {fold + 1}/{CV_FOLDS}")
+        fold_start_time = dt.datetime.now()
+
+        # Initialize model and move to GPU (if available)
+        model = ResNet50(
+            in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims="3D"
         ).to(DEVICE)
         criterion = CornLoss(num_classes=NUM_CLASSES)
         optimizer = optim.Adam(model.parameters(), lr=LR)
 
-        logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
-        cv_fold_info = {}
-
         # Define train and test loaders
         train_subset = Subset(dataset, indices=train_ids)
         train_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=True)
-        test_subset = Subset(dataset, indices=test_ids)
-        test_loader = DataLoader(test_subset, batch_size=BATCH_SIZE, shuffle=False)
-        logger.info(
-            f"Train batch size: {len(train_loader)} | Test batch size: {len(test_loader)}"
-        )
+        val_subset = Subset(dataset, indices=val_ids)
+        val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
 
+        # TODO set proper early stopping parameters
         es = EarlyStopping(
             checkpoint_path=f"{exp_out_dir}/model_fold_{fold}.pth",
             patience=PATIENCE,
             min_delta=MIN_DELTA,
         )
 
-        avg_fold_epoch_losses = []
-
         # --- Training Loop ---
-        for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc=f"Epoch"):
-            average_epoch_loss = train_epoch(model, train_loader, optimizer, criterion)
-            avg_fold_epoch_losses.append(average_epoch_loss)
+        avg_epoch_losses = []
+        val_losses = []
+        for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc="Epoch"):
+            avg_epoch_train_loss = train_epoch(
+                model, train_loader, optimizer, criterion
+            )
+            avg_epoch_losses.append(avg_epoch_train_loss)
 
-            es(val_loss=average_epoch_loss, model=model)
+            # Checkingpointing the model if it improves is handled by the EarlyStopping
+            es(val_loss=avg_epoch_train_loss, model=model)
             if es.early_stop:
                 logger.info("Early stopping ...")
                 break
 
-            if epoch % EPOCH_PRINT_INTERVAL == 0:
-                # Log training info ...
-                metrics = validate_model(model, criterion, test_loader)
-                logger.info(
-                    f"Epoch {epoch} | Average Loss: {average_epoch_loss:.4f} | F1: {metrics['f1']:.4f} | AUC: {metrics['AUC_filtered']:.4f}"
-                )
+            # Validate model:
+            # TODO maybe not do this every epoch ???
+            val_metrics = validate_model(model, criterion, val_loader)
+            val_losses.append(val_metrics["avg_val_loss"])
 
-        # Save fold model
-        # this is now done by the EarlyStopping class
-        # torch.save(model.state_dict(), f"{exp_out_dir}/model_fold_{fold}.pth")
+            # Logging training info ...
+            # TODO can we plot when training on HCP?
+            plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
+            # plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
 
-        # Save fold results
-        cv_fold_info["cv_epoch_losses"] = avg_fold_epoch_losses
-        cv_fold_info["eval_metrics"] = metrics
-        cv_results[fold] = cv_fold_info
+            # Log epoch results:
+            logger.info(
+                f"""
+                [[Fold {fold + 1}/{CV_FOLDS}]] - [Epoch {epoch}]
+                Average Training Loss: {avg_epoch_train_loss:.4f}
+                Average Validation Loss: {val_metrics['avg_val_loss']:.4f}
+                Val Accuracy: {val_metrics['accuracy']:.4f}
+                Val AUC_filtered: {val_metrics['AUC_filtered']:.4f}
+                Val AUC_ovr: {val_metrics['AUC_ovr']:.4f}
+                Val MAE: {np.mean(np.abs(val_metrics['errors'])):.4f}
+                Val MSE: {val_metrics['mse']:.4f}
+                """
+            )
 
-        if not cv:
-            # only train for one fold (do not do CV)
+        fold_end_time = dt.datetime.now()
+        fold_duration_time = fold_end_time - fold_start_time
+
+        # Store fold results:
+        fold_results = {}
+        fold_results["fold_duration_seconds"] = fold_duration_time.total_seconds()
+        fold_results["avg_epoch_train_losses"] = avg_epoch_losses
+        fold_results["avg_epoch_val_losses"] = val_losses
+        fold_results["eval_metrics"] = val_metrics
+        cv_results[fold + 1] = fold_results
+
+        if not cross_validation:
+            # do not do cross-validation (only train on one fold)
             break
 
     # Log results of experiment:
     experiment.end_time = dt.datetime.now()
     experiment.duration = experiment.end_time - experiment.start_time
+    # cast datetimes to strings for JSON serialization:
+    experiment.start_time = str(experiment.start_time)
+    experiment.end_time = str(experiment.end_time)
+    experiment.duration = str(experiment.duration)
     experiment.results = cv_results
-    experiment.write_experiment_to_json(out_dir=f"{env_config.OUT_DIR}/model_runs")
+    experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 
 
 # %%
 if __name__ == "__main__":
-    # train_model(experiment_name="testing_training_flow", cv=False)
+    model_name = "testing_training_flow"
+    context_window_size = 10
+    cross_validation = False
+    train_model(
+        model_name="testing_training_flow",
+        context_window_size=10,
+        cross_validation=False,
+    )
 
     # TESTING:
-    dataset = LIDC_IDRI_DATASET(
-        img_dim=IMAGE_DIMS[0], segmentation_configuration="none", augment_scans=False
-    )
-    sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
-    for fold, (train_ids, test_ids) in enumerate(
-        sgkf.split(
-            X=dataset.nodule_df,
-            y=dataset.nodule_df["malignancy_consensus"],
-            groups=dataset.nodule_df["pid"],
-        )
-    ):
-        # logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
-        val_subset = Subset(dataset, test_ids)
-        val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
-        break
+    # dataset = LIDC_IDRI_DATASET(
+    #     img_dim=IMAGE_DIMS[0], segmentation_configuration="none", augment_scans=False
+    # )
+    # sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
+    # for fold, (train_ids, test_ids) in enumerate(
+    #     sgkf.split(
+    #         X=dataset.nodule_df,
+    #         y=dataset.nodule_df["malignancy_consensus"],
+    #         groups=dataset.nodule_df["pid"],
+    #     )
+    # ):
+    #     # logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
+    #     val_subset = Subset(dataset, test_ids)
+    #     val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
+    #     break
 
-    # Testing validation:
-    model = convert_model_to_3d(
-        ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES)
-    )
-    criterion = CornLoss(num_classes=NUM_CLASSES)
-    metrics = validate_model(model, criterion, val_loader)
-    metrics
+    # # Testing validation:
+    # model = ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims="3D")
+    # criterion = CornLoss(num_classes=NUM_CLASSES)
+    # metrics = validate_model(model, criterion, val_loader)
+    # metrics
