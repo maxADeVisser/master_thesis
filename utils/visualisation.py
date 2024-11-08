@@ -31,7 +31,7 @@ def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> No
     )
     plt.legend()
     plt.xlabel("Validation Error")
-    plt.savefig(f"{out_dir}/loss_plot.png")
+    plt.savefig(f"{out_dir}/error_distribution.png")
 
 
 def plot_loss(avg_epoch_losses: list[float], val_loss, out_dir: str) -> None:

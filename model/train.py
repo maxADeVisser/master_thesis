@@ -252,11 +252,12 @@ def train_model(
             # Checkingpointing the model if it improves is handled by the EarlyStopping
             es(val_loss=avg_epoch_train_loss, model=model)
             if es.early_stop:
-                logger.info("Early stopping ...")
+                logger.info(f"Early stopping at epoch {epoch}")
                 break
 
             # Validate model:
             # TODO maybe not do this every epoch ???
+            # if epoch % 5 == 0: # validate every 5 epochs
             val_metrics = validate_model(model, criterion, val_loader)
             val_losses.append(val_metrics["avg_val_loss"])
 
@@ -307,9 +308,9 @@ def train_model(
 
 # %%
 if __name__ == "__main__":
-    model_name = "testing_training_flow"
-    context_window_size = 10
-    cross_validation = False
+    # model_name = "testing_training_flow"
+    # context_window_size = 10
+    # cross_validation = False
     train_model(
         model_name="testing_training_flow",
         context_window_size=10,
