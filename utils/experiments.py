@@ -1,3 +1,4 @@
+# %%
 import datetime as dt
 
 from pydantic import BaseModel, Field
@@ -24,7 +25,6 @@ class ExperimentModel(BaseModel):
     """Base Experiment Model for input validation"""
 
     name: str = Field(..., description="Name of the model.")
-    description: str = Field(..., description="Description of the model.")
     num_classes: int = Field(
         ..., ge=2, description="Number of output classes for classification."
     )
@@ -55,21 +55,11 @@ class ExperimentTraining(BaseModel):
     )
 
 
-class ExperimentResults(BaseModel):
-    """Base Experiment Evaluation for input validation"""
-
-    cv_results: dict = Field(..., description="Cross-validation results.")
-
-
 class BaseExperimentConfig(BaseModel):
     """Base Experiment Configuration for input validation"""
 
     name: str = Field(..., description="Name of the experiment.")
-    description: str = Field(..., description="Description of the experiment.")
-    id: str | None = Field(
-        None,
-        description="Unique identifier of the experiment. Has format NAME_DDMMYYYY_HHMMSS",
-    )
+    id: str | None = Field(None, description="ID of the experiment.")
     start_time: dt.datetime = Field(
         dt.datetime.now(), description="Start time of the experiment."
     )
@@ -82,7 +72,7 @@ class BaseExperimentConfig(BaseModel):
     dataset: ExperimentDataset = Field(..., description="Dataset configuration.")
     model: ExperimentModel = Field(..., description="Model configuration.")
     training: ExperimentTraining = Field(..., description="Training configuration.")
-    results: ExperimentResults | None = Field(None, description="Experiment Results.")
+    results: dict | None = Field(None, description="Results")
 
     def write_experiment_to_json(self, out_dir: str) -> None:
         """Write the experiment configuration to a JSON file."""
@@ -93,11 +83,18 @@ class BaseExperimentConfig(BaseModel):
 
 def create_experiment_from_json(
     name: str,
-    desc: str,
     out_dir: str,
     config_json_path: str = "pipeline_parameters.json",
 ) -> BaseExperimentConfig:
     """Load the configuration from the pipeline parameters JSON file."""
     with open(config_json_path, "r") as f:
         config = json.load(f)
-    return BaseExperimentConfig(name=name, description=desc, out_dir=out_dir, **config)
+    return BaseExperimentConfig(name=name, out_dir=out_dir, **config)
+
+
+# %%
+if __name__ == "__main__":
+    name = "test"
+    out_dir = "out"
+    config_json_path = "pipeline_parameters.json"
+    test = create_experiment_from_json(name, out_dir)

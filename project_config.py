@@ -23,7 +23,6 @@ class _EnvConfig:
     """
 
     def __init__(self):
-        # TODO write these attributes in a configuration file and load them here instead
         assert os.getenv(
             "LIDC_IDRI_DIR"
         ), "Please set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
@@ -90,6 +89,4 @@ class _EnvConfig:
 # Singleton pattern: only one instance of the Config class is created
 env_config = _EnvConfig()
 
-pipeline_config = create_experiment_from_json(
-    name="test", desc="first test experiment", out_dir=env_config.OUT_DIR
-)
+pipeline_config = create_experiment_from_json(name="test", out_dir=env_config.OUT_DIR)
