@@ -41,9 +41,9 @@ class _EnvConfig:
                 if os.path.isdir(os.path.join(lidc_idri_dir, pid))
             ]
         )
-        self.nodule_df_file = f"{out_dir}/nodule_df.csv"
-        self.processed_nodule_df_file = f"{out_dir}/processed_nodule_df.csv"
-        self.hold_out_nodule_df_file = f"{out_dir}/hold_out_nodule_df.csv"
+        self.nodule_df_file = f"preprocessing/nodule_df.csv"
+        self.processed_nodule_df_file = f"preprocessing/processed_nodule_df.csv"
+        self.hold_out_nodule_df_file = f"preprocessing/hold_out_nodule_df.csv"
         # self.dicom_encoding_mapping_file = "utils/dicom_encoding_mapping.pkl"
         # self.meta_dataframe_file = "utils/meta_dataframe.parquet"
         # self.excluded_dicom_attributes = [
