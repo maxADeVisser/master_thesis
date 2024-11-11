@@ -68,6 +68,7 @@ def train_epoch(
     Returns the average batch loss for the epoch.
     """
     model.to(DEVICE)  # move model to GPU
+    print("model is on device:", next(model.parameters()).device)
     model.train()
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
