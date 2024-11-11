@@ -1,6 +1,14 @@
 """Script for training a model"""
 
 # %%
+import os
+import sys
+
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+sys.path.append(os.getenv("PROJECT_DIR"))
+
 import datetime as dt
 from typing import Callable
 
@@ -11,7 +19,6 @@ from coral_pytorch.losses import CornLoss
 from sklearn.model_selection import StratifiedGroupKFold
 from torch.utils.data import DataLoader, Subset
 
-from model.dataset import LIDC_IDRI_DATASET
 from model.MEDMnist.ResNet import (
     ResNet50,
     compute_class_probs_from_logits,
@@ -278,8 +285,8 @@ def train_model(
                 break
 
             # Logging training info ...
-            # plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
-            # plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
+            plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
+            plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
 
             # Log epoch results:
             logger.info(

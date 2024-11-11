@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from utils.experiments import create_experiment_from_json
 
-load_dotenv(".env")  # Load environment variables from .env file
+load_dotenv(".env")
 
 
 SEED = 39  # Seed for reproducibility
