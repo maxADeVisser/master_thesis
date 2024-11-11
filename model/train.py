@@ -19,6 +19,7 @@ from coral_pytorch.losses import CornLoss
 from sklearn.model_selection import StratifiedGroupKFold
 from torch.utils.data import DataLoader, Subset
 
+from model.dataset import LIDC_IDRI_DATASET
 from model.MEDMnist.ResNet import (
     ResNet50,
     compute_class_probs_from_logits,
