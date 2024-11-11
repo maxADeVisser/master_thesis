@@ -5,7 +5,6 @@ import torch
 from pylidc.utils import consensus, volume_viewer
 from torch.utils.data import DataLoader, Dataset
 
-from model.data_augmentations import apply_augmentations
 from preprocessing.processing import clip_and_normalise_volume
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
@@ -133,10 +132,8 @@ class LIDC_IDRI_DATASET(Dataset):
         segmentation_configuration: Literal[
             "none", "remove_background", "remove_nodule"
         ] = "none",
-        augment_scans: bool = False,
     ) -> None:
         self.img_dim = img_dim
-        self.augment_scans = augment_scans
         self.segmentation_configuration = segmentation_configuration
         self.patient_ids = env_config.patient_ids
 
@@ -153,7 +150,7 @@ class LIDC_IDRI_DATASET(Dataset):
             ].apply(ast.literal_eval)
 
             logger.info(
-                f"\nLIDC-IDRI dataset loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}\nAUGMENT_SCANS: {self.augment_scans}"
+                f"\nLIDC-IDRI dataset loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}"
             )
         except FileNotFoundError:
             raise FileNotFoundError(
@@ -173,8 +170,6 @@ class LIDC_IDRI_DATASET(Dataset):
             segmentation_setting=self.segmentation_configuration,
             nodule_context_size=self.img_dim,
         )
-        if self.augment_scans:
-            nodule.nodule_roi = apply_augmentations(nodule.nodule_roi)
 
         return nodule.nodule_roi, nodule.malignancy_consensus
 
@@ -184,9 +179,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # testing dataloader
-    dataset = LIDC_IDRI_DATASET(
-        img_dim=70, segmentation_configuration="none", augment_scans=True
-    )
+    dataset = LIDC_IDRI_DATASET(img_dim=70, segmentation_configuration="none")
     train_loader = DataLoader(
         dataset, batch_size=1, shuffle=True, num_workers=4, pin_memory=True
     )

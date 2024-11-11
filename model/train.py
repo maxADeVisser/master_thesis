@@ -178,9 +178,10 @@ def train_model(
         @cv: whether to train the model using cross-validation.
     """
     # Log experiment:
-    experiment = pipeline_config.model_copy()
-    experiment.name = model_name
     start_time = dt.datetime.now()
+    experiment = pipeline_config.model_copy()
+    experiment.training.context_window_size = context_window_size
+    experiment.name = model_name
     experiment.start_time = start_time
     experiment.id = f"{experiment.name}_{start_time.strftime('%d%m_%H%M')}"
 
@@ -208,7 +209,6 @@ def train_model(
     dataset = LIDC_IDRI_DATASET(
         img_dim=context_window_size,
         segmentation_configuration="none",
-        augment_scans=False,
     )
 
     # --- Cross Validation ---
@@ -238,7 +238,7 @@ def train_model(
         val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
 
         # TODO set proper early stopping parameters
-        es = EarlyStopping(
+        early_stopper = EarlyStopping(
             checkpoint_path=f"{exp_out_dir}/model_fold_{fold}.pth",
             patience=PATIENCE,
             min_delta=MIN_DELTA,
@@ -248,22 +248,28 @@ def train_model(
         avg_epoch_losses = []
         val_losses = []
         for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc="Epoch"):
+            if epoch == 50 or epoch == 75:
+                # decreasing learning rate at specified epochs:
+                for param_group in optimizer.param_groups:
+                    param_group["lr"] *= 0.1
+                logger.info(
+                    f"Learning rate adjusted to: {optimizer.param_groups[0]['lr']}"
+                )
+
             avg_epoch_train_loss = train_epoch(
                 model, train_loader, optimizer, criterion
             )
             avg_epoch_losses.append(avg_epoch_train_loss)
 
-            # Checkingpointing the model if it improves is handled by the EarlyStopping
-            es(val_loss=avg_epoch_train_loss, model=model)
-            if es.early_stop:
-                logger.info(f"Early stopping at epoch {epoch}")
-                break
-
             # Validate model:
-            # TODO maybe not do this every epoch ???
-            # if epoch % 5 == 0: # validate every 5 epochs
             val_metrics = validate_model(model, criterion, val_loader)
             val_losses.append(val_metrics["avg_val_loss"])
+
+            # (NOTE: Checkingpointing the model if it improves is handled by the EarlyStopping)
+            early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
+            if early_stopper.early_stop:
+                logger.info(f"Early stopping at epoch {epoch}")
+                break
 
             # Logging training info ...
             # TODO can we plot when training on HCP?
@@ -321,13 +327,13 @@ if __name__ == "__main__":
     # cross_validation = False
     train_model(
         model_name="testing_training_flow",
-        context_window_size=10,
+        context_window_size=20,
         cross_validation=False,
     )
 
     # TESTING:
     # dataset = LIDC_IDRI_DATASET(
-    #     img_dim=IMAGE_DIMS[0], segmentation_configuration="none", augment_scans=False
+    #     img_dim=IMAGE_DIMS[0], segmentation_configuration="none"
     # )
     # sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
     # for fold, (train_ids, test_ids) in enumerate(

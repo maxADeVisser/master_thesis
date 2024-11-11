@@ -10,7 +10,7 @@ def train_context_models(context_window_sizes: list[int]) -> None:
     logger.info(f"\nTraining models with context window sizes:\n{context_window_sizes}")
     for context_size in context_window_sizes:
         train_model(
-            model_name=f"ContextWindow{context_size}",
+            model_name=f"contextwindow{context_size}",
             context_window_size=context_size,
             cross_validation=True,
         )

@@ -57,6 +57,7 @@ class ExperimentTraining(BaseModel):
         ge=0,
         description="Early stopping parameter: minimum change in the monitored metric to qualify as an improvement.",
     )
+    context_window_size: int | None = Field(None, description="Image dimension.")
 
 
 class BaseExperimentConfig(BaseModel):
