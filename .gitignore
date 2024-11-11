@@ -6,7 +6,6 @@ max/
 logs/*
 mlruns/
 mlartifacts/
-hpc/
 *.png
 *jpg
 *tar.gz
