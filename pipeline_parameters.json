@@ -1,7 +1,18 @@
 {
   "dataset": {
-    "clipping_bounds": [-1000, 400],
-    "image_dims": [10, 20, 30, 40, 50, 60, 70],
+    "clipping_bounds": [
+      -1000,
+      400
+    ],
+    "image_dims": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70
+    ],
     "segment_nodule": "none"
   },
   "model": {
