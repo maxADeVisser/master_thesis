@@ -8,7 +8,7 @@
 
 2. Once installed, run `poetry install` which will install all dependencies specified in the `pyproject.toml` file
 
-3. add a `.env` file in the root of the working directory and specify `LIDC_IDRI_DIR` as the directory path for the downloaded dataset
+3. add a `.env` file in the root of the working directory and specify `LIDC_IDRI_DIR` as the directory path for the downloaded dataset. This needs to be the folder named "LIDC-IDRI". E.g. `manifest-1600709154662/LIDC-IDRI/`
 
 ```mermaid
 ---
