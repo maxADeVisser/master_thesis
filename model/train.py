@@ -72,8 +72,6 @@ def train_epoch(
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
 
-    # DEBUGGING
-    c = 0
     for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
@@ -92,11 +90,6 @@ def train_epoch(
         optimizer.step()
 
         running_epoch_loss += loss.item()
-
-        # DEBUGGING only run 10 batches
-        c += 1
-        if c == 10:
-            break
 
     average_epoch_loss = running_epoch_loss / n_batches
     return average_epoch_loss

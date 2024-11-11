@@ -19,7 +19,7 @@ script should be run again with the hold out set filtered out.
 # from utils.common_imports import *
 # from utils.logger_setup import logger
 
-# nodule_df = pd.read_csv(f"{env_config.OUT_DIR}/nodule_df.csv")
+# nodule_df = pd.read_csv(f"{env_config.nodule_df_file}")
 # FOLDS = 10  # use ~10 percent of the data in the hold out set
 
 # sgkf = StratifiedGroupKFold(n_splits=FOLDS, shuffle=True, random_state=SEED)

@@ -139,9 +139,7 @@ class LIDC_IDRI_DATASET(Dataset):
 
         try:
             # Read in the nodule dataframe and convert the string representations to python objects
-            self.nodule_df = pd.read_csv(
-                f"{env_config.OUT_DIR}/processed_nodule_df.csv"
-            )
+            self.nodule_df = pd.read_csv(f"{env_config.processed_nodule_df_file}")
             self.nodule_df[f"consensus_bbox_{self.img_dim}"] = self.nodule_df[
                 f"consensus_bbox_{self.img_dim}"
             ].apply(ast.literal_eval)

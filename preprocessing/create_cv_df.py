@@ -2,7 +2,7 @@
 
 from sklearn.model_selection import StratifiedGroupKFold
 
-from project_config import SEED, pipeline_config
+from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 
 # SCRIPT PARAMS:
@@ -84,5 +84,5 @@ def add_cv_info(nodule_df: pd.DataFrame) -> None:
 
 
 if __name__ == "__main__":
-    nodule_df = pd.read_csv("out/nodule_df.csv")
+    nodule_df = pd.read_csv(f"{env_config.nodule_df_file}")
     nodule_df = add_cv_info(nodule_df)
