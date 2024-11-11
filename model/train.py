@@ -75,6 +75,7 @@ def train_epoch(
     for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
+        print("data is one device:", inputs.device, labels.device)
 
         # Zero the parameter gradients
         optimizer.zero_grad()
