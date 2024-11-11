@@ -327,8 +327,8 @@ def train_model(
 
 # %%
 if __name__ == "__main__":
-    model_name = "testing_training_flow"
-    context_window_size = 10
+    model_name = "first_run_on_hpc"
+    context_window_size = 70
     cross_validation = False
     train_model(
         model_name=model_name,
