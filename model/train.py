@@ -68,7 +68,6 @@ def train_epoch(
     Returns the average batch loss for the epoch.
     """
     model.to(DEVICE)  # move model to GPU
-    print("model is on device:", next(model.parameters()).device)
     model.train()
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
@@ -76,7 +75,6 @@ def train_epoch(
     for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
-        print("data is one device:", inputs.device, labels.device)
 
         # Zero the parameter gradients
         optimizer.zero_grad()
