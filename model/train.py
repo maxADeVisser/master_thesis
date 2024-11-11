@@ -64,6 +64,8 @@ def train_epoch(
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
 
+    # DEBUGGING
+    c = 0
     for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
@@ -82,6 +84,11 @@ def train_epoch(
         optimizer.step()
 
         running_epoch_loss += loss.item()
+
+        # DEBUGGING only run 10 batches
+        c += 1
+        if c == 10:
+            break
 
     average_epoch_loss = running_epoch_loss / n_batches
     return average_epoch_loss
@@ -110,8 +117,7 @@ def validate_model(
         num_val_samples, NUM_CLASSES, dtype=torch.float, device="cpu"
     )
 
-    start_idx = 0  # start index for storing predictions
-
+    start_idx = 0
     running_val_loss = 0.0
     number_of_batches = len(validation_loader)
 
@@ -265,16 +271,15 @@ def train_model(
             val_metrics = validate_model(model, criterion, val_loader)
             val_losses.append(val_metrics["avg_val_loss"])
 
-            # (NOTE: Checkingpointing the model if it improves is handled by the EarlyStopping)
+            # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
             early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
             if early_stopper.early_stop:
                 logger.info(f"Early stopping at epoch {epoch}")
                 break
 
             # Logging training info ...
-            # TODO can we plot when training on HCP?
-            plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
-            plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
+            # plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
+            # plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
 
             # Log epoch results:
             logger.info(
@@ -322,13 +327,13 @@ def train_model(
 
 # %%
 if __name__ == "__main__":
-    # model_name = "testing_training_flow"
-    # context_window_size = 10
-    # cross_validation = False
+    model_name = "testing_training_flow"
+    context_window_size = 10
+    cross_validation = False
     train_model(
-        model_name="testing_training_flow",
-        context_window_size=20,
-        cross_validation=False,
+        model_name=model_name,
+        context_window_size=context_window_size,
+        cross_validation=cross_validation,
     )
 
     # TESTING:

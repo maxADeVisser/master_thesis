@@ -95,5 +95,7 @@ class _EnvConfig:
 # Singleton pattern: only one instance of the Config class is created
 env_config = _EnvConfig()
 
-pipeline_config = create_experiment_from_json(name="test", out_dir=env_config.OUT_DIR)
+pipeline_config = create_experiment_from_json(
+    name="raw_configuration", out_dir=env_config.OUT_DIR
+)
 # %%
