@@ -16,18 +16,17 @@ DECIMAL_PLACES = 4
 
 def compute_errors(
     y_true: np.ndarray, y_pred: np.ndarray, absolute: bool = False
-) -> list:
+) -> list[int]:
     """
     Returns the absolute errors between the true and predicted labels. The mean of this is the MAE.
     We do not aggregate them here, as we can plot the distribution of the errors and descriptive statistics.
     @absolute: If True, returns the absolute errors.
     """
-    # since the labels are 1-indexed, we subtract 1 to get the correct index
-    y_true = y_true - 1
-    y_pred = y_pred - 1
+    # since the labels start from 1, we subtract 1 to make them 0-indexed
+    y_true, y_pred = y_true - 1, y_pred - 1
     if absolute:
-        return np.abs(y_true - y_pred)
-    return (y_true - y_pred).tolist()
+        return np.abs(y_pred - y_true)
+    return (y_pred - y_true).tolist()
 
 
 def compute_mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
