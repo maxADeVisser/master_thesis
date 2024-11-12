@@ -38,7 +38,7 @@ from utils.metrics import (
     compute_mse,
     compute_ovr_AUC,
 )
-from utils.visualisation import plot_loss
+from utils.visualisation import plot_loss, plot_val_error_distribution
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
@@ -243,7 +243,6 @@ def train_model(
         criterion = CornLoss(num_classes=NUM_CLASSES)
         optimizer = optim.Adam(model.parameters(), lr=LR)
 
-        # Define train and validation loaders
         train_subset = Subset(dataset, indices=train_ids)
         train_loader = DataLoader(
             train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
@@ -286,10 +285,9 @@ def train_model(
                 logger.info(f"Early stopping at epoch {epoch}")
                 break
 
-            # Logging training info ...
-            plot_loss(avg_epoch_losses, val_losses, out_dir=fold_out_dir)
-
             # Log epoch results:
+            plot_loss(avg_epoch_losses, val_losses, out_dir=fold_out_dir)
+            plot_val_error_distribution(val_metrics["errors"], out_dir=fold_out_dir)
             logger.info(
                 f"""
                 [[Fold {fold + 1}/{CV_FOLDS}]] - [Epoch {epoch}]

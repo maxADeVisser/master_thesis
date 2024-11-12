@@ -33,6 +33,15 @@ def update_loss_plot(experiment_id: str) -> None:
     _transfer_hpc_to_local(hpc_out, out_dir)
 
 
+def get_error_distribution(experiment_id: str) -> None:
+    """
+    Fetch the latest error distribution from the HPC
+    """
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/error_distribution.png"
+    out_dir = f"/Users/maxvisser/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
+    _transfer_hpc_to_local(hpc_out, out_dir)
+
+
 def fetch_model_weights(experiment_id: str) -> None:
     """
     Fetch the model weights from the HPC

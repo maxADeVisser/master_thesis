@@ -37,12 +37,12 @@ def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> No
     plt.close()
 
 
-def plot_loss(avg_epoch_losses: list[float], val_loss, out_dir: str) -> None:
+def plot_loss(train_losses: list[float], val_losses, out_dir: str) -> None:
     """
     Plots the training and validation loss across epochs.
     """
-    plt.plot(avg_epoch_losses, label="train_loss", color="red")
-    plt.plot(val_loss, label="val_loss", color="blue")
+    plt.plot(train_losses, label="train_loss", color="red")
+    plt.plot(val_losses, label="val_loss", color="blue")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.legend()
