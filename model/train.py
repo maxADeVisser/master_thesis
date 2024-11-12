@@ -212,11 +212,11 @@ def train_model(
         Output directory: {exp_out_dir}
 
         Device used: {DEVICE}
-        GPU name: {torch.cuda.get_device_name(0)}
         """
-    )
+    if DEVICE.type == "cuda:0":
+        log_message += f"GPU name: {torch.cuda.get_device_name(0)}"
+    logger.info(log_message)
 
-    # Create dataset for training:
     dataset = LIDC_IDRI_DATASET(
         img_dim=context_window_size,
         segmentation_configuration="none",
@@ -235,6 +235,8 @@ def train_model(
         logger.info(f"\nStarting Fold {fold + 1}/{CV_FOLDS}")
         fold_start_time = dt.datetime.now()
         fold_out_dir = f"{exp_out_dir}_fold{fold}"
+        if not os.path.exists(fold_out_dir):
+            os.makedirs(fold_out_dir)
 
         # Initialize model and move to GPU (if available)
         model = ResNet50(
