@@ -38,7 +38,7 @@ from utils.metrics import (
     compute_mse,
     compute_ovr_AUC,
 )
-from utils.visualisation import plot_loss, plot_val_error_distribution
+from utils.visualisation import plot_loss
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
@@ -54,7 +54,7 @@ CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
 PATIENCE = pipeline_config.training.patience
 MIN_DELTA = pipeline_config.training.min_delta
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def train_epoch(
@@ -68,6 +68,14 @@ def train_epoch(
     Returns the average batch loss for the epoch.
     """
     model.to(DEVICE)  # move model to GPU
+    logger.info(
+        f"""
+                Model is on GPU: {next(model.parameters()).is_cuda}
+                Current device: {torch.cuda.current_device()}
+                Device name: {torch.cuda.get_device_name(0)}
+                number of GPUs: {torch.cuda.device_count()}
+                """
+    )
     model.train()
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
@@ -75,6 +83,9 @@ def train_epoch(
     for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
+        logger.info(
+            f"inputs is on GPU: {inputs.is_cuda}, labels is on GPU: {labels.is_cuda}"
+        )
 
         # Zero the parameter gradients
         optimizer.zero_grad()
@@ -101,7 +112,7 @@ def validate_model(
     validation_loader: DataLoader,
 ) -> dict:
     """Validates the model according performance metrics using the provided data loader."""
-    print("Validating model ...")
+    logger.info("Validating model ...")
     model.to(DEVICE)
     model.eval()
 
@@ -124,7 +135,7 @@ def validate_model(
 
     # (no gradient calculations needed during validation)
     with torch.no_grad():
-        for inputs, labels in validation_loader:
+        for inputs, labels in tqdm(validation_loader, "Validation Batches"):
             # move features and labels to GPU, get logits and compute loss:
             inputs, labels = inputs.to(DEVICE).float(), labels.to(DEVICE).int()
             logits = model(inputs)
@@ -240,9 +251,13 @@ def train_model(
 
         # Define train and validation loaders
         train_subset = Subset(dataset, indices=train_ids)
-        train_loader = DataLoader(train_subset, batch_size=BATCH_SIZE, shuffle=True)
+        train_loader = DataLoader(
+            train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4
+        )
         val_subset = Subset(dataset, indices=val_ids)
-        val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
+        val_loader = DataLoader(
+            val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4
+        )
 
         # TODO set proper early stopping parameters
         early_stopper = EarlyStopping(
@@ -280,7 +295,6 @@ def train_model(
 
             # Logging training info ...
             plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
-            plot_val_error_distribution(val_metrics["errors"], out_dir=exp_out_dir)
 
             # Log epoch results:
             logger.info(
@@ -305,6 +319,8 @@ def train_model(
         fold_results["avg_epoch_train_losses"] = avg_epoch_losses
         fold_results["avg_epoch_val_losses"] = val_losses
         fold_results["eval_metrics"] = val_metrics
+        fold_results["train_ids"] = train_ids.tolist()
+        fold_results["val_ids"] = val_ids.tolist()
         cv_results[fold + 1] = fold_results
 
         if not cross_validation:
