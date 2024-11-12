@@ -68,14 +68,6 @@ def train_epoch(
     Returns the average batch loss for the epoch.
     """
     model.to(DEVICE)  # move model to GPU
-    logger.info(
-        f"""
-                Model is on GPU: {next(model.parameters()).is_cuda}
-                Current device: {torch.cuda.current_device()}
-                Device name: {torch.cuda.get_device_name(0)}
-                number of GPUs: {torch.cuda.device_count()}
-                """
-    )
     model.train()
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
@@ -252,11 +244,11 @@ def train_model(
         # Define train and validation loaders
         train_subset = Subset(dataset, indices=train_ids)
         train_loader = DataLoader(
-            train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4
+            train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8
         )
         val_subset = Subset(dataset, indices=val_ids)
         val_loader = DataLoader(
-            val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4
+            val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=8
         )
 
         # TODO set proper early stopping parameters
