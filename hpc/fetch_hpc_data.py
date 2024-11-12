@@ -51,7 +51,7 @@ def fetch_model_weights(job_id: int, dest_dir: str) -> None:
 
 if __name__ == "__main__":
     experiment_id = "context30_1111_2100"
-    # get_job_stdout(
-    #     422, f"/Users/maxvisser/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
-    # )
-    update_loss_plot(experiment_id)
+    get_job_stdout(
+        422, f"/Users/maxvisser/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
+    )
+    # update_loss_plot(experiment_id)
