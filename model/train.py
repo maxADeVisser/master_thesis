@@ -345,7 +345,7 @@ def train_model(
 
 # %%
 if __name__ == "__main__":
-    model_name = "context30"
+    model_name = "c30_reduced_lr"
     context_window_size = 30
     cross_validation = False
     train_model(
