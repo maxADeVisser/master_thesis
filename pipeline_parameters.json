@@ -13,7 +13,7 @@
     "batch_size": 32,
     "cross_validation_folds": 10,
     "cv_train_folds": 3,
-    "learning_rate": 0.001,
+    "learning_rate": 0.0001,
     "min_delta": 0.01,
     "num_epochs": 100,
     "num_workers": 8,

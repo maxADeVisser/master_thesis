@@ -198,8 +198,7 @@ def train_model(
     if not os.path.exists(exp_out_dir):
         os.makedirs(exp_out_dir)
 
-    logger.info(
-        f"""
+    log_message = f"""
         [[--- Training model: {experiment.name} ---]]
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
@@ -281,12 +280,6 @@ def train_model(
             val_metrics = validate_model(model, criterion, val_loader)
             val_losses.append(val_metrics["avg_val_loss"])
 
-            # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
-            early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
-            if early_stopper.early_stop:
-                logger.info(f"Early stopping at epoch {epoch}")
-                break
-
             # Log epoch results:
             plot_loss(avg_epoch_losses, val_losses, out_dir=fold_out_dir)
             plot_val_error_distribution(val_metrics["errors"], out_dir=fold_out_dir)
@@ -302,6 +295,12 @@ def train_model(
                 Val MSE: {val_metrics['mse']:.4f}
                 """
             )
+
+            # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
+            early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
+            if early_stopper.early_stop:
+                logger.info(f"Early stopping at epoch {epoch}")
+                break
 
         fold_end_time = dt.datetime.now()
         fold_duration_time = fold_end_time - fold_start_time
