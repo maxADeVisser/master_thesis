@@ -52,7 +52,7 @@ IN_CHANNELS = pipeline_config.model.in_channels
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
-NUM_WORKERS = pipeline_config.training.num_epochs
+NUM_WORKERS = pipeline_config.training.num_workers
 PATIENCE = pipeline_config.training.patience
 MIN_DELTA = pipeline_config.training.min_delta
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -207,12 +207,13 @@ def train_model(
         CROSS_VALIDATION: {cross_validation}
         ES_PATIENCE: {PATIENCE}
         ES_MIN_DELTA: {MIN_DELTA}
+        NUM_WORKERS: {NUM_WORKERS}
 
         Output directory: {exp_out_dir}
 
         Device used: {DEVICE}
         """
-    if DEVICE.type == "cuda:0":
+    if DEVICE == "cuda:0":
         log_message += f"GPU name: {torch.cuda.get_device_name(0)}"
     logger.info(log_message)
 
