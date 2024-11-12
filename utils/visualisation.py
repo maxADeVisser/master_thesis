@@ -32,6 +32,7 @@ def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> No
     plt.legend()
     plt.xlabel("Validation Error")
     plt.savefig(f"{out_dir}/error_distribution.png")
+    plt.close()
 
 
 def plot_loss(avg_epoch_losses: list[float], val_loss, out_dir: str) -> None:
@@ -42,6 +43,7 @@ def plot_loss(avg_epoch_losses: list[float], val_loss, out_dir: str) -> None:
     plt.ylabel("Loss")
     plt.legend()
     plt.savefig(f"{out_dir}/loss_plot.png")
+    plt.close()
 
 
 def show_segmentation_consensus(
