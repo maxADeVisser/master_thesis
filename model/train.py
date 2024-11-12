@@ -52,6 +52,7 @@ IN_CHANNELS = pipeline_config.model.in_channels
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
+NUM_WORKERS = pipeline_config.training.num_epochs
 PATIENCE = pipeline_config.training.patience
 MIN_DELTA = pipeline_config.training.min_delta
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -75,9 +76,6 @@ def train_epoch(
     for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
-        logger.info(
-            f"inputs is on GPU: {inputs.is_cuda}, labels is on GPU: {labels.is_cuda}"
-        )
 
         # Zero the parameter gradients
         optimizer.zero_grad()
@@ -188,11 +186,11 @@ def train_model(
         @cv: whether to train the model using cross-validation.
     """
     # Log experiment:
-    start_time = dt.datetime.now()
     experiment = pipeline_config.model_copy()
-    experiment.training.context_window_size = context_window_size
-    experiment.name = model_name
+    start_time = dt.datetime.now()
     experiment.start_time = start_time
+    experiment.name = model_name
+    experiment.training.context_window_size = context_window_size
     experiment.id = f"{experiment.name}_{start_time.strftime('%d%m_%H%M')}"
 
     # Create output directory for experiment:
@@ -202,7 +200,7 @@ def train_model(
 
     logger.info(
         f"""
-        Training model: {experiment.name}
+        [[--- Training model: {experiment.name} ---]]
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
         BATCH_SIZE: {BATCH_SIZE}
@@ -212,6 +210,9 @@ def train_model(
         ES_MIN_DELTA: {MIN_DELTA}
 
         Output directory: {exp_out_dir}
+
+        Device used: {DEVICE}
+        GPU name: {torch.cuda.get_device_name(0)}
         """
     )
 
@@ -233,6 +234,7 @@ def train_model(
     ):
         logger.info(f"\nStarting Fold {fold + 1}/{CV_FOLDS}")
         fold_start_time = dt.datetime.now()
+        fold_out_dir = f"{exp_out_dir}_fold{fold}"
 
         # Initialize model and move to GPU (if available)
         model = ResNet50(
@@ -244,16 +246,15 @@ def train_model(
         # Define train and validation loaders
         train_subset = Subset(dataset, indices=train_ids)
         train_loader = DataLoader(
-            train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=8
+            train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
         )
         val_subset = Subset(dataset, indices=val_ids)
         val_loader = DataLoader(
-            val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=8
+            val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
         )
 
-        # TODO set proper early stopping parameters
         early_stopper = EarlyStopping(
-            checkpoint_path=f"{exp_out_dir}/model_fold_{fold}.pth",
+            checkpoint_path=f"{fold_out_dir}/model_fold{fold}.pth",
             patience=PATIENCE,
             min_delta=MIN_DELTA,
         )
@@ -286,7 +287,7 @@ def train_model(
                 break
 
             # Logging training info ...
-            plot_loss(avg_epoch_losses, val_losses, out_dir=exp_out_dir)
+            plot_loss(avg_epoch_losses, val_losses, out_dir=fold_out_dir)
 
             # Log epoch results:
             logger.info(
@@ -310,13 +311,21 @@ def train_model(
         fold_results["fold_duration_seconds"] = fold_duration_time.total_seconds()
         fold_results["avg_epoch_train_losses"] = avg_epoch_losses
         fold_results["avg_epoch_val_losses"] = val_losses
-        fold_results["eval_metrics"] = val_metrics
+        fold_results["latest_eval_metrics"] = val_metrics
+        fold_results["best_loss"] = early_stopper.best_loss
+        fold_results["epoch_stopped"] = epoch
         fold_results["train_ids"] = train_ids.tolist()
         fold_results["val_ids"] = val_ids.tolist()
+
+        # Write fold results to JSON:
+        with open(f"{fold_out_dir}/fold_results.json", "w") as f:
+            json.dump(fold_results, f)
+
+        # Store fold results in cv_results:
         cv_results[fold + 1] = fold_results
 
         if not cross_validation:
-            # do not do cross-validation (only train on one fold only)
+            # do not do cross-validation (train on one fold only)
             break
 
         if fold + 1 == CV_TRAIN_FOLDS:

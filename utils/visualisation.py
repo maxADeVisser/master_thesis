@@ -10,7 +10,9 @@ from utils.utils import get_scans_by_patient_id
 
 
 def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> None:
-    """Plots the distribution of validation errors."""
+    """
+    Plots the distribution of validation errors.
+    """
     plt.hist(
         validation_erros,
         bins=range(min(validation_erros), max(validation_erros) + 2),
@@ -36,7 +38,9 @@ def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> No
 
 
 def plot_loss(avg_epoch_losses: list[float], val_loss, out_dir: str) -> None:
-    """Plots the training and validation loss across epochs."""
+    """
+    Plots the training and validation loss across epochs.
+    """
     plt.plot(avg_epoch_losses, label="train_loss", color="red")
     plt.plot(val_loss, label="val_loss", color="blue")
     plt.xlabel("Epoch")

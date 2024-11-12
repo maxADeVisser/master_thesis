@@ -47,6 +47,9 @@ class ExperimentTraining(BaseModel):
         ...,
         description="Number of folds to train. If train on all folds, set equal to cross_validation_folds.",
     )
+    num_workers: int | None = Field(
+        None, ge=0, description="Number of workers for data loading."
+    )
     patience: int | None = Field(
         5,
         ge=1,
