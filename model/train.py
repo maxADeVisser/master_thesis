@@ -198,7 +198,8 @@ def train_model(
     if not os.path.exists(exp_out_dir):
         os.makedirs(exp_out_dir)
 
-    log_message = f"""
+    logger.info(
+        f"""
         [[--- Training model: {experiment.name} ---]]
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
@@ -212,10 +213,9 @@ def train_model(
         Output directory: {exp_out_dir}
 
         Device used: {DEVICE}
+        GPU: {torch.cuda.get_device_name(0)}
         """
-    if DEVICE == "cuda:0":
-        log_message += f"GPU name: {torch.cuda.get_device_name(0)}"
-    logger.info(log_message)
+    )
 
     dataset = LIDC_IDRI_DATASET(
         img_dim=context_window_size,
@@ -353,26 +353,3 @@ if __name__ == "__main__":
         context_window_size=context_window_size,
         cross_validation=cross_validation,
     )
-
-    # TESTING:
-    # dataset = LIDC_IDRI_DATASET(
-    #     img_dim=IMAGE_DIMS[0], segmentation_configuration="none"
-    # )
-    # sgkf = StratifiedGroupKFold(n_splits=30, shuffle=True, random_state=SEED)
-    # for fold, (train_ids, test_ids) in enumerate(
-    #     sgkf.split(
-    #         X=dataset.nodule_df,
-    #         y=dataset.nodule_df["malignancy_consensus"],
-    #         groups=dataset.nodule_df["pid"],
-    #     )
-    # ):
-    #     # logger.info(f"Fold {fold + 1}/{CV_FOLDS}")
-    #     val_subset = Subset(dataset, test_ids)
-    #     val_loader = DataLoader(val_subset, batch_size=BATCH_SIZE, shuffle=False)
-    #     break
-
-    # # Testing validation:
-    # model = ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims="3D")
-    # criterion = CornLoss(num_classes=NUM_CLASSES)
-    # metrics = validate_model(model, criterion, val_loader)
-    # metrics
