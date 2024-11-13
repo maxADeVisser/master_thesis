@@ -9,5 +9,5 @@
 #SBATCH --mem=32G
 module load Anaconda3
 source activate /opt/itu/condaenvs/pytorch/
-pip install -r requirements.txt
+pip install -r training_requirements.txt
 python model/train.py
