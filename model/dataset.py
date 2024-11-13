@@ -15,6 +15,18 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 
+def transform_3d_to_25d(volume: torch.Tensor) -> torch.Tensor:
+    """
+    Transform a 3D volume with 1 channel to a 2.5D volume with 3 channels by selecting the three middle slices and stacking them along a new axis for the channel (mimics a RGB image)
+    """
+    volume = volume.squeeze(0)  # Remove channel dimension
+    middle_slice_idx = volume.shape[0] // 2
+    z_indices = [middle_slice_idx - 1, middle_slice_idx, middle_slice_idx + 1]
+    # Change the order of the dimensions to match the expected input shape of the model:
+    transformed = volume[:, :, z_indices].permute(2, 0, 1)
+    return transformed
+
+
 class Nodule:
     """
     Helper class to store and manipulate nodule information from nodule df created by create_nodule_df.py script.
@@ -28,8 +40,10 @@ class Nodule:
         nodule_record: pd.Series,
         nodule_context_size: int,
         segmentation_setting: Literal["none", "remove_background", "remove_nodule"],
+        nodule_dim: Literal["2.5D", "3D"] = "3D",
     ) -> None:
         self.patient_id = nodule_record["pid"]
+        self.nodule_dim = nodule_dim
         self.annotation_ids = nodule_record["nodule_annotation_ids"]
         self.pylidc_annotations = [
             pl.query(pl.Annotation).filter(pl.Annotation.id == ann_id).first()
@@ -52,6 +66,9 @@ class Nodule:
             raise ValueError(
                 f"Segmentation setting {segmentation_setting} not recognised. Please choose one of: ['none', 'remove_nodule', 'remove_background']"
             )
+
+        if self.nodule_dim == "2.5D":
+            self.nodule_roi = transform_3d_to_25d(self.nodule_roi)
 
     def get_nodule_roi(self) -> torch.Tensor:
         """Returns the nodule region of interest from the scan based on the consensus bbox from the 4 annotators"""
@@ -132,8 +149,10 @@ class LIDC_IDRI_DATASET(Dataset):
         segmentation_configuration: Literal[
             "none", "remove_background", "remove_nodule"
         ] = "none",
+        n_dims: Literal["2.5D", "3D"] = "3D",
     ) -> None:
         self.img_dim = img_dim
+        self.n_dims = n_dims
         self.segmentation_configuration = segmentation_configuration
         self.patient_ids = env_config.patient_ids
 
@@ -148,7 +167,12 @@ class LIDC_IDRI_DATASET(Dataset):
             ].apply(ast.literal_eval)
 
             logger.info(
-                f"\nLIDC-IDRI dataset loaded successfully with parameters:\nIMG_DIM: {self.img_dim}\nSEGMENTATION: {self.segmentation_configuration}"
+                f"""
+                LIDC-IDRI dataset loaded successfully with parameters:
+                IMG_DIM: {self.img_dim}
+                N_DIMS: {self.n_dims}
+                SEGMENTATION: {self.segmentation_configuration}
+                """
             )
         except FileNotFoundError:
             raise FileNotFoundError(
@@ -164,9 +188,10 @@ class LIDC_IDRI_DATASET(Dataset):
         corresponding consensus malignancy score
         """
         nodule = Nodule(
-            self.nodule_df.iloc[idx],
-            segmentation_setting=self.segmentation_configuration,
+            nodule_record=self.nodule_df.iloc[idx],
             nodule_context_size=self.img_dim,
+            segmentation_setting=self.segmentation_configuration,
+            nodule_dim=self.n_dims,
         )
 
         return nodule.nodule_roi, nodule.malignancy_consensus
@@ -174,36 +199,45 @@ class LIDC_IDRI_DATASET(Dataset):
 
 # %%
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
 
-    # testing dataloader
-    dataset = LIDC_IDRI_DATASET(img_dim=70, segmentation_configuration="none")
-    train_loader = DataLoader(
-        dataset, batch_size=1, shuffle=True, num_workers=4, pin_memory=True
+    # # testing dataloader
+    dataset = LIDC_IDRI_DATASET(
+        img_dim=30, segmentation_configuration="none", n_dims="2.5D"
     )
-
+    train_loader = DataLoader(dataset, batch_size=1, shuffle=True)
     roi, label = next(iter(train_loader))
     print(roi.shape)
     middle_slice = roi.shape[-1] // 2
-    plt.imshow(roi[0][0][:, :, middle_slice], cmap="gray")
+    plt.imshow(roi[0][1], cmap="gray")
     plt.title(f"Label malignancy score: {label[0]}")
     plt.show()
 
-    # Testing data set:
-    dataset = LIDC_IDRI_DATASET(img_dim=30)
-    roi_consensus, label = dataset.__getitem__(0)
+    # # Testing data set:
+    # dataset = LIDC_IDRI_DATASET(img_dim=30)
+    # roi_consensus, label = dataset.__getitem__(0)
     # plt.imshow(roi_consensus[:, :, 35], cmap="gray")
     # plt.title(f"Label malignancy score: {label}")
     # plt.show()
 
     # Test Nodule
-    # test_nodule = Nodule(
-    #     dataset.nodule_df.iloc[0],
-    #     nodule_context_size=IMAGE_DIM,
-    #     # segmentation_setting="remove_nodule",
-    # )
-    # plt.imshow(test_nodule.nodule_roi[:, :, 35], cmap="gray")
-    # plt.show()
+    IMG_DIM = 70
+    dataset = LIDC_IDRI_DATASET(
+        img_dim=IMG_DIM, segmentation_configuration="none", n_dims="2.5D"
+    )
+
+    test_nodule = Nodule(
+        dataset.nodule_df.iloc[1],
+        nodule_context_size=IMG_DIM,
+        segmentation_setting="none",
+        nodule_dim="3D",
+        # nodule_dim="2.5D",
+    )
+    test_nodule.nodule_roi.shape
+    middle_slice = test_nodule.nodule_roi.shape[-1] // 2
+    plt.imshow(test_nodule.nodule_roi[0, :, :, middle_slice], cmap="gray")
+    plt.show()
+
     # test_nodule.visualise_nodule_bbox()
 
     # Validate that all ROIs have standardise shape (this is currently not the case!):

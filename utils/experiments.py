@@ -19,6 +19,10 @@ class ExperimentDataset(BaseModel):
     segment_nodule: Literal["none", "remove_background", "remove_nodule"] = Field(
         "none", description="Segmentation setting for the nodules."
     )
+    dimensionality: Literal["2.5D", "3D"] = Field(
+        "3D",
+        description="Dimensionality. If 2.5D, the middle +/- one slice is used. That is, it mimics a RGB image with 3 channels",
+    )
 
 
 class ExperimentModel(BaseModel):
