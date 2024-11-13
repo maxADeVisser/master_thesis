@@ -29,7 +29,7 @@ def update_error_distribution(
     """
     Fetch the latest error distribution from the HPC
     """
-    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}_fold{fold}/error_distribution.png"
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/fold{fold}/error_distribution.png"
     out_dir = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
     _transfer_hpc_to_local(hpc_out, out_dir)
 
@@ -38,33 +38,33 @@ def update_loss_plot(experiment_id: str, fold: int, user: str = "newuser") -> No
     """
     Fetch the latest loss plot from the HPC
     """
-    # TODO this line needs to be changed for the next run (the fold is a subfolder of the experiment folder now)
-    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}_fold{fold}/loss_plot.png"
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/fold{fold}/loss_plot.png"
     out_dir = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
     _transfer_hpc_to_local(hpc_out, out_dir)
 
 
-def fetch_model_weights(experiment_id: str) -> None:
+def fetch_model_weights(experiment_id: str, fold: int, user: str = "newuser") -> None:
     """
     Fetch the model weights from the HPC
     """
-    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/model_fold_0.pth"
-    out_dir = f"/Users/maxvisser/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/fold{fold}/model_fold{fold}.pth"
+    out_dir = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
     _transfer_hpc_to_local(hpc_out, out_dir)
 
 
 # %%
 if __name__ == "__main__":
-    experiment_id = "c40_1311_0915"
-    job_id = 751
+    experiment_id = "c50_25d_1311_1450"
+    job_id = 784
     fold = 0
-    user = "newuser"  # maxvisser for personal computer
+    local_user = "maxvisser"  # maxvisser for personal computer
 
     # Create out folder
-    local_path = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
+    local_path = f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
     if not os.path.exists(local_path):
         os.makedirs(local_path)
 
     get_job_stdout(job_id, local_path)
-    update_loss_plot(experiment_id, fold, user)
-    # update_error_distribution(experiment_id, fold, user)
+    update_loss_plot(experiment_id, fold, local_user)
+    update_error_distribution(experiment_id, fold, local_user)
+    fetch_model_weights(experiment_id, fold, local_user)
