@@ -150,6 +150,7 @@ class LIDC_IDRI_DATASET(Dataset):
             "none", "remove_background", "remove_nodule"
         ] = "none",
         n_dims: Literal["2.5D", "3D"] = "3D",
+        nodule_df_path: str = env_config.processed_nodule_df_file,
     ) -> None:
         self.context_size = context_size
         self.n_dims = n_dims
@@ -158,7 +159,7 @@ class LIDC_IDRI_DATASET(Dataset):
 
         try:
             # Read in the nodule dataframe and convert the string representations to python objects
-            self.nodule_df = pd.read_csv(f"{env_config.processed_nodule_df_file}")
+            self.nodule_df = pd.read_csv(nodule_df_path)
         except FileNotFoundError:
             raise FileNotFoundError(
                 "The nodule dataframe was not found. Please run the create_nodule_df.py script first"

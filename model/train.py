@@ -197,6 +197,7 @@ def train_model(
     experiment.dataset.context_window = context_window_size
     experiment.id = f"{experiment.config_name}_{start_time.strftime('%d%m_%H%M')}"
     experiment.training.gpu_used = torch.cuda.get_device_name(0)
+    experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 
     # Create output directory for experiment:
     exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
@@ -253,6 +254,15 @@ def train_model(
         if not os.path.exists(fold_out_dir):
             os.makedirs(fold_out_dir)
 
+        fold_results = {}
+        fold_results["train_ids"] = train_ids.tolist()
+        fold_results["val_ids"] = val_ids.tolist()
+        fold_results["fold_start_time"] = str(fold_start_time)
+
+        # Write initial fold setup to JSON:
+        with open(f"{fold_out_dir}/fold_results.json", "w") as f:
+            json.dump(fold_results, f)
+
         # Initialize model and move to GPU (if available)
         model = ResNet50(
             in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims=DATA_DIMENSIONALITY
@@ -270,7 +280,7 @@ def train_model(
         )
 
         early_stopper = EarlyStopping(
-            checkpoint_path=f"{fold_out_dir}/model_fold{fold}.pth",
+            checkpoint_path=f"{fold_out_dir}/model.pth",
             patience=PATIENCE,
             min_delta=MIN_DELTA,
         )
@@ -322,17 +332,14 @@ def train_model(
         fold_duration_time = fold_end_time - fold_start_time
 
         # Store fold results:
-        fold_results = {}
         fold_results["fold_duration_seconds"] = fold_duration_time.total_seconds()
         fold_results["avg_epoch_train_losses"] = avg_epoch_losses
         fold_results["avg_epoch_val_losses"] = val_losses
         fold_results["latest_eval_metrics"] = val_metrics
         fold_results["best_loss"] = early_stopper.best_loss
         fold_results["epoch_stopped"] = epoch
-        fold_results["train_ids"] = train_ids.tolist()
-        fold_results["val_ids"] = val_ids.tolist()
 
-        # Write fold results to JSON:
+        # Write final fold results to JSON:
         with open(f"{fold_out_dir}/fold_results.json", "w") as f:
             json.dump(fold_results, f)
 

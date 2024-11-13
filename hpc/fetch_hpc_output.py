@@ -67,4 +67,4 @@ if __name__ == "__main__":
     get_job_stdout(job_id, local_path)
     update_loss_plot(experiment_id, fold, local_user)
     update_error_distribution(experiment_id, fold, local_user)
-    fetch_model_weights(experiment_id, fold, local_user)
+    # fetch_model_weights(experiment_id, fold, local_user)
