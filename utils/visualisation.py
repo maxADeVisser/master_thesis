@@ -21,18 +21,19 @@ def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> No
     )
     plt.axvline(
         x=np.mean(validation_erros),
-        color="r",
+        color="red",
         linestyle="--",
         label=f"Mean Error: {np.mean(validation_erros):.2f}",
     )
     plt.axvline(
         x=np.median(validation_erros),
-        color="b",
+        color="orange",
         linestyle="--",
         label=f"Median Error: {np.median(validation_erros):.2f}",
     )
     plt.legend()
-    plt.xlabel("Validation Error")
+    plt.xlabel("Validation Malignancy Error")
+    plt.ylabel("Frequency")
     plt.savefig(f"{out_dir}/error_distribution.png")
     plt.close()
 

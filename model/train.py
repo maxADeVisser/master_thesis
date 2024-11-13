@@ -49,6 +49,7 @@ NUM_EPOCHS = pipeline_config.training.num_epochs
 IMAGE_DIMS = pipeline_config.dataset.image_dims
 NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
+DATA_DIMENSIONALITY = pipeline_config.dataset.dimensionality
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
@@ -174,7 +175,10 @@ def validate_model(
 
 
 def train_model(
-    model_name: str, context_window_size: int, cross_validation: bool = False
+    model_name: str,
+    context_window_size: int,
+    data_dimensionality: Literal["2.5D", "3D"] = "3D",
+    cross_validation: bool = False,
 ) -> None:
     """
     Trains the model.
@@ -220,6 +224,7 @@ def train_model(
     dataset = LIDC_IDRI_DATASET(
         img_dim=context_window_size,
         segmentation_configuration="none",
+        n_dims=data_dimensionality,
     )
 
     # --- Cross Validation ---
@@ -234,7 +239,7 @@ def train_model(
     ):
         logger.info(f"\nStarting Fold {fold + 1}/{CV_FOLDS}")
         fold_start_time = dt.datetime.now()
-        fold_out_dir = f"{exp_out_dir}_fold{fold}"
+        fold_out_dir = f"{exp_out_dir}/fold{fold}"
         if not os.path.exists(fold_out_dir):
             os.makedirs(fold_out_dir)
 
@@ -352,4 +357,5 @@ if __name__ == "__main__":
         model_name=model_name,
         context_window_size=context_window_size,
         cross_validation=cross_validation,
+        data_dimensionality=DATA_DIMENSIONALITY,
     )
