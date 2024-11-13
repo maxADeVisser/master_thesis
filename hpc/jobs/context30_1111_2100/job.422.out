@@ -1,0 +1,778 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting ACSConv@ git+https://github.com/M3DV/ACSConv@95dc860a77e309f010a3d8be1f675e77c7dfeda4 (from -r requirements.txt (line 1))
+  Using cached ACSConv-0.1.1-py3-none-any.whl
+Requirement already satisfied: annotated-types==0.7.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 2)) (0.7.0)
+Requirement already satisfied: contourpy==1.3.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 3)) (1.3.0)
+Requirement already satisfied: coral-pytorch==1.4.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 4)) (1.4.0)
+Requirement already satisfied: cycler==0.12.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 5)) (0.12.1)
+Requirement already satisfied: filelock==3.16.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 6)) (3.16.1)
+Requirement already satisfied: fire==0.7.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 7)) (0.7.0)
+Requirement already satisfied: fonttools==4.54.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 8)) (4.54.1)
+Requirement already satisfied: fsspec==2024.10.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 9)) (2024.10.0)
+Requirement already satisfied: imageio==2.36.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 10)) (2.36.0)
+Requirement already satisfied: Jinja2==3.1.4 in /opt/itu/condaenvs/pytorch/lib/python3.12/site-packages (from -r requirements.txt (line 11)) (3.1.4)
+Requirement already satisfied: joblib==1.4.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 12)) (1.4.2)
+Requirement already satisfied: kiwisolver==1.4.7 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 13)) (1.4.7)
+Requirement already satisfied: lazy_loader==0.4 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 14)) (0.4)
+Requirement already satisfied: MarkupSafe==3.0.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 15)) (3.0.2)
+Requirement already satisfied: matplotlib==3.9.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 16)) (3.9.2)
+Requirement already satisfied: mpmath==1.3.0 in /opt/itu/condaenvs/pytorch/lib/python3.12/site-packages (from -r requirements.txt (line 17)) (1.3.0)
+Requirement already satisfied: networkx==3.4.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 18)) (3.4.2)
+Requirement already satisfied: numpy==2.1.3 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 19)) (2.1.3)
+Requirement already satisfied: packaging==24.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 20)) (24.2)
+Requirement already satisfied: pandas==2.2.3 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 21)) (2.2.3)
+Requirement already satisfied: pillow==11.0.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 22)) (11.0.0)
+Requirement already satisfied: protobuf==5.28.3 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 23)) (5.28.3)
+Requirement already satisfied: pydantic==2.9.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 24)) (2.9.2)
+Requirement already satisfied: pydantic_core==2.23.4 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 25)) (2.23.4)
+Requirement already satisfied: pydicom==3.0.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 26)) (3.0.1)
+Requirement already satisfied: pylidc==0.2.3 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 27)) (0.2.3)
+Requirement already satisfied: pyparsing==3.2.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 28)) (3.2.0)
+Requirement already satisfied: python-dateutil==2.9.0.post0 in /opt/itu/condaenvs/pytorch/lib/python3.12/site-packages (from -r requirements.txt (line 29)) (2.9.0.post0)
+Requirement already satisfied: python-dotenv==1.0.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 30)) (1.0.1)
+Requirement already satisfied: pytz==2024.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 31)) (2024.2)
+Requirement already satisfied: scikit-image==0.24.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 32)) (0.24.0)
+Requirement already satisfied: scikit-learn==1.5.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 33)) (1.5.2)
+Requirement already satisfied: scipy==1.14.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 34)) (1.14.1)
+Requirement already satisfied: seaborn==0.13.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 35)) (0.13.2)
+Requirement already satisfied: six==1.16.0 in /opt/itu/condaenvs/pytorch/lib/python3.12/site-packages (from -r requirements.txt (line 36)) (1.16.0)
+Requirement already satisfied: SQLAlchemy==2.0.36 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 37)) (2.0.36)
+Requirement already satisfied: sympy==1.13.3 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 38)) (1.13.3)
+Requirement already satisfied: tensorboardX==2.6.2.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 39)) (2.6.2.2)
+Requirement already satisfied: termcolor==2.5.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 40)) (2.5.0)
+Requirement already satisfied: threadpoolctl==3.5.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 41)) (3.5.0)
+Requirement already satisfied: tifffile==2024.9.20 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 42)) (2024.9.20)
+Requirement already satisfied: torch==2.4.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 43)) (2.4.1)
+Requirement already satisfied: torchvision==0.19.1 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 44)) (0.19.1)
+Requirement already satisfied: tqdm==4.67.0 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 45)) (4.67.0)
+Requirement already satisfied: typing_extensions==4.12.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 46)) (4.12.2)
+Requirement already satisfied: tzdata==2024.2 in /home/maxd/.local/lib/python3.12/site-packages (from -r requirements.txt (line 47)) (2024.2)
+Requirement already satisfied: setuptools in /opt/itu/condaenvs/pytorch/lib/python3.12/site-packages (from coral-pytorch==1.4.0->-r requirements.txt (line 4)) (75.1.0)
+Requirement already satisfied: greenlet!=0.4.17 in /home/maxd/.local/lib/python3.12/site-packages (from SQLAlchemy==2.0.36->-r requirements.txt (line 37)) (3.1.1)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.1.105 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (12.1.105)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.1.105 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (12.1.105)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.1.105 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (12.1.105)
+Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (9.1.0.70)
+Requirement already satisfied: nvidia-cublas-cu12==12.1.3.1 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (12.1.3.1)
+Requirement already satisfied: nvidia-cufft-cu12==11.0.2.54 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (11.0.2.54)
+Requirement already satisfied: nvidia-curand-cu12==10.3.2.106 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (10.3.2.106)
+Requirement already satisfied: nvidia-cusolver-cu12==11.4.5.107 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (11.4.5.107)
+Requirement already satisfied: nvidia-cusparse-cu12==12.1.0.106 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (12.1.0.106)
+Requirement already satisfied: nvidia-nccl-cu12==2.20.5 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (2.20.5)
+Requirement already satisfied: nvidia-nvtx-cu12==12.1.105 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (12.1.105)
+Requirement already satisfied: triton==3.0.0 in /home/maxd/.local/lib/python3.12/site-packages (from torch==2.4.1->-r requirements.txt (line 43)) (3.0.0)
+Requirement already satisfied: nvidia-nvjitlink-cu12 in /home/maxd/.local/lib/python3.12/site-packages (from nvidia-cusolver-cu12==11.4.5.107->torch==2.4.1->-r requirements.txt (line 43)) (12.6.77)
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.1.3 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/maxd/master_thesis/model/train.py", line 19, in <module>
+    from sklearn.model_selection import StratifiedGroupKFold
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/__init__.py", line 84, in <module>
+    from .base import clone
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/base.py", line 19, in <module>
+    from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/__init__.py", line 11, in <module>
+    from ._chunking import gen_batches, gen_even_slices
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_chunking.py", line 8, in <module>
+    from ._param_validation import Interval, validate_params
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_param_validation.py", line 14, in <module>
+    from .validation import _is_arraylike_not_scalar
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/validation.py", line 26, in <module>
+    from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_array_api.py", line 11, in <module>
+    from .fixes import parse_version
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/fixes.py", line 24, in <module>
+    import pandas as pd
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/__init__.py", line 26, in <module>
+    from pandas.compat import (
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/compat/__init__.py", line 27, in <module>
+    from pandas.compat.pyarrow import (
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/compat/pyarrow.py", line 8, in <module>
+    import pyarrow as pa
+  File "/opt/itu/condaenvs/pytorch/lib/python3.12/site-packages/pyarrow/__init__.py", line 65, in <module>
+    import pyarrow.lib as _lib
+Traceback (most recent call last):
+  File "/home/maxd/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.py", line 44, in __getattr__
+    raise ImportError(msg)
+ImportError: 
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.1.3 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.1.3 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/maxd/master_thesis/model/train.py", line 19, in <module>
+    from sklearn.model_selection import StratifiedGroupKFold
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/__init__.py", line 84, in <module>
+    from .base import clone
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/base.py", line 19, in <module>
+    from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/__init__.py", line 11, in <module>
+    from ._chunking import gen_batches, gen_even_slices
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_chunking.py", line 8, in <module>
+    from ._param_validation import Interval, validate_params
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_param_validation.py", line 14, in <module>
+    from .validation import _is_arraylike_not_scalar
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/validation.py", line 26, in <module>
+    from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_array_api.py", line 11, in <module>
+    from .fixes import parse_version
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/fixes.py", line 24, in <module>
+    import pandas as pd
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/__init__.py", line 49, in <module>
+    from pandas.core.api import (
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/api.py", line 9, in <module>
+    from pandas.core.dtypes.dtypes import (
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/dtypes/dtypes.py", line 24, in <module>
+    from pandas._libs import (
+  File "/opt/itu/condaenvs/pytorch/lib/python3.12/site-packages/pyarrow/__init__.py", line 65, in <module>
+    import pyarrow.lib as _lib
+Traceback (most recent call last):
+  File "/home/maxd/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.py", line 44, in __getattr__
+    raise ImportError(msg)
+ImportError: 
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.1.3 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.1.3 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/home/maxd/master_thesis/model/train.py", line 19, in <module>
+    from sklearn.model_selection import StratifiedGroupKFold
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/__init__.py", line 84, in <module>
+    from .base import clone
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/base.py", line 19, in <module>
+    from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/__init__.py", line 11, in <module>
+    from ._chunking import gen_batches, gen_even_slices
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_chunking.py", line 8, in <module>
+    from ._param_validation import Interval, validate_params
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_param_validation.py", line 14, in <module>
+    from .validation import _is_arraylike_not_scalar
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/validation.py", line 26, in <module>
+    from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/_array_api.py", line 11, in <module>
+    from .fixes import parse_version
+  File "/home/maxd/.local/lib/python3.12/site-packages/sklearn/utils/fixes.py", line 24, in <module>
+    import pandas as pd
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/__init__.py", line 49, in <module>
+    from pandas.core.api import (
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/api.py", line 28, in <module>
+    from pandas.core.arrays import Categorical
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/arrays/__init__.py", line 1, in <module>
+    from pandas.core.arrays.arrow import ArrowExtensionArray
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/arrays/arrow/__init__.py", line 5, in <module>
+    from pandas.core.arrays.arrow.array import ArrowExtensionArray
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/arrays/arrow/array.py", line 64, in <module>
+    from pandas.core.arrays.masked import BaseMaskedArray
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py", line 60, in <module>
+    from pandas.core import (
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/core/nanops.py", line 52, in <module>
+    bn = import_optional_dependency("bottleneck", errors="warn")
+  File "/home/maxd/.local/lib/python3.12/site-packages/pandas/compat/_optional.py", line 135, in import_optional_dependency
+    module = importlib.import_module(name)
+  File "/opt/itu/condaenvs/pytorch/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/opt/itu/condaenvs/pytorch/lib/python3.12/site-packages/bottleneck/__init__.py", line 7, in <module>
+    from .move import (move_argmax, move_argmin, move_max, move_mean, move_median,
+Traceback (most recent call last):
+  File "/home/maxd/.local/lib/python3.12/site-packages/numpy/core/_multiarray_umath.py", line 44, in __getattr__
+    raise ImportError(msg)
+ImportError: 
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.1.3 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+The ``converters`` are currently experimental. It may not support operations including (but not limited to) Functions in ``torch.nn.functional`` that involved data dimension
+[INFO|train.py|train_model|L200] 2024-11-11 21:00:31: 
+        Training model: context30
+        LR: 0.001
+        EPOCHS: 100
+        BATCH_SIZE: 32
+        CONTEXT_WINDOW_SIZE: 30
+        CROSS_VALIDATION: False
+        ES_PATIENCE: 5
+        ES_MIN_DELTA: 0.01
+
+        Output directory: /home/maxd/master_thesis/out/model_runs/context30_1111_2100
+        
+[INFO|dataset.py|__init__|L150] 2024-11-11 21:00:31: 
+LIDC-IDRI dataset loaded successfully with parameters:
+IMG_DIM: 30
+SEGMENTATION: none
+[INFO|train.py|train_model|L231] 2024-11-11 21:00:31: 
+Starting Fold 1/5
+Epoch:   0%|          | 0/100 [00:00<?, ?it/s]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [02:45<2:20:40, 165.49s/it][A
+Epoch Batches:   4%|▍         | 2/52 [05:48<2:26:18, 175.57s/it][A
+Epoch Batches:   6%|▌         | 3/52 [07:59<2:06:52, 155.36s/it][A
+Epoch Batches:   8%|▊         | 4/52 [10:40<2:06:13, 157.78s/it][A
+Epoch Batches:  10%|▉         | 5/52 [12:47<1:54:47, 146.54s/it][A
+Epoch Batches:  12%|█▏        | 6/52 [15:11<1:51:47, 145.81s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [16:54<1:38:38, 131.53s/it][A
+Epoch Batches:  15%|█▌        | 8/52 [18:48<1:32:25, 126.04s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [20:39<1:26:54, 121.27s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [22:26<1:21:53, 116.99s/it][A
+Epoch Batches:  21%|██        | 11/52 [24:14<1:18:01, 114.18s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [25:50<1:12:28, 108.71s/it][A
+Epoch Batches:  25%|██▌       | 13/52 [27:39<1:10:38, 108.67s/it][A
+Epoch Batches:  27%|██▋       | 14/52 [29:34<1:10:01, 110.57s/it][A
+Epoch Batches:  29%|██▉       | 15/52 [31:20<1:07:22, 109.26s/it][A
+Epoch Batches:  31%|███       | 16/52 [32:59<1:03:47, 106.31s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [34:42<1:01:24, 105.26s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [36:29<59:51, 105.64s/it]  [A
+Epoch Batches:  37%|███▋      | 19/52 [39:00<1:05:43, 119.49s/it][A
+Epoch Batches:  38%|███▊      | 20/52 [41:19<1:06:45, 125.16s/it][A
+Epoch Batches:  40%|████      | 21/52 [43:27<1:05:10, 126.16s/it][A
+Epoch Batches:  42%|████▏     | 22/52 [45:11<59:47, 119.57s/it]  [A
+Epoch Batches:  44%|████▍     | 23/52 [46:26<51:20, 106.22s/it][A
+Epoch Batches:  46%|████▌     | 24/52 [48:16<50:03, 107.27s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [49:55<47:04, 104.62s/it][A
+Epoch Batches:  50%|█████     | 26/52 [51:30<44:08, 101.87s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [53:07<41:50, 100.43s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [54:50<40:25, 101.05s/it][A
+Epoch Batches:  56%|█████▌    | 29/52 [56:25<38:03, 99.30s/it] [A
+Epoch Batches:  58%|█████▊    | 30/52 [58:07<36:45, 100.24s/it][A
+Epoch Batches:  60%|█████▉    | 31/52 [59:43<34:36, 98.90s/it] [A
+Epoch Batches:  62%|██████▏   | 32/52 [1:01:19<32:38, 97.91s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [1:03:26<33:47, 106.71s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [1:04:40<29:03, 96.84s/it] [A
+Epoch Batches:  67%|██████▋   | 35/52 [1:07:05<31:31, 111.29s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [1:08:27<27:20, 102.53s/it][A
+Epoch Batches:  71%|███████   | 37/52 [1:09:52<24:18, 97.22s/it] [A
+Epoch Batches:  73%|███████▎  | 38/52 [1:11:57<24:37, 105.56s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [1:13:32<22:12, 102.49s/it][A
+Epoch Batches:  77%|███████▋  | 40/52 [1:14:54<19:14, 96.19s/it] [A
+Epoch Batches:  79%|███████▉  | 41/52 [1:16:24<17:18, 94.43s/it][A
+Epoch Batches:  81%|████████  | 42/52 [1:18:00<15:48, 94.88s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [1:19:36<14:17, 95.28s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:21:08<12:33, 94.16s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:22:57<11:30, 98.64s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:24:50<10:18, 103.15s/it][A
+Epoch Batches:  90%|█████████ | 47/52 [1:26:31<08:31, 102.27s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:27:47<06:17, 94.38s/it] [A
+Epoch Batches:  94%|█████████▍| 49/52 [1:29:15<04:38, 92.73s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:30:55<03:09, 94.91s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:32:50<01:40, 100.87s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:34:19<00:00, 97.41s/it] [AEpoch Batches: 100%|██████████| 52/52 [1:34:19<00:00, 108.85s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-11 22:53:47: 
+                [[Fold 1/5]] - [Epoch 1]
+                Average Training Loss: 0.5672
+                Average Validation Loss: 0.4865
+                Val Accuracy: 0.5000
+                Val AUC_filtered: 0.6862
+                Val AUC_ovr: 0.5472
+                Val MAE: 0.6453
+                Val MSE: 0.9360
+                
+Epoch:   1%|          | 1/100 [1:53:09<186:42:08, 6789.17s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [01:45<1:29:17, 105.05s/it][A
+Epoch Batches:   4%|▍         | 2/52 [03:33<1:29:05, 106.91s/it][A
+Epoch Batches:   6%|▌         | 3/52 [05:58<1:41:31, 124.32s/it][A
+Epoch Batches:   8%|▊         | 4/52 [08:16<1:43:59, 129.99s/it][A
+Epoch Batches:  10%|▉         | 5/52 [10:08<1:36:36, 123.33s/it][A
+Epoch Batches:  12%|█▏        | 6/52 [12:10<1:34:04, 122.72s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [13:58<1:28:35, 118.13s/it][A
+Epoch Batches:  15%|█▌        | 8/52 [16:06<1:28:48, 121.09s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [18:25<1:30:52, 126.80s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [20:37<1:29:51, 128.36s/it][A
+Epoch Batches:  21%|██        | 11/52 [22:09<1:20:05, 117.21s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [24:59<1:28:59, 133.48s/it][A
+Epoch Batches:  25%|██▌       | 13/52 [26:33<1:18:55, 121.42s/it][A
+Epoch Batches:  27%|██▋       | 14/52 [28:42<1:18:24, 123.81s/it][A
+Epoch Batches:  29%|██▉       | 15/52 [30:09<1:09:28, 112.66s/it][A
+Epoch Batches:  31%|███       | 16/52 [31:46<1:04:41, 107.82s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [33:24<1:01:14, 104.99s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [35:01<58:06, 102.53s/it]  [A
+Epoch Batches:  37%|███▋      | 19/52 [36:20<52:33, 95.56s/it] [A
+Epoch Batches:  38%|███▊      | 20/52 [37:56<50:58, 95.58s/it][A
+Epoch Batches:  40%|████      | 21/52 [39:43<51:11, 99.10s/it][A
+Epoch Batches:  42%|████▏     | 22/52 [41:20<49:10, 98.35s/it][A
+Epoch Batches:  44%|████▍     | 23/52 [43:00<47:48, 98.92s/it][A
+Epoch Batches:  46%|████▌     | 24/52 [45:05<49:44, 106.59s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [46:24<44:19, 98.51s/it] [A
+Epoch Batches:  50%|█████     | 26/52 [48:25<45:32, 105.12s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [49:54<41:47, 100.31s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [51:32<39:53, 99.74s/it] [A
+Epoch Batches:  56%|█████▌    | 29/52 [53:28<40:06, 104.65s/it][A
+Epoch Batches:  58%|█████▊    | 30/52 [54:46<35:25, 96.59s/it] [A
+Epoch Batches:  60%|█████▉    | 31/52 [56:17<33:13, 94.93s/it][A
+Epoch Batches:  62%|██████▏   | 32/52 [57:49<31:16, 93.82s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [59:18<29:19, 92.61s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [1:01:23<30:39, 102.20s/it][A
+Epoch Batches:  67%|██████▋   | 35/52 [1:03:25<30:37, 108.07s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [1:04:27<25:09, 94.36s/it] [A
+Epoch Batches:  71%|███████   | 37/52 [1:06:11<24:20, 97.37s/it][A
+Epoch Batches:  73%|███████▎  | 38/52 [1:08:12<24:22, 104.46s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [1:09:28<20:44, 95.70s/it] [A
+Epoch Batches:  77%|███████▋  | 40/52 [1:10:52<18:26, 92.17s/it][A
+Epoch Batches:  79%|███████▉  | 41/52 [1:12:20<16:41, 91.08s/it][A
+Epoch Batches:  81%|████████  | 42/52 [1:14:03<15:44, 94.47s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [1:15:38<14:13, 94.88s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:17:16<12:45, 95.64s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:19:15<11:58, 102.66s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:20:38<09:41, 96.91s/it] [A
+Epoch Batches:  90%|█████████ | 47/52 [1:22:07<07:52, 94.53s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:23:24<05:56, 89.05s/it][A
+Epoch Batches:  94%|█████████▍| 49/52 [1:25:09<04:41, 93.97s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:26:58<03:16, 98.42s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:28:43<01:40, 100.35s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:29:39<00:00, 87.24s/it] [AEpoch Batches: 100%|██████████| 52/52 [1:29:39<00:00, 103.46s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-12 00:41:44: 
+                [[Fold 1/5]] - [Epoch 2]
+                Average Training Loss: 0.4945
+                Average Validation Loss: 0.5446
+                Val Accuracy: 0.4754
+                Val AUC_filtered: 0.7337
+                Val AUC_ovr: 0.5894
+                Val MAE: 0.6946
+                Val MSE: 1.0837
+                
+Epoch:   2%|▏         | 2/100 [3:41:06<179:49:16, 6605.67s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [01:35<1:20:48, 95.07s/it][A
+Epoch Batches:   4%|▍         | 2/52 [03:46<1:36:53, 116.26s/it][A
+Epoch Batches:   6%|▌         | 3/52 [05:54<1:39:20, 121.64s/it][A
+Epoch Batches:   8%|▊         | 4/52 [08:12<1:42:25, 128.02s/it][A
+Epoch Batches:  10%|▉         | 5/52 [09:59<1:34:30, 120.65s/it][A
+Epoch Batches:  12%|█▏        | 6/52 [11:25<1:23:33, 108.99s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [13:05<1:19:28, 105.96s/it][A
+Epoch Batches:  15%|█▌        | 8/52 [14:31<1:13:04, 99.64s/it] [A
+Epoch Batches:  17%|█▋        | 9/52 [16:01<1:09:11, 96.54s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [17:56<1:11:39, 102.37s/it][A
+Epoch Batches:  21%|██        | 11/52 [19:42<1:10:31, 103.21s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [21:34<1:10:45, 106.14s/it][A
+Epoch Batches:  25%|██▌       | 13/52 [22:57<1:04:19, 98.96s/it] [A
+Epoch Batches:  27%|██▋       | 14/52 [24:31<1:01:48, 97.61s/it][A
+Epoch Batches:  29%|██▉       | 15/52 [26:04<59:14, 96.06s/it]  [A
+Epoch Batches:  31%|███       | 16/52 [27:30<55:48, 93.01s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [29:13<56:00, 96.01s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [30:45<53:42, 94.77s/it][A
+Epoch Batches:  37%|███▋      | 19/52 [32:41<55:45, 101.39s/it][A
+Epoch Batches:  38%|███▊      | 20/52 [34:22<54:00, 101.25s/it][A
+Epoch Batches:  40%|████      | 21/52 [35:56<51:05, 98.90s/it] [A
+Epoch Batches:  42%|████▏     | 22/52 [37:13<46:15, 92.50s/it][A
+Epoch Batches:  44%|████▍     | 23/52 [38:30<42:26, 87.81s/it][A
+Epoch Batches:  46%|████▌     | 24/52 [39:51<40:01, 85.76s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [41:29<40:17, 89.53s/it][A
+Epoch Batches:  50%|█████     | 26/52 [42:33<35:24, 81.72s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [44:15<36:32, 87.68s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [45:47<35:37, 89.08s/it][A
+Epoch Batches:  56%|█████▌    | 29/52 [47:03<32:39, 85.20s/it][A
+Epoch Batches:  58%|█████▊    | 30/52 [48:20<30:17, 82.59s/it][A
+Epoch Batches:  60%|█████▉    | 31/52 [49:47<29:26, 84.12s/it][A
+Epoch Batches:  62%|██████▏   | 32/52 [51:13<28:10, 84.53s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [52:21<25:14, 79.69s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [53:34<23:16, 77.57s/it][A
+Epoch Batches:  67%|██████▋   | 35/52 [54:53<22:09, 78.22s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [55:52<19:16, 72.28s/it][A
+Epoch Batches:  71%|███████   | 37/52 [57:11<18:37, 74.47s/it][A
+Epoch Batches:  73%|███████▎  | 38/52 [58:26<17:23, 74.54s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [59:37<15:53, 73.37s/it][A
+Epoch Batches:  77%|███████▋  | 40/52 [1:01:17<16:17, 81.48s/it][A
+Epoch Batches:  79%|███████▉  | 41/52 [1:02:27<14:16, 77.90s/it][A
+Epoch Batches:  81%|████████  | 42/52 [1:03:50<13:14, 79.45s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [1:05:11<11:59, 79.94s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:06:40<11:01, 82.67s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:08:06<09:45, 83.61s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:09:47<08:53, 88.91s/it][A
+Epoch Batches:  90%|█████████ | 47/52 [1:11:13<07:20, 88.17s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:12:44<05:55, 88.81s/it][A
+Epoch Batches:  94%|█████████▍| 49/52 [1:13:58<04:12, 84.32s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:15:09<02:41, 80.58s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:16:28<01:19, 79.90s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:17:30<00:00, 74.46s/it][AEpoch Batches: 100%|██████████| 52/52 [1:17:30<00:00, 89.42s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-12 02:17:21: 
+                [[Fold 1/5]] - [Epoch 3]
+                Average Training Loss: 0.4611
+                Average Validation Loss: 0.6549
+                Val Accuracy: 0.4433
+                Val AUC_filtered: 0.7697
+                Val AUC_ovr: 0.5971
+                Val MAE: 0.7709
+                Val MSE: 1.2931
+                
+Epoch:   3%|▎         | 3/100 [5:16:43<167:17:51, 6208.98s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [01:30<1:17:11, 90.82s/it][A
+Epoch Batches:   4%|▍         | 2/52 [02:57<1:13:34, 88.30s/it][A
+Epoch Batches:   6%|▌         | 3/52 [04:38<1:16:49, 94.07s/it][A
+Epoch Batches:   8%|▊         | 4/52 [06:04<1:12:51, 91.08s/it][A
+Epoch Batches:  10%|▉         | 5/52 [07:50<1:15:31, 96.41s/it][A
+Epoch Batches:  12%|█▏        | 6/52 [09:37<1:16:37, 99.94s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [11:38<1:20:07, 106.82s/it][A
+Epoch Batches:  15%|█▌        | 8/52 [13:39<1:21:35, 111.26s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [15:17<1:16:45, 107.11s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [16:39<1:09:40, 99.53s/it][A
+Epoch Batches:  21%|██        | 11/52 [18:21<1:08:34, 100.35s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [19:47<1:03:50, 95.76s/it] [A
+Epoch Batches:  25%|██▌       | 13/52 [21:25<1:02:41, 96.45s/it][A
+Epoch Batches:  27%|██▋       | 14/52 [23:07<1:02:08, 98.12s/it][A
+Epoch Batches:  29%|██▉       | 15/52 [24:39<59:23, 96.30s/it]  [A
+Epoch Batches:  31%|███       | 16/52 [26:24<59:22, 98.96s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [27:45<54:37, 93.63s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [29:37<56:13, 99.21s/it][A
+Epoch Batches:  37%|███▋      | 19/52 [31:18<54:47, 99.63s/it][A
+Epoch Batches:  38%|███▊      | 20/52 [32:48<51:33, 96.68s/it][A
+Epoch Batches:  40%|████      | 21/52 [34:46<53:21, 103.28s/it][A
+Epoch Batches:  42%|████▏     | 22/52 [36:20<50:12, 100.41s/it][A
+Epoch Batches:  44%|████▍     | 23/52 [37:43<45:57, 95.10s/it] [A
+Epoch Batches:  46%|████▌     | 24/52 [39:14<43:45, 93.75s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [40:42<41:27, 92.12s/it][A
+Epoch Batches:  50%|█████     | 26/52 [42:13<39:45, 91.75s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [43:21<35:15, 84.61s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [44:33<32:25, 81.05s/it][A
+Epoch Batches:  56%|█████▌    | 29/52 [45:59<31:34, 82.38s/it][A
+Epoch Batches:  58%|█████▊    | 30/52 [47:11<29:02, 79.19s/it][A
+Epoch Batches:  60%|█████▉    | 31/52 [48:39<28:42, 82.01s/it][A
+Epoch Batches:  62%|██████▏   | 32/52 [50:18<29:02, 87.15s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [51:49<27:53, 88.09s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [53:00<24:55, 83.11s/it][A
+Epoch Batches:  67%|██████▋   | 35/52 [54:39<24:51, 87.74s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [55:38<21:09, 79.33s/it][A
+Epoch Batches:  71%|███████   | 37/52 [56:43<18:43, 74.89s/it][A
+Epoch Batches:  73%|███████▎  | 38/52 [58:09<18:14, 78.16s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [59:48<18:19, 84.54s/it][A
+Epoch Batches:  77%|███████▋  | 40/52 [1:01:03<16:19, 81.61s/it][A
+Epoch Batches:  79%|███████▉  | 41/52 [1:02:36<15:36, 85.14s/it][A
+Epoch Batches:  81%|████████  | 42/52 [1:03:43<13:16, 79.67s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [1:04:44<11:05, 73.93s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:05:54<09:43, 72.95s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:07:20<08:56, 76.62s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:08:33<07:33, 75.66s/it][A
+Epoch Batches:  90%|█████████ | 47/52 [1:09:59<06:34, 78.82s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:11:18<05:15, 78.75s/it][A
+Epoch Batches:  94%|█████████▍| 49/52 [1:12:33<03:53, 77.83s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:14:02<02:41, 80.96s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:15:46<01:27, 87.88s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:16:47<00:00, 79.77s/it][AEpoch Batches: 100%|██████████| 52/52 [1:16:47<00:00, 88.60s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-12 03:51:43: 
+                [[Fold 1/5]] - [Epoch 4]
+                Average Training Loss: 0.4681
+                Average Validation Loss: 0.4768
+                Val Accuracy: 0.3177
+                Val AUC_filtered: 0.8375
+                Val AUC_ovr: 0.5921
+                Val MAE: 0.7833
+                Val MSE: 0.9901
+                
+Epoch:   4%|▍         | 4/100 [6:51:04<159:48:21, 5992.72s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [01:25<1:12:30, 85.30s/it][A
+Epoch Batches:   4%|▍         | 2/52 [03:15<1:23:15, 99.92s/it][A
+Epoch Batches:   6%|▌         | 3/52 [04:49<1:19:32, 97.40s/it][A
+Epoch Batches:   8%|▊         | 4/52 [06:36<1:20:42, 100.89s/it][A
+Epoch Batches:  10%|▉         | 5/52 [08:10<1:17:16, 98.64s/it] [A
+Epoch Batches:  12%|█▏        | 6/52 [10:06<1:20:04, 104.45s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [11:59<1:20:27, 107.28s/it][A
+Epoch Batches:  15%|█▌        | 8/52 [13:36<1:16:09, 103.85s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [15:08<1:11:45, 100.13s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [16:43<1:09:09, 98.80s/it][A
+Epoch Batches:  21%|██        | 11/52 [17:58<1:02:33, 91.55s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [19:23<59:34, 89.35s/it]  [A
+Epoch Batches:  25%|██▌       | 13/52 [20:56<58:53, 90.61s/it][A
+Epoch Batches:  27%|██▋       | 14/52 [22:00<52:08, 82.33s/it][A
+Epoch Batches:  29%|██▉       | 15/52 [23:37<53:31, 86.78s/it][A
+Epoch Batches:  31%|███       | 16/52 [25:01<51:39, 86.10s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [26:26<50:00, 85.72s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [27:37<46:06, 81.38s/it][A
+Epoch Batches:  37%|███▋      | 19/52 [29:24<49:01, 89.13s/it][A
+Epoch Batches:  38%|███▊      | 20/52 [31:10<50:06, 93.96s/it][A
+Epoch Batches:  40%|████      | 21/52 [32:30<46:26, 89.89s/it][A
+Epoch Batches:  42%|████▏     | 22/52 [33:52<43:45, 87.52s/it][A
+Epoch Batches:  44%|████▍     | 23/52 [35:38<44:55, 92.95s/it][A
+Epoch Batches:  46%|████▌     | 24/52 [37:11<43:25, 93.04s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [38:43<41:45, 92.78s/it][A
+Epoch Batches:  50%|█████     | 26/52 [40:11<39:35, 91.37s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [41:40<37:43, 90.56s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [42:53<34:07, 85.32s/it][A
+Epoch Batches:  56%|█████▌    | 29/52 [43:50<29:25, 76.77s/it][A
+Epoch Batches:  58%|█████▊    | 30/52 [45:17<29:18, 79.92s/it][A
+Epoch Batches:  60%|█████▉    | 31/52 [46:48<29:09, 83.31s/it][A
+Epoch Batches:  62%|██████▏   | 32/52 [48:12<27:48, 83.45s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [49:17<24:37, 77.77s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [50:47<24:26, 81.49s/it][A
+Epoch Batches:  67%|██████▋   | 35/52 [51:43<20:56, 73.93s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [52:44<18:42, 70.18s/it][A
+Epoch Batches:  71%|███████   | 37/52 [53:54<17:31, 70.08s/it][A
+Epoch Batches:  73%|███████▎  | 38/52 [54:55<15:41, 67.27s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [56:08<14:57, 69.04s/it][A
+Epoch Batches:  77%|███████▋  | 40/52 [57:34<14:49, 74.14s/it][A
+Epoch Batches:  79%|███████▉  | 41/52 [58:26<12:23, 67.58s/it][A
+Epoch Batches:  81%|████████  | 42/52 [59:25<10:48, 64.89s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [1:00:32<09:48, 65.36s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:01:49<09:11, 68.90s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:03:16<08:40, 74.39s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:04:42<07:47, 77.90s/it][A
+Epoch Batches:  90%|█████████ | 47/52 [1:06:07<06:40, 80.07s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:06:59<04:46, 71.55s/it][A
+Epoch Batches:  94%|█████████▍| 49/52 [1:08:29<03:51, 77.24s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:10:07<02:46, 83.31s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:11:18<01:19, 79.75s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:12:16<00:00, 73.04s/it][AEpoch Batches: 100%|██████████| 52/52 [1:12:16<00:00, 83.39s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-12 05:21:49: 
+                [[Fold 1/5]] - [Epoch 5]
+                Average Training Loss: 0.4556
+                Average Validation Loss: 0.4706
+                Val Accuracy: 0.5049
+                Val AUC_filtered: 0.8242
+                Val AUC_ovr: 0.6105
+                Val MAE: 0.6478
+                Val MSE: 0.9975
+                
+Epoch:   5%|▌         | 5/100 [8:21:11<152:33:59, 5781.47s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [01:19<1:07:43, 79.68s/it][A
+Epoch Batches:   4%|▍         | 2/52 [02:30<1:02:09, 74.59s/it][A
+Epoch Batches:   6%|▌         | 3/52 [03:39<58:35, 71.74s/it]  [A
+Epoch Batches:   8%|▊         | 4/52 [05:14<1:04:51, 81.06s/it][A
+Epoch Batches:  10%|▉         | 5/52 [06:37<1:04:08, 81.89s/it][A
+Epoch Batches:  12%|█▏        | 6/52 [07:52<1:01:00, 79.59s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [09:04<57:47, 77.05s/it]  [A
+Epoch Batches:  15%|█▌        | 8/52 [10:19<55:52, 76.19s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [11:34<54:24, 75.92s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [13:10<57:28, 82.10s/it][A
+Epoch Batches:  21%|██        | 11/52 [14:37<57:04, 83.53s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [16:33<1:02:26, 93.65s/it][A
+Epoch Batches:  25%|██▌       | 13/52 [18:07<1:00:47, 93.52s/it][A
+Epoch Batches:  27%|██▋       | 14/52 [19:25<56:17, 88.88s/it]  [A
+Epoch Batches:  29%|██▉       | 15/52 [21:02<56:22, 91.42s/it][A
+Epoch Batches:  31%|███       | 16/52 [22:46<57:10, 95.28s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [24:09<53:24, 91.57s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [25:43<52:18, 92.31s/it][A
+Epoch Batches:  37%|███▋      | 19/52 [26:48<46:15, 84.10s/it][A
+Epoch Batches:  38%|███▊      | 20/52 [28:12<44:46, 83.96s/it][A
+Epoch Batches:  40%|████      | 21/52 [29:44<44:36, 86.33s/it][A
+Epoch Batches:  42%|████▏     | 22/52 [31:06<42:31, 85.06s/it][A
+Epoch Batches:  44%|████▍     | 23/52 [32:50<43:53, 90.82s/it][A
+Epoch Batches:  46%|████▌     | 24/52 [34:18<41:57, 89.93s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [35:45<40:05, 89.10s/it][A
+Epoch Batches:  50%|█████     | 26/52 [37:17<38:59, 89.99s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [38:46<37:19, 89.59s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [40:27<37:17, 93.21s/it][A
+Epoch Batches:  56%|█████▌    | 29/52 [41:54<34:55, 91.09s/it][A
+Epoch Batches:  58%|█████▊    | 30/52 [42:54<29:59, 81.80s/it][A
+Epoch Batches:  60%|█████▉    | 31/52 [44:05<27:30, 78.57s/it][A
+Epoch Batches:  62%|██████▏   | 32/52 [45:37<27:32, 82.62s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [47:00<26:13, 82.81s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [48:08<23:29, 78.32s/it][A
+Epoch Batches:  67%|██████▋   | 35/52 [49:36<23:00, 81.21s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [50:50<21:03, 78.96s/it][A
+Epoch Batches:  71%|███████   | 37/52 [52:12<19:57, 79.86s/it][A
+Epoch Batches:  73%|███████▎  | 38/52 [53:21<17:56, 76.87s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [54:25<15:49, 73.00s/it][A
+Epoch Batches:  77%|███████▋  | 40/52 [55:55<15:34, 77.87s/it][A
+Epoch Batches:  79%|███████▉  | 41/52 [57:18<14:35, 79.58s/it][A
+Epoch Batches:  81%|████████  | 42/52 [58:23<12:30, 75.08s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [59:33<11:01, 73.47s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:00:42<09:38, 72.35s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:01:55<08:26, 72.40s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:03:02<07:05, 70.86s/it][A
+Epoch Batches:  90%|█████████ | 47/52 [1:04:06<05:44, 68.83s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:04:51<04:07, 61.78s/it][A
+Epoch Batches:  94%|█████████▍| 49/52 [1:06:19<03:28, 69.65s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:07:21<02:14, 67.19s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:08:36<01:09, 69.42s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:09:33<00:00, 65.79s/it][AEpoch Batches: 100%|██████████| 52/52 [1:09:33<00:00, 80.26s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-12 06:48:54: 
+                [[Fold 1/5]] - [Epoch 6]
+                Average Training Loss: 0.4434
+                Average Validation Loss: 0.4578
+                Val Accuracy: 0.5074
+                Val AUC_filtered: 0.8523
+                Val AUC_ovr: 0.6347
+                Val MAE: 0.6478
+                Val MSE: 1.0074
+                
+Epoch:   6%|▌         | 6/100 [9:48:15<146:01:00, 5592.13s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [01:08<58:26, 68.76s/it][A
+Epoch Batches:   4%|▍         | 2/52 [02:39<1:08:06, 81.73s/it][A
+Epoch Batches:   6%|▌         | 3/52 [04:18<1:13:17, 89.75s/it][A
+Epoch Batches:   8%|▊         | 4/52 [05:29<1:05:41, 82.12s/it][A
+Epoch Batches:  10%|▉         | 5/52 [07:15<1:11:04, 90.74s/it][A
+Epoch Batches:  12%|█▏        | 6/52 [08:24<1:03:57, 83.42s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [09:50<1:03:14, 84.32s/it][A
+Epoch Batches:  15%|█▌        | 8/52 [11:11<1:00:59, 83.17s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [12:15<55:19, 77.19s/it]  [A
+Epoch Batches:  19%|█▉        | 10/52 [13:35<54:44, 78.19s/it][A
+Epoch Batches:  21%|██        | 11/52 [15:21<59:15, 86.72s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [16:58<59:53, 89.83s/it][A
+Epoch Batches:  25%|██▌       | 13/52 [18:54<1:03:32, 97.76s/it][A
+Epoch Batches:  27%|██▋       | 14/52 [20:45<1:04:26, 101.76s/it][A
+Epoch Batches:  29%|██▉       | 15/52 [22:10<59:33, 96.59s/it]   [A
+Epoch Batches:  31%|███       | 16/52 [23:55<59:32, 99.23s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [25:34<57:51, 99.17s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [27:23<57:44, 101.91s/it][A
+Epoch Batches:  37%|███▋      | 19/52 [28:50<53:41, 97.62s/it] [A
+Epoch Batches:  38%|███▊      | 20/52 [30:18<50:27, 94.60s/it][A
+Epoch Batches:  40%|████      | 21/52 [31:48<48:11, 93.26s/it][A
+Epoch Batches:  42%|████▏     | 22/52 [32:54<42:29, 84.99s/it][A
+Epoch Batches:  44%|████▍     | 23/52 [34:23<41:38, 86.16s/it][A
+Epoch Batches:  46%|████▌     | 24/52 [35:27<37:09, 79.63s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [36:41<35:07, 78.06s/it][A
+Epoch Batches:  50%|█████     | 26/52 [37:50<32:33, 75.14s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [39:03<31:04, 74.57s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [40:38<32:15, 80.64s/it][A
+Epoch Batches:  56%|█████▌    | 29/52 [41:49<29:47, 77.73s/it][A
+Epoch Batches:  58%|█████▊    | 30/52 [43:27<30:46, 83.95s/it][A
+Epoch Batches:  60%|█████▉    | 31/52 [44:31<27:17, 78.00s/it][A
+Epoch Batches:  62%|██████▏   | 32/52 [45:46<25:41, 77.10s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [46:45<22:39, 71.57s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [47:52<21:04, 70.23s/it][A
+Epoch Batches:  67%|██████▋   | 35/52 [49:15<21:00, 74.17s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [50:37<20:23, 76.45s/it][A
+Epoch Batches:  71%|███████   | 37/52 [51:39<18:01, 72.07s/it][A
+Epoch Batches:  73%|███████▎  | 38/52 [52:47<16:32, 70.91s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [54:18<16:40, 76.94s/it][A
+Epoch Batches:  77%|███████▋  | 40/52 [55:18<14:19, 71.65s/it][A
+Epoch Batches:  79%|███████▉  | 41/52 [56:15<12:21, 67.43s/it][A
+Epoch Batches:  81%|████████  | 42/52 [57:56<12:55, 77.52s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [59:17<11:46, 78.50s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:00:35<10:25, 78.22s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:01:41<08:42, 74.70s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:02:48<07:14, 72.38s/it][A
+Epoch Batches:  90%|█████████ | 47/52 [1:04:08<06:14, 74.81s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:05:09<04:42, 70.66s/it][A
+Epoch Batches:  94%|█████████▍| 49/52 [1:06:04<03:17, 65.77s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:07:05<02:08, 64.31s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:08:07<01:03, 63.73s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:09:18<00:00, 65.88s/it][AEpoch Batches: 100%|██████████| 52/52 [1:09:18<00:00, 79.97s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-12 08:15:36: 
+                [[Fold 1/5]] - [Epoch 7]
+                Average Training Loss: 0.4422
+                Average Validation Loss: 0.4670
+                Val Accuracy: 0.4039
+                Val AUC_filtered: 0.8819
+                Val AUC_ovr: 0.6606
+                Val MAE: 0.6798
+                Val MSE: 0.8818
+                
+Epoch:   7%|▋         | 7/100 [11:14:58<141:10:19, 5464.73s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [01:39<1:24:55, 99.91s/it][A
+Epoch Batches:   4%|▍         | 2/52 [02:43<1:05:23, 78.47s/it][A
+Epoch Batches:   6%|▌         | 3/52 [04:54<1:23:33, 102.31s/it][A
+Epoch Batches:   8%|▊         | 4/52 [06:23<1:17:47, 97.24s/it] [A
+Epoch Batches:  10%|▉         | 5/52 [07:50<1:13:13, 93.49s/it][A
+Epoch Batches:  12%|█▏        | 6/52 [08:59<1:05:19, 85.21s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [10:20<1:02:53, 83.85s/it][A
+Epoch Batches:  15%|█▌        | 8/52 [12:13<1:08:13, 93.03s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [13:35<1:04:15, 89.66s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [14:58<1:01:21, 87.66s/it][A
+Epoch Batches:  21%|██        | 11/52 [16:38<1:02:28, 91.41s/it][A
+Epoch Batches:  23%|██▎       | 12/52 [17:59<58:52, 88.32s/it]  [A
+Epoch Batches:  25%|██▌       | 13/52 [20:10<1:05:44, 101.14s/it][A
+Epoch Batches:  27%|██▋       | 14/52 [21:32<1:00:26, 95.44s/it] [A
+Epoch Batches:  29%|██▉       | 15/52 [23:12<59:42, 96.83s/it]  [A
+Epoch Batches:  31%|███       | 16/52 [24:40<56:26, 94.06s/it][A
+Epoch Batches:  33%|███▎      | 17/52 [26:02<52:48, 90.54s/it][A
+Epoch Batches:  35%|███▍      | 18/52 [27:26<50:04, 88.37s/it][A
+Epoch Batches:  37%|███▋      | 19/52 [29:00<49:40, 90.33s/it][A
+Epoch Batches:  38%|███▊      | 20/52 [30:27<47:37, 89.28s/it][A
+Epoch Batches:  40%|████      | 21/52 [31:45<44:17, 85.73s/it][A
+Epoch Batches:  42%|████▏     | 22/52 [33:18<43:59, 87.98s/it][A
+Epoch Batches:  44%|████▍     | 23/52 [34:26<39:34, 81.90s/it][A
+Epoch Batches:  46%|████▌     | 24/52 [35:57<39:31, 84.68s/it][A
+Epoch Batches:  48%|████▊     | 25/52 [37:11<36:40, 81.49s/it][A
+Epoch Batches:  50%|█████     | 26/52 [38:30<34:59, 80.74s/it][A
+Epoch Batches:  52%|█████▏    | 27/52 [39:49<33:24, 80.16s/it][A
+Epoch Batches:  54%|█████▍    | 28/52 [41:13<32:33, 81.38s/it][A
+Epoch Batches:  56%|█████▌    | 29/52 [42:36<31:24, 81.94s/it][A
+Epoch Batches:  58%|█████▊    | 30/52 [43:50<29:09, 79.53s/it][A
+Epoch Batches:  60%|█████▉    | 31/52 [45:11<28:01, 80.06s/it][A
+Epoch Batches:  62%|██████▏   | 32/52 [46:06<24:05, 72.28s/it][A
+Epoch Batches:  63%|██████▎   | 33/52 [47:49<25:51, 81.68s/it][A
+Epoch Batches:  65%|██████▌   | 34/52 [49:27<25:59, 86.62s/it][A
+Epoch Batches:  67%|██████▋   | 35/52 [50:16<21:17, 75.14s/it][A
+Epoch Batches:  69%|██████▉   | 36/52 [51:27<19:45, 74.09s/it][A
+Epoch Batches:  71%|███████   | 37/52 [52:22<17:05, 68.35s/it][A
+Epoch Batches:  73%|███████▎  | 38/52 [53:41<16:40, 71.44s/it][A
+Epoch Batches:  75%|███████▌  | 39/52 [54:44<14:56, 68.94s/it][A
+Epoch Batches:  77%|███████▋  | 40/52 [55:43<13:11, 65.92s/it][A
+Epoch Batches:  79%|███████▉  | 41/52 [57:12<13:23, 73.03s/it][A
+Epoch Batches:  81%|████████  | 42/52 [58:29<12:21, 74.11s/it][A
+Epoch Batches:  83%|████████▎ | 43/52 [59:54<11:36, 77.36s/it][A
+Epoch Batches:  85%|████████▍ | 44/52 [1:01:15<10:28, 78.52s/it][A
+Epoch Batches:  87%|████████▋ | 45/52 [1:02:42<09:27, 81.03s/it][A
+Epoch Batches:  88%|████████▊ | 46/52 [1:03:57<07:55, 79.26s/it][A
+Epoch Batches:  90%|█████████ | 47/52 [1:05:25<06:49, 81.93s/it][A
+Epoch Batches:  92%|█████████▏| 48/52 [1:06:50<05:30, 82.57s/it][A
+Epoch Batches:  94%|█████████▍| 49/52 [1:08:32<04:25, 88.63s/it][A
+Epoch Batches:  96%|█████████▌| 50/52 [1:10:03<02:58, 89.26s/it][A
+Epoch Batches:  98%|█████████▊| 51/52 [1:11:36<01:30, 90.45s/it][A
+Epoch Batches: 100%|██████████| 52/52 [1:12:42<00:00, 82.96s/it][AEpoch Batches: 100%|██████████| 52/52 [1:12:42<00:00, 83.89s/it]
+Validating model ...
+[INFO|train.py|train_model|L286] 2024-11-12 09:46:19: 
+                [[Fold 1/5]] - [Epoch 8]
+                Average Training Loss: 0.4402
+                Average Validation Loss: 0.4406
+                Val Accuracy: 0.5197
+                Val AUC_filtered: 0.8593
+                Val AUC_ovr: 0.6559
+                Val MAE: 0.6133
+                Val MSE: 0.8793
+                
+Epoch:   8%|▊         | 8/100 [12:45:41<139:28:30, 5457.72s/it]
+Epoch Batches:   0%|          | 0/52 [00:00<?, ?it/s][A
+Epoch Batches:   2%|▏         | 1/52 [02:01<1:43:27, 121.71s/it][A
+Epoch Batches:   4%|▍         | 2/52 [03:59<1:39:43, 119.66s/it][A
+Epoch Batches:   6%|▌         | 3/52 [05:42<1:31:23, 111.90s/it][A
+Epoch Batches:   8%|▊         | 4/52 [07:24<1:26:13, 107.78s/it][A
+Epoch Batches:  10%|▉         | 5/52 [08:48<1:17:41, 99.19s/it] [A
+Epoch Batches:  12%|█▏        | 6/52 [10:36<1:18:27, 102.33s/it][A
+Epoch Batches:  13%|█▎        | 7/52 [12:11<1:14:56, 99.92s/it] [A
+Epoch Batches:  15%|█▌        | 8/52 [13:59<1:15:04, 102.38s/it][A
+Epoch Batches:  17%|█▋        | 9/52 [15:57<1:16:56, 107.37s/it][A
+Epoch Batches:  19%|█▉        | 10/52 [17:43<1:14:56, 107.05s/it][A
+Epoch Batches:  21%|██        | 11/52 [19:35<1:14:07, 108.48s/it][A

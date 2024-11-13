@@ -22,13 +22,11 @@ def get_job_stdout(job_id: int, dest_dir: str) -> None:
     _transfer_hpc_to_local(hpc_out, dest_dir)
 
 
-def update_loss_plot(experiment_id: str) -> None:
+def update_loss_plot(experiment_id: str, fold: int) -> None:
     """
     Fetch the latest loss plot from the HPC
     """
-    hpc_out = (
-        f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/loss_plot.png"
-    )
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}_fold{fold}/loss_plot.png"
     out_dir = f"/Users/maxvisser/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
     _transfer_hpc_to_local(hpc_out, out_dir)
 
@@ -52,8 +50,9 @@ def fetch_model_weights(experiment_id: str) -> None:
 
 
 if __name__ == "__main__":
-    experiment_id = "context30_1211_1114"
-    job_id = 462
+    experiment_id = "c30_reduced_lr_1211_1804"
+    job_id = 538
+    fold = 0
 
     # Create out folder
     path = f"/Users/maxvisser/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
@@ -61,4 +60,4 @@ if __name__ == "__main__":
         os.makedirs(path)
 
     get_job_stdout(job_id, path)
-    update_loss_plot(experiment_id)
+    update_loss_plot(experiment_id, fold)
