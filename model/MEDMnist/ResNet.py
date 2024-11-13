@@ -14,8 +14,6 @@ from acsconv.converters import Conv3dConverter
 
 from project_config import SEED, pipeline_config
 
-NUM_CLASSES = pipeline_config.model.num_classes
-IN_CHANNELS = pipeline_config.model.in_channels
 torch.manual_seed(SEED)
 
 
@@ -142,7 +140,7 @@ class ResNet(nn.Module):
 
 
 def ResNet50(
-    in_channels: int, num_classes: int, dims: Literal["2D", "3D"] = "3D"
+    in_channels: int, num_classes: int, dims: Literal["2.5D", "3D"] = "3D"
 ) -> ResNet:
     """
     Return a ResNet50 model for the given number of input channels and classes.
@@ -156,7 +154,7 @@ def ResNet50(
                 num_classes=num_classes,
             )
         )
-    elif dims == "2D":
+    elif dims == "2.5D":
         return ResNet(
             num_blocks=[3, 4, 6, 3],
             in_channels=in_channels,

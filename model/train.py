@@ -209,6 +209,7 @@ def train_model(
         EPOCHS: {NUM_EPOCHS}
         BATCH_SIZE: {BATCH_SIZE}
         CONTEXT_WINDOW_SIZE: {context_window_size}
+        DATA DIMENSIONALITY: {data_dimensionality}
         CROSS_VALIDATION: {cross_validation}
         ES_PATIENCE: {PATIENCE}
         ES_MIN_DELTA: {MIN_DELTA}
@@ -245,7 +246,7 @@ def train_model(
 
         # Initialize model and move to GPU (if available)
         model = ResNet50(
-            in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims="3D"
+            in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims=DATA_DIMENSIONALITY
         ).to(DEVICE)
         criterion = CornLoss(num_classes=NUM_CLASSES)
         optimizer = optim.Adam(model.parameters(), lr=LR)
