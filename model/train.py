@@ -44,12 +44,14 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 # LOAD SCRIPT PARAMS:
+CONFIG_NAME = pipeline_config.config_name
 LR = pipeline_config.training.learning_rate
 NUM_EPOCHS = pipeline_config.training.num_epochs
-IMAGE_DIMS = pipeline_config.dataset.image_dims
 NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
 DATA_DIMENSIONALITY = pipeline_config.dataset.dimensionality
+CONTEXT_WINDOW_SIZE = pipeline_config.dataset.context_window
+DO_CROSS_VALIDATION = pipeline_config.training.do_cross_validation
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
@@ -175,27 +177,26 @@ def validate_model(
 
 
 def train_model(
-    model_name: str,
-    context_window_size: int,
-    data_dimensionality: Literal["2.5D", "3D"] = "3D",
-    cross_validation: bool = False,
+    context_window_size: int = CONTEXT_WINDOW_SIZE,
+    data_dimensionality: Literal["2.5D", "3D"] = DATA_DIMENSIONALITY,
+    cross_validation: bool = DO_CROSS_VALIDATION,
 ) -> None:
     """
     Trains the model.
 
     Params
     ---
-        @model_name: name of the model trained.
         @context_window_size: size of the context window of the nodule ROI used for training.
-        @cv: whether to train the model using cross-validation.
+        @data_dimensionality: whether to use 2.5D or 3D data.
+        @cross_validation: whether to train the model using cross-validation.
     """
     # Log experiment:
     experiment = pipeline_config.model_copy()
     start_time = dt.datetime.now()
     experiment.start_time = start_time
-    experiment.name = model_name
-    experiment.training.context_window_size = context_window_size
-    experiment.id = f"{experiment.name}_{start_time.strftime('%d%m_%H%M')}"
+    experiment.dataset.context_window = context_window_size
+    experiment.id = f"{experiment.config_name}_{start_time.strftime('%d%m_%H%M')}"
+    experiment.training.gpu_used = torch.cuda.get_device_name(0)
 
     # Create output directory for experiment:
     exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
@@ -204,7 +205,7 @@ def train_model(
 
     logger.info(
         f"""
-        [[--- Training model: {experiment.name} ---]]
+        [[--- Training model: {experiment.config_name} ---]]
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
         BATCH_SIZE: {BATCH_SIZE}
@@ -238,7 +239,13 @@ def train_model(
             groups=dataset.nodule_df["pid"],
         )
     ):
-        logger.info(f"\nStarting Fold {fold + 1}/{CV_FOLDS}")
+        logger.info(
+            f"""
+            [[Starting Fold {fold + 1}/{CV_FOLDS}]]
+            Train instances: {len(train_ids)}
+            Validation instances: {len(val_ids)}
+            """
+        )
         fold_start_time = dt.datetime.now()
         fold_out_dir = f"{exp_out_dir}/fold{fold}"
         if not os.path.exists(fold_out_dir):
@@ -351,12 +358,8 @@ def train_model(
 
 # %%
 if __name__ == "__main__":
-    model_name = "c40"
-    context_window_size = 40
-    cross_validation = False
     train_model(
-        model_name=model_name,
-        context_window_size=context_window_size,
-        cross_validation=cross_validation,
+        context_window_size=CONTEXT_WINDOW_SIZE,
+        cross_validation=DO_CROSS_VALIDATION,
         data_dimensionality=DATA_DIMENSIONALITY,
     )

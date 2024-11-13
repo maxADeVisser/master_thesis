@@ -9,8 +9,8 @@ from utils.common_imports import *
 class ExperimentDataset(BaseModel):
     """Base Experiment Dataset for input validation"""
 
-    image_dims: list[int] = Field(
-        ..., description="Uniform dimensions of the images: (H, W, D)"
+    context_window: Literal[10, 20, 30, 40, 50, 60, 70] = Field(
+        ..., description="The uniform size of the context window for the nodule ROI."
     )
     clipping_bounds: list[int, int] = Field(
         [-1000, 400],
@@ -28,7 +28,6 @@ class ExperimentDataset(BaseModel):
 class ExperimentModel(BaseModel):
     """Base Experiment Model for input validation"""
 
-    name: str = Field(..., description="Name of the model.")
     num_classes: int = Field(
         ..., ge=2, description="Number of output classes for classification."
     )
@@ -44,6 +43,10 @@ class ExperimentTraining(BaseModel):
         ..., gt=0, description="Learning rate for the optimizer."
     )
     num_epochs: int = Field(..., ge=1, description="Number of epochs for training.")
+    do_cross_validation: bool = Field(
+        ...,
+        description="Whether to do cross-validation or only train on a single fold.",
+    )
     cross_validation_folds: int | None = Field(
         None, description="If provided, determines number of CV folds. If None, no CV."
     )
@@ -64,13 +67,13 @@ class ExperimentTraining(BaseModel):
         ge=0,
         description="Early stopping parameter: minimum change in the monitored metric to qualify as an improvement.",
     )
-    context_window_size: int | None = Field(None, description="Image dimension.")
+    gpu_used: str | None = Field(None, description="Name of GPU used for training.")
 
 
 class BaseExperimentConfig(BaseModel):
     """Base Experiment Configuration for input validation"""
 
-    name: str = Field(..., description="Name of the experiment.")
+    config_name: str = Field(..., description="Name of the experiment.")
     id: str | None = Field(None, description="ID of the experiment.")
     start_time: dt.datetime | str = Field(
         dt.datetime.now(), description="Start time of the experiment."

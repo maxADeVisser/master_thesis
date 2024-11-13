@@ -18,20 +18,24 @@ np.random.seed(SEED)
 # LOAD SCRIPT PARAMS:
 LR = pipeline_config.training.learning_rate
 NUM_EPOCHS = pipeline_config.training.num_epochs
-IMAGE_DIMS = pipeline_config.dataset.image_dims
 NUM_CLASSES = pipeline_config.model.num_classes
+DATA_DIMENSIONALITY = pipeline_config.dataset.dimensionality
 IN_CHANNELS = pipeline_config.model.in_channels
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 BATCH_SIZE = pipeline_config.training.batch_size
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # LOAD MODEL:
-model = ResNet50(in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims="3D").to(DEVICE)
+model = ResNet50(
+    in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims=DATA_DIMENSIONALITY
+).to(DEVICE)
 criterion = CornLoss(num_classes=NUM_CLASSES)
 optimizer = optim.Adam(model.parameters(), lr=LR)
 
 # get a single batch of data:
-dataset = LIDC_IDRI_DATASET(img_dim=20, augment_scans=False)
+dataset = LIDC_IDRI_DATASET(
+    img_dim=30, n_dims=DATA_DIMENSIONALITY, segmentation_configuration="none"
+)
 batch_features, batch_labels = next(iter(DataLoader(dataset, batch_size=16)))
 batch_features, batch_labels = batch_features.to(DEVICE), batch_labels.to(DEVICE)
 
@@ -39,7 +43,6 @@ model.train()
 iterations = len(dataset)
 
 losses = []
-
 for i in range(iterations):
     # Zero the parameter gradients
     optimizer.zero_grad()

@@ -6,7 +6,7 @@ from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 
 # SCRIPT PARAMS:
-CV_N_FOLDS = pipeline_config.dataset.cross_validation_folds
+CV_N_FOLDS = pipeline_config.training.cross_validation_folds
 np.random.seed(SEED)
 
 
