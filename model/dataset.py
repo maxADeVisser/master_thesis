@@ -145,13 +145,13 @@ class LIDC_IDRI_DATASET(Dataset):
 
     def __init__(
         self,
-        img_dim: Literal[10, 20, 30, 40, 50, 60, 70],
+        context_size: Literal[10, 20, 30, 40, 50, 60, 70],
         segmentation_configuration: Literal[
             "none", "remove_background", "remove_nodule"
         ] = "none",
         n_dims: Literal["2.5D", "3D"] = "3D",
     ) -> None:
-        self.img_dim = img_dim
+        self.context_size = context_size
         self.n_dims = n_dims
         self.segmentation_configuration = segmentation_configuration
         self.patient_ids = env_config.patient_ids
@@ -159,25 +159,25 @@ class LIDC_IDRI_DATASET(Dataset):
         try:
             # Read in the nodule dataframe and convert the string representations to python objects
             self.nodule_df = pd.read_csv(f"{env_config.processed_nodule_df_file}")
-            self.nodule_df[f"consensus_bbox_{self.img_dim}"] = self.nodule_df[
-                f"consensus_bbox_{self.img_dim}"
-            ].apply(ast.literal_eval)
-            self.nodule_df["nodule_annotation_ids"] = self.nodule_df[
-                "nodule_annotation_ids"
-            ].apply(ast.literal_eval)
-
-            logger.info(
-                f"""
-                LIDC-IDRI dataset loaded successfully with parameters:
-                IMG_DIM: {self.img_dim}
-                N_DIMS: {self.n_dims}
-                SEGMENTATION: {self.segmentation_configuration}
-                """
-            )
         except FileNotFoundError:
             raise FileNotFoundError(
-                "The nodule dataframe was not found. Please run the create_nodule_df.py script first."
+                "The nodule dataframe was not found. Please run the create_nodule_df.py script first"
             )
+        self.nodule_df[f"consensus_bbox_{self.context_size}"] = self.nodule_df[
+            f"consensus_bbox_{self.context_size}"
+        ].apply(ast.literal_eval)
+        self.nodule_df["nodule_annotation_ids"] = self.nodule_df[
+            "nodule_annotation_ids"
+        ].apply(ast.literal_eval)
+
+        logger.info(
+            f"""
+            LIDC-IDRI nodule dataset loaded successfully with parameters:
+            CONTEXT SIZE: {self.context_size}
+            DATA DIMENSIONALITY: {self.n_dims}
+            NODULE SEGMENTATION: {self.segmentation_configuration}
+            """
+        )
 
     def __len__(self) -> int:
         return len(self.nodule_df)
@@ -189,7 +189,7 @@ class LIDC_IDRI_DATASET(Dataset):
         """
         nodule = Nodule(
             nodule_record=self.nodule_df.iloc[idx],
-            nodule_context_size=self.img_dim,
+            nodule_context_size=self.context_size,
             segmentation_setting=self.segmentation_configuration,
             nodule_dim=self.n_dims,
         )
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
     # # testing dataloader
     dataset = LIDC_IDRI_DATASET(
-        img_dim=30, segmentation_configuration="none", n_dims="2.5D"
+        context_size=30, segmentation_configuration="none", n_dims="2.5D"
     )
     train_loader = DataLoader(dataset, batch_size=1, shuffle=True)
     roi, label = next(iter(train_loader))
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     # Test Nodule
     IMG_DIM = 70
     dataset = LIDC_IDRI_DATASET(
-        img_dim=IMG_DIM, segmentation_configuration="none", n_dims="2.5D"
+        context_size=IMG_DIM, segmentation_configuration="none", n_dims="2.5D"
     )
 
     test_nodule = Nodule(

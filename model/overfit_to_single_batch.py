@@ -34,7 +34,7 @@ optimizer = optim.Adam(model.parameters(), lr=LR)
 
 # get a single batch of data:
 dataset = LIDC_IDRI_DATASET(
-    img_dim=30, n_dims=DATA_DIMENSIONALITY, segmentation_configuration="none"
+    context_size=30, n_dims=DATA_DIMENSIONALITY, segmentation_configuration="none"
 )
 batch_features, batch_labels = next(iter(DataLoader(dataset, batch_size=16)))
 batch_features, batch_labels = batch_features.to(DEVICE), batch_labels.to(DEVICE)

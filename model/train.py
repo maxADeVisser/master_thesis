@@ -211,7 +211,9 @@ def train_model(
         BATCH_SIZE: {BATCH_SIZE}
         CONTEXT_WINDOW_SIZE: {context_window_size}
         DATA DIMENSIONALITY: {data_dimensionality}
+        DO_CROSS_VALIDATION: {DO_CROSS_VALIDATION}
         CROSS_VALIDATION: {cross_validation}
+        CV_FOLDS: {CV_FOLDS}
         ES_PATIENCE: {PATIENCE}
         ES_MIN_DELTA: {MIN_DELTA}
         NUM_WORKERS: {NUM_WORKERS}
@@ -224,7 +226,7 @@ def train_model(
     )
 
     dataset = LIDC_IDRI_DATASET(
-        img_dim=context_window_size,
+        context_size=context_window_size,
         segmentation_configuration="none",
         n_dims=data_dimensionality,
     )
