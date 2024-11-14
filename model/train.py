@@ -260,7 +260,7 @@ def train_model(
             fold_id=f"fold{fold}_{experiment.id}",
             train_idxs=train_idxs.tolist(),
             val_idxs=val_idxs.tolist(),
-            fold_start_time=fold_start_time,
+            start_time=fold_start_time,
         )
         # save initial fold information
         fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
@@ -339,11 +339,9 @@ def train_model(
         fold_results.val_losses = val_losses
         fold_results.latest_eval_metrics = val_metrics
         fold_results.best_loss = early_stopper.best_loss
-        fold_results.epoch_stopped = early_stopper.epoch_stopped
+        fold_results.epoch_stopped = epoch
         fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
-
-        # Store fold results in cv_results:
-        cv_results[fold + 1] = fold_results
+        experiment.fold_results.append(fold_results)
 
         if not cross_validation:
             # do not do cross-validation (train on one fold only)
@@ -354,9 +352,7 @@ def train_model(
             break
 
     # Log results of experiment:
-    experiment.end_time = dt.datetime.now()
-    experiment.duration = experiment.end_time - experiment.start_time
-    experiment.all_results = cv_results
+    experiment.duration = dt.datetime.now() - experiment.start_time
     experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 
 

@@ -34,11 +34,13 @@ class TrainingFold(BaseModel):
 
     def write_fold_to_json(self, out_dir: str) -> None:
         """Write the experiment to a JSON file."""
-        self.start_time = str(self.start_time)
-        if self.duration:
-            self.duration = str(self.duration)
-        with open(f"{out_dir}/{self.fold_id}.json", "w") as f:
-            json.dump(self.model_dump(), f)
+        copy = self.model_copy()
+        copy.start_time = str(copy.start_time)
+        if copy.duration:
+            copy.duration = str(copy.duration)
+        with open(f"{out_dir}/{copy.fold_id}.json", "w") as f:
+            json.dump(copy.model_dump(), f)
+        del copy
 
 
 class ExperimentDataset(BaseModel):
@@ -111,10 +113,8 @@ class BaseExperimentConfig(BaseModel):
     config_name: str = Field(..., description="Name of the experiment.")
     id: str | None = Field(None, description="ID of the experiment.")
     start_time: dt.datetime | str = Field(
-        dt.datetime.now(), description="Start time of the experiment."
-    )
-    end_time: dt.datetime | str | None = Field(
-        None, description="End time of the experiment."
+        dt.datetime.now(),
+        description="Start time of the experiment (initialised to now to also act as created_at).",
     )
     duration: dt.timedelta | str | None = Field(
         None, description="Duration of the experiment."
@@ -122,20 +122,23 @@ class BaseExperimentConfig(BaseModel):
     dataset: ExperimentDataset = Field(..., description="Dataset configuration.")
     model: ExperimentModel = Field(..., description="Model configuration.")
     training: ExperimentTraining = Field(..., description="Training configuration.")
-    fold_results: list[TrainingFold] | None = Field(
-        None, description="Results for each fold."
-    )
-    all_results: dict | None = Field(None, description="Results")
+    fold_results: list[TrainingFold] = Field([], description="Results for each fold.")
 
     def write_experiment_to_json(self, out_dir: str) -> None:
         """Write the experiment to a JSON file."""
-        self.start_time = str(self.start_time)
-        if self.end_time:
-            self.end_time = str(self.end_time)
-        if self.duration:
-            self.duration = str(self.duration)
-        with open(f"{out_dir}/run_{self.id}.json", "w") as f:
-            json.dump(self.model_dump(), f)
+        copy = self.model_copy()
+        # cast all dates to str for JSON serialisation
+        copy.start_time = str(copy.start_time)
+        if copy.duration:
+            copy.duration = str(copy.duration)
+        if copy.fold_results:
+            for fold_res in copy.fold_results:
+                fold_res.start_time = str(fold_res.start_time)
+                if fold_res.duration:
+                    fold_res.duration = str(fold_res.duration)
+        with open(f"{out_dir}/run_{copy.id}.json", "w") as f:
+            json.dump(copy.model_dump(), f)
+        del copy
 
 
 def create_experiment_from_json(
@@ -163,4 +166,10 @@ if __name__ == "__main__":
     name = "test"
     out_dir = "out"
     config_json_path = "pipeline_parameters.json"
-    test = create_experiment_from_json(name, out_dir)
+    test = create_experiment_from_json(name, out_dir, config_json_path)
+    test.write_experiment_to_json(out_dir)
+
+    # config = load_experiment_from_json(
+    #     "out/model_runs/c30_25d_1411_1620/run_c30_25d_1411_1620.json"
+    # )
+    # config.fold_results[0].latest_eval_metrics
