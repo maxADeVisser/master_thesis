@@ -357,10 +357,6 @@ def train_model(
     # Log results of experiment:
     experiment.end_time = dt.datetime.now()
     experiment.duration = experiment.end_time - experiment.start_time
-    # cast datetimes to strings for JSON serialization:
-    experiment.start_time = str(experiment.start_time)
-    experiment.end_time = str(experiment.end_time)
-    experiment.duration = str(experiment.duration)
     experiment.results = cv_results
     experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 

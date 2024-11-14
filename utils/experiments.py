@@ -91,6 +91,11 @@ class BaseExperimentConfig(BaseModel):
 
     def write_experiment_to_json(self, out_dir: str) -> None:
         """Write the experiment to a JSON file."""
+        self.start_time = str(self.start_time)
+        if self.end_time:
+            self.end_time = str(self.end_time)
+        if self.duration:
+            self.duration = str(self.duration)
         with open(f"{out_dir}/run_{self.id}.json", "w") as f:
             json.dump(self.model_dump(), f)
 
