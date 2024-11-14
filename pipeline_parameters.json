@@ -2,7 +2,7 @@
   "config_name": "c70_25d",
   "dataset": {
     "clipping_bounds": [-1000, 400],
-    "context_window": 70,
+    "context_window": 30,
     "dimensionality": "2.5D",
     "segment_nodule": "none"
   },
@@ -11,7 +11,7 @@
     "num_classes": 5
   },
   "training": {
-    "batch_size": 32,
+    "batch_size": 16,
     "cross_validation_folds": 5,
     "cv_train_folds": 3,
     "do_cross_validation": true,
