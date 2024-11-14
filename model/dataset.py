@@ -200,8 +200,6 @@ class LIDC_IDRI_DATASET(Dataset):
 
 # %%
 if __name__ == "__main__":
-    # import matplotlib.pyplot as plt
-
     # # testing dataloader
     dataset = LIDC_IDRI_DATASET(
         context_size=30, segmentation_configuration="none", n_dims="2.5D"
@@ -240,17 +238,5 @@ if __name__ == "__main__":
     plt.show()
 
     # test_nodule.visualise_nodule_bbox()
-
-    # Validate that all ROIs have standardise shape (this is currently not the case!):
-    # dataset = LIDC_IDRI_DATASET()
-    # from tqdm import tqdm
-
-    # for i in tqdm(range(len(dataset))):
-    #     roi, _ = dataset.__getitem__(i)
-    #     assert roi.shape == (
-    #         IMAGE_DIM,
-    #         IMAGE_DIM,
-    #         IMAGE_DIM,
-    #     ), f"ROI shape is not standardised. ROI {i} has shape {roi.shape}"
 
 # %%
