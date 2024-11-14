@@ -33,6 +33,7 @@ from utils.experiments import TrainingFold
 from utils.logger_setup import logger
 from utils.metrics import (
     compute_accuracy,
+    compute_cwce,
     compute_errors,
     compute_filtered_AUC,
     compute_mae,
@@ -100,7 +101,7 @@ def train_epoch(
     return average_epoch_loss
 
 
-def validate_model(
+def evaluate_model(
     model: nn.Module,
     criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
     validation_loader: DataLoader,
@@ -155,24 +156,21 @@ def validate_model(
 
             start_idx += batch_size
 
-    # convert to numpy:
-    all_true_labels = all_true_labels.numpy()
-    all_binary_prob_predictions = all_binary_prob_predictions.numpy()
-    all_malignancy_predictions = all_malignancy_predictions.numpy()
-    all_class_proba_preds = all_class_proba_preds.numpy()
-
     # --- COMPUTE METRICS ---
-    errors = compute_errors(all_true_labels, all_malignancy_predictions)
+    np_all_true_labels = all_true_labels.numpy()
+    np_all_class_proba_preds = all_class_proba_preds.numpy()
+    np_all_binary_prob_predictions = all_binary_prob_predictions.numpy()
     val_metrics = {
         "avg_val_loss": running_val_loss / number_of_batches,
         "accuracy": compute_accuracy(all_true_labels, all_malignancy_predictions),
-        "AUC_ovr": compute_ovr_AUC(all_true_labels, all_class_proba_preds),
+        "AUC_ovr": compute_ovr_AUC(np_all_true_labels, np_all_class_proba_preds),
         "AUC_filtered": compute_filtered_AUC(
-            all_true_labels, all_binary_prob_predictions
+            np_all_true_labels, np_all_binary_prob_predictions
         ),
-        "errors": errors,
-        "mae": compute_mae(errors),
+        "errors": compute_errors(all_true_labels, all_malignancy_predictions),
+        "mae": compute_mae(all_true_labels, all_malignancy_predictions),
         "mse": compute_mse(all_true_labels, all_malignancy_predictions),
+        "cwce": compute_cwce(all_true_labels, all_class_proba_preds, M=10),
     }
     return val_metrics
 
@@ -235,7 +233,6 @@ def train_model(
 
     # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
-    cv_results = {}
     for fold, (train_idxs, val_idxs) in enumerate(
         sgkf.split(
             X=dataset.nodule_df,
@@ -288,8 +285,6 @@ def train_model(
         )
 
         # --- Training Loop ---
-        avg_epoch_losses = []
-        val_losses = []
         for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc="Epoch"):
             if epoch == 50 or epoch == 75:
                 # decreasing learning rate at specified epochs:
@@ -302,14 +297,28 @@ def train_model(
             avg_epoch_train_loss = train_epoch(
                 model, train_loader, optimizer, criterion
             )
-            avg_epoch_losses.append(avg_epoch_train_loss)
+            fold_results.train_losses.append(avg_epoch_train_loss)
 
-            # Validate model:
-            val_metrics = validate_model(model, criterion, val_loader)
-            val_losses.append(val_metrics["avg_val_loss"])
+            # Evaluate model:
+            val_metrics = evaluate_model(model, criterion, val_loader)
+            # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
+            early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
+
+            fold_results.best_loss = early_stopper.best_loss
+            fold_results.val_losses.append(val_metrics["avg_val_loss"])
+            fold_results.val_accuracies.append(val_metrics["accuracy"])
+            fold_results.val_AUC_filtered.append(val_metrics["AUC_filtered"])
+            fold_results.val_AUC_ovr.append(val_metrics["AUC_ovr"])
+            fold_results.val_maes.append(val_metrics["mae"])
+            fold_results.val_mses.append(val_metrics["mse"])
+            fold_results.val_cwces.append(val_metrics["cwce"])
+            # Write incremental results out to JSON:
+            fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 
             # Log epoch results:
-            plot_loss(avg_epoch_losses, val_losses, out_dir=fold_out_dir)
+            plot_loss(
+                fold_results.train_losses, fold_results.val_losses, out_dir=fold_out_dir
+            )
             plot_val_error_distribution(val_metrics["errors"], out_dir=fold_out_dir)
             logger.info(
                 f"""
@@ -321,26 +330,18 @@ def train_model(
                 Val AUC_ovr: {val_metrics['AUC_ovr']:.4f}
                 Val MAE: {np.mean(np.abs(val_metrics['errors'])):.4f}
                 Val MSE: {val_metrics['mse']:.4f}
+                Val CWCE: {val_metrics['cwce']:.4f}
                 """
             )
 
-            # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
-            early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
             if early_stopper.early_stop:
                 logger.info(f"Early stopping at epoch {epoch}")
+                fold_results.epoch_stopped = epoch
                 break
 
-        fold_end_time = dt.datetime.now()
-        fold_duration_time = fold_end_time - fold_start_time
-
-        # Store fold results and write to JSON:
-        fold_results.duration = fold_duration_time
-        fold_results.train_losses = avg_epoch_losses
-        fold_results.val_losses = val_losses
-        fold_results.latest_eval_metrics = val_metrics
-        fold_results.best_loss = early_stopper.best_loss
-        fold_results.epoch_stopped = epoch
+        fold_results.duration = dt.datetime.now() - fold_start_time
         fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
+
         experiment.fold_results.append(fold_results)
 
         if not cross_validation:

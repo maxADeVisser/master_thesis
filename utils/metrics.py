@@ -3,8 +3,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.calibration import calibration_curve, label_binarize
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.calibration import calibration_curve
+from sklearn.metrics import roc_auc_score
 
 from project_config import SEED
 
@@ -14,169 +14,161 @@ np.random.seed(SEED)
 DECIMAL_PLACES = 4
 
 
-def compute_errors(
-    y_true: np.ndarray, y_pred: np.ndarray, absolute: bool = False
-) -> list[int]:
+def compute_errors(y_true: torch.Tensor, y_pred: torch.Tensor) -> list[int]:
     """
     Returns the absolute errors between the true and predicted labels. The mean of this is the MAE.
     We do not aggregate them here, as we can plot the distribution of the errors and descriptive statistics.
-    @absolute: If True, returns the absolute errors.
     """
-    # since the labels start from 1, we subtract 1 to make them 0-indexed
-    y_true, y_pred = y_true - 1, y_pred - 1
-    if absolute:
-        return np.abs(y_pred - y_true)
     return (y_pred - y_true).tolist()
 
 
-def compute_mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+def compute_mse(y_true: torch.Tensor, y_pred: torch.Tensor) -> float:
     """
     Computes the mean squared error (MSE).
     """
-    return round(float(np.mean((y_true - y_pred) ** 2)), DECIMAL_PLACES)
+    return torch.mean((y_true - y_pred).float() ** 2).item()
 
 
-def compute_mae(errors: np.ndarray) -> float:
+def compute_mae(y_true: torch.Tensor, y_pred: torch.Tensor) -> float:
     """
     Computes the mean absolute error (MAE).
-    @errors are computed from the @compute_errors function.
     """
-    return round(float(np.mean(np.abs(errors))), DECIMAL_PLACES)
+    return torch.mean(torch.abs(y_true - y_pred).float()).item()
 
 
-def compute_ovr_AUC(
-    all_true_labels: np.ndarray, all_class_proba_preds: np.ndarray
-) -> float:
+def compute_ovr_AUC(y_true: np.ndarray, all_class_proba_preds: np.ndarray) -> float:
     """
     Computes the one-vs-rest AUC.
     """
-    y_true_binary = label_binarize(all_true_labels, classes=[1, 2, 3, 4, 5])
+    # y_true_binary = label_binarize(y_true, classes=[1, 2, 3, 4, 5])
     ovr_AUC = roc_auc_score(
-        y_true=y_true_binary,
+        y_true=y_true,
         y_score=all_class_proba_preds,
         multi_class="ovr",
         average="weighted",
     )
-    return round(float(ovr_AUC), DECIMAL_PLACES)
-
-
-def compute_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """
-    Computes the accuracy of the model.
-    """
-    return round(float(accuracy_score(y_true, y_pred)), DECIMAL_PLACES)
+    return float(ovr_AUC)
 
 
 def compute_filtered_AUC(
     all_true_labels: np.ndarray, all_binary_prob_predictions: np.ndarray
 ) -> float:
     """Calculate binary AUC for non-ambiguous cases only."""
-    # Filter out labels equal to 3
+    # Filter out labels equal to 3:
     non_ambiguous_mask = all_true_labels != 3
-
-    # Filtered predictions and labels using boolean indexing
     binary_predictions_filtered = all_binary_prob_predictions[non_ambiguous_mask]
     labels_filtered = all_true_labels[non_ambiguous_mask]
 
     # Create binary labels (1 if label > 3, else 0):
     binary_labels = (labels_filtered > 3).astype(int)
 
-    return round(
-        float(roc_auc_score(y_true=binary_labels, y_score=binary_predictions_filtered)),
-        DECIMAL_PLACES,
+    return float(
+        roc_auc_score(y_true=binary_labels, y_score=binary_predictions_filtered)
     )
 
 
-# NOTE: NOT USED
-# def expected_calibration_error(
-#     true_labels: torch.Tensor, pred_probas: torch.Tensor, bins=10
-# ) -> float:
+def compute_accuracy(y_true: torch.Tensor, y_pred: torch.Tensor) -> float:
+    """
+    Computes the accuracy of the model.
+    """
+    return torch.mean((y_true == y_pred).float()).item()
+
+
+def compute_cwce(
+    true_labels: torch.Tensor, pred_class_probas: torch.Tensor, M: int
+) -> float:
+    """
+    Calculates the Expected Calibration Error (ECE) for a set of samples and their true labels.
+    Works for binary and multi-class classification settings (aggregated ECE).
+
+    Params:
+    ---
+    @pred_class_probas: torch.Tensor - shape (n_samples, n_classes)
+        The predicted probabilities for each class for each sample.
+    @true_labels: torch.Tensor - shape (n_samples,)
+        The true labels for each sample.
+    @M is the number of bins to divide the confidence interval [0, 1] into.
+
+    Returns
+    ---
+    @ece: torch.Tensor - shape (1,)
+
+    Source:
+    https://towardsdatascience.com/expected-calibration-error-ece-a-step-by-step-visual-explanation-with-python-code-c3e9aa12937d
+    """
+    # uniform binning approach with M number of bins
+    bin_boundaries = torch.linspace(0, 1, M + 1)
+    bin_lowers = bin_boundaries[:-1]
+    bin_uppers = bin_boundaries[1:]
+
+    # get max probability per sample i (confidences) and the final predictions from these confidences
+    confidences, predicted_label = torch.max(pred_class_probas, 1)
+
+    # get a boolean list of correct/false predictions
+    accuracies = predicted_label.eq(true_labels)
+
+    ece = torch.zeros(1)
+    for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
+        # determine if sample is in bin m (between bin lower & upper)
+        in_bin = confidences.gt(bin_lower.item()) * confidences.le(bin_upper.item())
+        # can calculate the empirical probability of a sample falling into bin m: (|Bm|/n)
+        prop_in_bin = in_bin.float().mean()
+        if prop_in_bin.item() > 0:
+            # get the accuracy of bin m: acc(Bm)
+            accuracy_in_bin = accuracies[in_bin].float().mean()
+            # get the average confidence of bin m: conf(Bm)
+            avg_confidence_in_bin = confidences[in_bin].mean()
+            # calculate |acc(Bm) - conf(Bm)| * (|Bm|/n) for bin m and add to the total ECE
+            ece += torch.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
+
+    return ece.item()
+
+
+# NOT used. Calculates pr. class (but not sure if it's correct)
+# def classwise_ece(
+#     pred_probas: np.ndarray, y_true: np.ndarray, num_classes: int = 5, num_bins: int = 5
+# ):
 #     """
+#     Computes the Expected Calibration Error (ECE) per class.
+
 #     Params
 #     ---
-#     @pred_probas: torch.Tensor - shape (n_samples, n_classes)
-#         The predicted probabilities for each class for each sample.
-#     @true_labels: torch.Tensor - shape (n_samples,)
-#         The true labels for each sample.
-
-#     Returns
-#     ---
-#     @ece: float
-
-#     Source:
-#         https://towardsdatascience.com/expected-calibration-error-ece-a-step-by-step-visual-explanation-with-python-code-c3e9aa12937d
+#     @pred_probas: The predicted probabilities for each class.
+#         Shape: (num_samples, num_classes)
+#     @y_true: The true class labels.
+#         Shape: (num_samples,)
 #     """
-#     # uniform binning approach with @bins number of bins
-#     bin_boundaries = torch.linspace(0, 1, bins + 1)
-#     bin_lowers, bin_uppers = bin_boundaries[:-1], bin_boundaries[1:]
+#     classwise_ece = []
+#     bin_boundaries = np.linspace(0, 1, num_bins + 1)
+#     num_samples = len(y_true)
 
-#     # get max probability per sample i (confidences) and the final predictions from these confidences
-#     confidences, predicted_label = torch.max(pred_probas, 1)
-#     # get a boolean list of correct/false predictions
-#     accuracies = predicted_label.eq(true_labels)  # predicted_label == true_labels
+#     for c in range(num_classes):
+#         class_ece = 0.0
 
-#     # Compute ECE:
-#     ece = torch.zeros(1)
-#     for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
-#         # determine if sample is in bin m (between bin lower & upper)
-#         in_bin = confidences.gt(bin_lower.item()) * confidences.le(bin_upper.item())
+#         # Subset the class of interest:
+#         class_probs = pred_probas[:, c]  # predicted probabilities for class c
+#         binary_class_labels = (y_true == c + 1).astype(int)
 
-#         # can calculate the empirical probability of a sample falling into bin m: (|Bm|/n)
-#         prop_in_bin = in_bin.float().mean()
-#         if prop_in_bin.item() > 0:
-#             # get the accuracy of bin m: acc(Bm)
-#             accuracy_in_bin = accuracies[in_bin].float().mean()
-#             # get the average confidence of bin m: conf(Bm)
-#             avg_confidence_in_bin = confidences[in_bin].mean()
-#             # calculate |acc(Bm) - conf(Bm)| * (|Bm|/n) for bin m and add to the total ECE
-#             ece += torch.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
-#     return ece
+#         # For each bin, compute the confidence and accuracy:
+#         for i in range(num_bins):
+#             bin_lower, bin_upper = bin_boundaries[i], bin_boundaries[i + 1]
+#             bin_mask = (class_probs >= bin_lower) & (class_probs < bin_upper)
 
+#             n_bin = bin_mask.sum()  # number of samples in the bin
+#             if n_bin > 0:
+#                 # average confidence of the predictions in the bin:
+#                 avg_bin_confidence = class_probs[bin_mask].mean()
 
-def classwise_ece(
-    pred_probas: np.ndarray, y_true: np.ndarray, num_classes: int = 5, num_bins: int = 5
-):
-    """
-    Computes the Expected Calibration Error (ECE) per class.
+#                 # P(y = c | y_pred in bin) - proportion of correct predictions in the bin:
+#                 bin_accuracy = binary_class_labels[bin_mask].sum() / n_bin
 
-    Params
-    ---
-    @pred_probas: The predicted probabilities for each class.
-        Shape: (N, num_classes)
-    @y_true: The true class labels.
-        Shape: (N,)
-    """
-    classwise_ece = []
-    bin_boundaries = np.linspace(0, 1, num_bins + 1)
-    N = len(y_true)
+#                 # n_b/N: proportion of samples in the bin:
+#                 bin_weight = n_bin / num_samples
+#                 class_ece += bin_weight * abs(bin_accuracy - avg_bin_confidence)
 
-    for c in range(num_classes):
-        class_ece = 0.0
+#         classwise_ece.append(round(float(class_ece), 4))
 
-        # Subset the class of interest:
-        class_probs = pred_probas[:, c]  # predicted probabilities for class c
-        binary_class_labels = (y_true == c + 1).astype(int)
-
-        # For each bin, compute the confidence and accuracy:
-        for i in range(num_bins):
-            bin_lower, bin_upper = bin_boundaries[i], bin_boundaries[i + 1]
-            bin_mask = (class_probs >= bin_lower) & (class_probs < bin_upper)
-
-            n_bin = bin_mask.sum()  # number of samples in the bin
-            if n_bin > 0:
-                # average confidence of the predictions in the bin:
-                avg_bin_confidence = class_probs[bin_mask].mean()
-
-                # P(y = c | y_pred in bin) - proportion of correct predictions in the bin:
-                bin_accuracy = binary_class_labels[bin_mask].sum() / n_bin
-
-                # n_b/N: proportion of samples in the bin:
-                bin_weight = n_bin / N
-                class_ece += bin_weight * abs(bin_accuracy - avg_bin_confidence)
-
-        classwise_ece.append(round(float(class_ece), 4))
-
-    return classwise_ece
+#     return classwise_ece
 
 
 def reliability_diagram(

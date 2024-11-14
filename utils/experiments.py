@@ -18,14 +18,29 @@ class TrainingFold(BaseModel):
     duration: dt.timedelta | str | None = Field(
         None, description="Duration of the fold"
     )
-    train_losses: list[float] | None = Field(
-        None, description="List of average training loss for all epochs"
+    train_losses: list[float] = Field(
+        [], description="List of average training loss for all epochs"
     )
-    val_losses: list[float] | None = Field(
-        None, description="List of average validation loss for all epochs"
+    val_losses: list[float] = Field(
+        [], description="List of average validation loss for all epochs"
     )
-    latest_eval_metrics: dict | None = Field(
-        None, description="Latest evaluation metrics (from @validate_model func)"
+    val_accuracies: list[float] = Field(
+        [], description="List of average validation accuracies for all epochs"
+    )
+    val_AUC_filtered: list[float] = Field(
+        [], description="List of average validation AUC for non-ambiguous cases"
+    )
+    val_AUC_ovr: list[float] = Field(
+        [], description="List of average validation AUC for all classes"
+    )
+    val_maes: list[float] = Field(
+        [], description="List of average validation MAE for all epochs"
+    )
+    val_mses: list[float] = Field(
+        [], description="List of average validation MSE for all epochs"
+    )
+    val_cwces: list[float] = Field(
+        [], description="List of average validation CWCE for all epochs"
     )
     best_loss: float | None = Field(None, description="Best loss for the fold")
     epoch_stopped: int | None = Field(
@@ -75,7 +90,6 @@ class ExperimentModel(BaseModel):
 
 class ExperimentTraining(BaseModel):
     batch_size: int = Field(..., ge=1, description="Batch size for training.")
-    optimiser: str = Field("adam", description="Optimiser to use for training.")
     learning_rate: float = Field(
         ..., gt=0, description="Learning rate for the optimizer."
     )
