@@ -1,11 +1,8 @@
 {
-  "config_name": "c50_25d",
+  "config_name": "c30_25d",
   "dataset": {
-    "clipping_bounds": [
-      -1000,
-      400
-    ],
-    "context_window": 50,
+    "clipping_bounds": [-1000, 400],
+    "context_window": 30,
     "dimensionality": "2.5D",
     "segment_nodule": "none"
   },
@@ -18,10 +15,10 @@
     "cross_validation_folds": 5,
     "cv_train_folds": 3,
     "do_cross_validation": true,
-    "learning_rate": 0.001,
+    "learning_rate": 0.0001,
     "min_delta": 0.01,
     "num_epochs": 100,
-    "num_workers": 8,
+    "num_workers": 4,
     "patience": 10
   }
 }
