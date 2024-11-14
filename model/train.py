@@ -29,6 +29,7 @@ from model.MEDMnist.ResNet import (
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.early_stopping import EarlyStopping
+from utils.experiments import TrainingFold
 from utils.logger_setup import logger
 from utils.metrics import (
     compute_accuracy,
@@ -235,7 +236,7 @@ def train_model(
     # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
     cv_results = {}
-    for fold, (train_ids, val_ids) in enumerate(
+    for fold, (train_idxs, val_idxs) in enumerate(
         sgkf.split(
             X=dataset.nodule_df,
             y=dataset.nodule_df["malignancy_consensus"],
@@ -245,23 +246,24 @@ def train_model(
         logger.info(
             f"""
             [[Starting Fold {fold + 1}/{CV_FOLDS}]]
-            Train instances: {len(train_ids)}
-            Validation instances: {len(val_ids)}
+            Train instances: {len(train_idxs)}
+            Validation instances: {len(val_idxs)}
             """
         )
+
         fold_start_time = dt.datetime.now()
         fold_out_dir = f"{exp_out_dir}/fold{fold}"
         if not os.path.exists(fold_out_dir):
             os.makedirs(fold_out_dir)
 
-        fold_results = {}
-        fold_results["train_ids"] = train_ids.tolist()
-        fold_results["val_ids"] = val_ids.tolist()
-        fold_results["fold_start_time"] = str(fold_start_time)
-
-        # Write initial fold setup to JSON:
-        with open(f"{fold_out_dir}/fold_results.json", "w") as f:
-            json.dump(fold_results, f)
+        fold_results = TrainingFold(
+            fold_id=f"fold{fold}_{experiment.id}",
+            train_idxs=train_idxs.tolist(),
+            val_idxs=val_idxs.tolist(),
+            fold_start_time=fold_start_time,
+        )
+        # save initial fold information
+        fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 
         # Initialize model and move to GPU (if available)
         model = ResNet50(
@@ -270,11 +272,11 @@ def train_model(
         criterion = CornLoss(num_classes=NUM_CLASSES)
         optimizer = optim.Adam(model.parameters(), lr=LR)
 
-        train_subset = Subset(dataset, indices=train_ids)
+        train_subset = Subset(dataset, indices=train_idxs)
         train_loader = DataLoader(
             train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
         )
-        val_subset = Subset(dataset, indices=val_ids)
+        val_subset = Subset(dataset, indices=val_idxs)
         val_loader = DataLoader(
             val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
         )
@@ -331,17 +333,14 @@ def train_model(
         fold_end_time = dt.datetime.now()
         fold_duration_time = fold_end_time - fold_start_time
 
-        # Store fold results:
-        fold_results["fold_duration_seconds"] = fold_duration_time.total_seconds()
-        fold_results["avg_epoch_train_losses"] = avg_epoch_losses
-        fold_results["avg_epoch_val_losses"] = val_losses
-        fold_results["latest_eval_metrics"] = val_metrics
-        fold_results["best_loss"] = early_stopper.best_loss
-        fold_results["epoch_stopped"] = epoch
-
-        # Write final fold results to JSON:
-        with open(f"{fold_out_dir}/fold_results.json", "w") as f:
-            json.dump(fold_results, f)
+        # Store fold results and write to JSON:
+        fold_results.duration = fold_duration_time
+        fold_results.train_losses = avg_epoch_losses
+        fold_results.val_losses = val_losses
+        fold_results.latest_eval_metrics = val_metrics
+        fold_results.best_loss = early_stopper.best_loss
+        fold_results.epoch_stopped = early_stopper.epoch_stopped
+        fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 
         # Store fold results in cv_results:
         cv_results[fold + 1] = fold_results
@@ -357,7 +356,7 @@ def train_model(
     # Log results of experiment:
     experiment.end_time = dt.datetime.now()
     experiment.duration = experiment.end_time - experiment.start_time
-    experiment.results = cv_results
+    experiment.all_results = cv_results
     experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 
 

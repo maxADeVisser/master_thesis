@@ -6,6 +6,41 @@ from pydantic import BaseModel, Field
 from utils.common_imports import *
 
 
+class TrainingFold(BaseModel):
+    fold_id: str = Field(..., description="ID of the fold (e.g. fold0_experimentID)")
+    train_idxs: list[int] = Field(
+        ..., description="List of training indicies used for the fold"
+    )
+    val_idxs: list[int] = Field(
+        ..., description="List of validation indicies used for the fold"
+    )
+    start_time: dt.datetime | str = Field(..., description="Start time of the fold.")
+    duration: dt.timedelta | str | None = Field(
+        None, description="Duration of the fold"
+    )
+    train_losses: list[float] | None = Field(
+        None, description="List of average training loss for all epochs"
+    )
+    val_losses: list[float] | None = Field(
+        None, description="List of average validation loss for all epochs"
+    )
+    latest_eval_metrics: dict | None = Field(
+        None, description="Latest evaluation metrics (from @validate_model func)"
+    )
+    best_loss: float | None = Field(None, description="Best loss for the fold")
+    epoch_stopped: int | None = Field(
+        None, description="Epoch where early stopping stopped training"
+    )
+
+    def write_fold_to_json(self, out_dir: str) -> None:
+        """Write the experiment to a JSON file."""
+        self.start_time = str(self.start_time)
+        if self.duration:
+            self.duration = str(self.duration)
+        with open(f"{out_dir}/{self.fold_id}.json", "w") as f:
+            json.dump(self.model_dump(), f)
+
+
 class ExperimentDataset(BaseModel):
     """Base Experiment Dataset for input validation"""
 
@@ -87,7 +122,10 @@ class BaseExperimentConfig(BaseModel):
     dataset: ExperimentDataset = Field(..., description="Dataset configuration.")
     model: ExperimentModel = Field(..., description="Model configuration.")
     training: ExperimentTraining = Field(..., description="Training configuration.")
-    results: dict | None = Field(None, description="Results")
+    fold_results: list[TrainingFold] | None = Field(
+        None, description="Results for each fold."
+    )
+    all_results: dict | None = Field(None, description="Results")
 
     def write_experiment_to_json(self, out_dir: str) -> None:
         """Write the experiment to a JSON file."""
