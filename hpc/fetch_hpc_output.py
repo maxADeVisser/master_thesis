@@ -23,6 +23,15 @@ def get_job_stdout(job_id: int, dest_dir: str) -> None:
     _transfer_hpc_to_local(hpc_out, dest_dir)
 
 
+def get_experiment_json(experiment_id: str, dest_dir: str) -> None:
+    """
+    Fetch the latest stdout data from the HPC
+    see the experiment_ids in the `out` directory on the HPC.
+    """
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/run_{experiment_id}.json"
+    _transfer_hpc_to_local(hpc_out, dest_dir)
+
+
 def update_error_distribution(
     experiment_id: str, fold: int, user: str = "newuser"
 ) -> None:
@@ -54,8 +63,8 @@ def fetch_model_weights(experiment_id: str, fold: int, user: str = "newuser") ->
 
 # %%
 if __name__ == "__main__":
-    experiment_id = "c50_25d_1311_1450"
-    job_id = 784
+    experiment_id = "c30_25d_1411_1123"
+    job_id = 934
     fold = 0
     local_user = "maxvisser"  # maxvisser for personal computer
 
@@ -65,6 +74,7 @@ if __name__ == "__main__":
         os.makedirs(local_path)
 
     get_job_stdout(job_id, local_path)
+    get_experiment_json(experiment_id, local_path)
     update_loss_plot(experiment_id, fold, local_user)
-    update_error_distribution(experiment_id, fold, local_user)
+    # update_error_distribution(experiment_id, fold, local_user)
     # fetch_model_weights(experiment_id, fold, local_user)
