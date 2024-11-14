@@ -197,12 +197,12 @@ def train_model(
     experiment.dataset.context_window = context_window_size
     experiment.id = f"{experiment.config_name}_{start_time.strftime('%d%m_%H%M')}"
     experiment.training.gpu_used = torch.cuda.get_device_name(0)
-    experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 
     # Create output directory for experiment:
     exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
     if not os.path.exists(exp_out_dir):
         os.makedirs(exp_out_dir)
+    experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 
     logger.info(
         f"""
