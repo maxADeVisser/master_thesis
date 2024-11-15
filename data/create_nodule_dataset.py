@@ -24,7 +24,7 @@ from utils.utils import get_scans_by_patient_id
 
 def main():
     # SCRIPT PARAMS
-    CONTEXT_WINDOW_SIZES = [30, 50, 70]
+    CONTEXT_WINDOW_SIZES = [10, 20, 30, 40]
     DIMENSIONALITY = "2.5D"
     PROJECT_DIR = os.getenv("PROJECT_DIR")
 
@@ -82,9 +82,3 @@ def main():
 # %%
 if __name__ == "__main__":
     main()
-
-# t = torch.load(
-#     "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_40C_2.5D/instance0.pt"
-# )
-# t[0].shape
-# t[1].shape

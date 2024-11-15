@@ -4,6 +4,10 @@ import logging
 import os
 import sys
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 LOG_LEVEL = os.getenv(key="LOG_LEVEL", default=logging.DEBUG)
 assert LOG_LEVEL in [
     "DEBUG",

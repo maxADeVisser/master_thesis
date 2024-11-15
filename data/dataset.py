@@ -216,11 +216,12 @@ class PrecomputedNoduleROIs(Dataset):
 if __name__ == "__main__":
     # testing precomputed dataset ----------------
     pdataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_50C_2.5D"
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_40C_2.5D"
     )
     loader = DataLoader(pdataset, batch_size=2, shuffle=False)
     for i, (roi, label) in enumerate(loader):
         roi.shape
+        label.shape
         break
     # -----------------------
 

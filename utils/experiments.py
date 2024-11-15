@@ -124,7 +124,7 @@ class ExperimentTraining(BaseModel):
 class BaseExperimentConfig(BaseModel):
     """Base Experiment Configuration for input validation"""
 
-    config_name: str = Field(..., description="Name of the experiment.")
+    config_name: str = Field(None, description="Name of the experiment.")
     id: str | None = Field(None, description="ID of the experiment.")
     start_time: dt.datetime | str = Field(
         dt.datetime.now(),
@@ -137,6 +137,10 @@ class BaseExperimentConfig(BaseModel):
     model: ExperimentModel = Field(..., description="Model configuration.")
     training: ExperimentTraining = Field(..., description="Training configuration.")
     fold_results: list[TrainingFold] = Field([], description="Results for each fold.")
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.config_name = f"c{self.dataset.context_window}_{self.dataset.dimensionality.replace('.', '')}"
 
     def write_experiment_to_json(self, out_dir: str) -> None:
         """Write the experiment to a JSON file."""
@@ -156,14 +160,13 @@ class BaseExperimentConfig(BaseModel):
 
 
 def create_experiment_from_json(
-    name: str,
     out_dir: str,
     config_json_path: str = "pipeline_parameters.json",
 ) -> BaseExperimentConfig:
     """Load the configuration from the pipeline parameters JSON file."""
     with open(config_json_path, "r") as f:
         config = json.load(f)
-    return BaseExperimentConfig(name=name, out_dir=out_dir, **config)
+    return BaseExperimentConfig(out_dir=out_dir, **config)
 
 
 def load_experiment_from_json(
@@ -180,7 +183,7 @@ if __name__ == "__main__":
     name = "test"
     out_dir = "out"
     config_json_path = "pipeline_parameters.json"
-    test = create_experiment_from_json(name, out_dir, config_json_path)
+    test = create_experiment_from_json(out_dir, config_json_path)
     test.write_experiment_to_json(out_dir)
 
     # config = load_experiment_from_json(

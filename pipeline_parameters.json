@@ -1,7 +1,9 @@
 {
-  "config_name": "c30_25d",
   "dataset": {
-    "clipping_bounds": [-1000, 400],
+    "clipping_bounds": [
+      -1000,
+      400
+    ],
     "context_window": 30,
     "dimensionality": "2.5D",
     "segment_nodule": "none"

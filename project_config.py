@@ -24,16 +24,17 @@ class _EnvConfig:
     """
 
     def __init__(self):
-        out_dir = os.getenv("OUTPUT_DIR") or "out"
+        project_dir = os.getenv("PROJECT_DIR")
         lidc_idri_dir = os.getenv("LIDC_IDRI_DIR")
         assert (
-            out_dir is not None
-        ), "Please set the OUTPUT_DIR env var in a .env file in the root directory of the project"
+            project_dir is not None
+        ), "Please set the PROJECT_DIR env var in a .env file in the root directory of the project"
         assert (
             lidc_idri_dir is not None
         ), "Please set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
+        self.PROJECT_DIR = project_dir
         self.DATA_DIR = lidc_idri_dir
-        self.OUT_DIR = out_dir
+        self.OUT_DIR = f"{project_dir}/out"
         self.patient_ids = sorted(
             [
                 pid
@@ -41,9 +42,13 @@ class _EnvConfig:
                 if os.path.isdir(os.path.join(lidc_idri_dir, pid))
             ]
         )
-        self.nodule_df_file = f"preprocessing/nodule_df.csv"
-        self.processed_nodule_df_file = f"preprocessing/processed_nodule_df.csv"
-        self.hold_out_nodule_df_file = f"preprocessing/hold_out_nodule_df.csv"
+        self.nodule_df_file = f"{project_dir}/preprocessing/nodule_df.csv"
+        self.processed_nodule_df_file = (
+            f"{project_dir}/preprocessing/processed_nodule_df.csv"
+        )
+        self.hold_out_nodule_df_file = (
+            f"{project_dir}/preprocessing/hold_out_nodule_df.csv"
+        )
         # self.dicom_encoding_mapping_file = "utils/dicom_encoding_mapping.pkl"
         # self.meta_dataframe_file = "utils/meta_dataframe.parquet"
         # self.excluded_dicom_attributes = [
@@ -97,7 +102,5 @@ class _EnvConfig:
 # Singleton pattern: only one instance of the Config class is created
 env_config = _EnvConfig()
 
-pipeline_config = create_experiment_from_json(
-    name="raw_configuration", out_dir=env_config.OUT_DIR
-)
+pipeline_config = create_experiment_from_json(out_dir=env_config.OUT_DIR)
 # %%

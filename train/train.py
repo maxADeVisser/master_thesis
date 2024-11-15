@@ -222,9 +222,7 @@ def train_model(
         """
     )
 
-    preprocessed_data_dir = (
-        f"data/precomputed_rois_{CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
-    )
+    preprocessed_data_dir = f"{env_config.PROJECT_DIR}/data/precomputed_rois_{CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
     assert os.path.exists(
         preprocessed_data_dir
     ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
