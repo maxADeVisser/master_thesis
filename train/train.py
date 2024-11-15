@@ -18,7 +18,7 @@ from coral_pytorch.losses import corn_loss
 from sklearn.model_selection import StratifiedGroupKFold
 from torch.utils.data import DataLoader, Subset
 
-from data.dataset import LIDC_IDRI_DATASET, PrecomputedNoduleROIs
+from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import (
     ResNet50,
     compute_class_probs_from_logits,
@@ -222,11 +222,6 @@ def train_model(
         """
     )
 
-    # dataset = LIDC_IDRI_DATASET(
-    #     context_size=context_window_size,
-    #     segmentation_configuration="none",
-    #     n_dims=data_dimensionality,
-    # )
     preprocessed_data_dir = (
         f"data/precomputed_rois_{CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
     )
