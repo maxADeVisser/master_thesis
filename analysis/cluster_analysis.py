@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.manifold import TSNE
 
-from model.MEDMnist.ResNet import load_resnet_model
+from model.ResNet import load_resnet_model
 from project_config import SEED
 
 fold = 0

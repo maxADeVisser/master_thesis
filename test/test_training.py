@@ -7,8 +7,8 @@ from coral_pytorch.losses import CornLoss
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from model.train import get_pred_malignancy_score_from_logits, train_epoch, train_model
 from project_config import env_config
+from train.train import get_pred_malignancy_score_from_logits, train_epoch, train_model
 from utils.early_stopping import EarlyStopping
 
 

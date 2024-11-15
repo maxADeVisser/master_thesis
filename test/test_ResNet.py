@@ -3,14 +3,14 @@ from unittest.mock import MagicMock, patch
 
 import torch
 
-from model.MEDMnist.ResNet import (
+from model.ResNet import (
     compute_class_probs_from_logits,
     get_pred_malignancy_score_from_logits,
     predict_binary_from_logits,
 )
 
 
-@patch("model.MEDMnist.ResNet.get_unconditional_probas")
+@patch("model.ResNet.get_unconditional_probas")
 class TestPredictMalignancyFromLogits(unittest.TestCase):
     def setUp(self):
         # text example for 5 classes
@@ -34,7 +34,7 @@ class TestPredictMalignancyFromLogits(unittest.TestCase):
         mock_get_unconditional_probas.assert_called_once_with(self.logits)
 
 
-@patch("model.MEDMnist.ResNet.get_unconditional_probas")
+@patch("model.ResNet.get_unconditional_probas")
 class TestPredictBinaryFromLogits(unittest.TestCase):
     def setUp(self):
         # text example for 5 classes
@@ -64,7 +64,7 @@ class TestPredictBinaryFromLogits(unittest.TestCase):
         mock_get_unconditional_probas.assert_called_once_with(self.logits)
 
 
-@patch("model.MEDMnist.ResNet.get_unconditional_probas")
+@patch("model.ResNet.get_unconditional_probas")
 class TestComputeClassProbsFromLogits(unittest.TestCase):
     def setUp(self):
         # text example for 5 classes

@@ -2,7 +2,7 @@
 import torch
 from coral_pytorch.dataset import corn_label_from_logits
 
-from model.MEDMnist.ResNet import compute_class_probs_from_logits
+from model.ResNet import compute_class_probs_from_logits
 from utils.common_imports import *
 
 

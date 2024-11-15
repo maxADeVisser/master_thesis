@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from model.dataset import LIDC_IDRI_DATASET
-from model.MEDMnist.ResNet import load_resnet_model
+from model.ResNet import load_resnet_model
 
 # TODO seperate the train and validation sets when getting the embeddings!
 experiment_id = "c50_25d_1311_1450"
