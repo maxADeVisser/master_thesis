@@ -2,9 +2,14 @@
 
 # %%
 import os
+import sys
+
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+sys.path.append(os.getenv("PROJECT_DIR"))
 
 import torch
-from dotenv import load_dotenv
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -19,7 +24,6 @@ def main() -> None:
 
     # Constants
     batch_size = 1
-    load_dotenv()
     PROJECT_DIR = os.getenv("PROJECT_DIR")
     OUT_DIR = (
         f"{PROJECT_DIR}/data/precomputed_rois_{CONTEXT_WINDOW_SIZE}C_{DIMENSIONALITY}"
