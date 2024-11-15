@@ -7,9 +7,6 @@ import sys
 import numpy as np
 from dotenv import load_dotenv
 
-from preprocessing.processing import clip_and_normalise_volume
-from utils.utils import get_scans_by_patient_id
-
 load_dotenv(".env")
 sys.path.append(os.getenv("PROJECT_DIR"))
 
@@ -20,7 +17,9 @@ import torch
 from tqdm import tqdm
 
 from data.dataset import transform_3d_to_25d
+from preprocessing.processing import clip_and_normalise_volume
 from project_config import env_config
+from utils.utils import get_scans_by_patient_id
 
 
 def main():
