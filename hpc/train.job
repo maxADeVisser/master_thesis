@@ -10,5 +10,4 @@
 module load Anaconda3
 source activate /opt/itu/condaenvs/pytorch/
 pip install -r training_requirements.txt
-python data/create_nodule_dataset.py
-python model/train.py
+python train/train.py
