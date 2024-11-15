@@ -306,13 +306,13 @@ def train_model(
             early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
 
             fold_results.best_loss = early_stopper.best_loss
-            fold_results.val_losses.append(val_metrics["avg_val_loss"])
-            fold_results.val_accuracies.append(val_metrics["accuracy"])
-            fold_results.val_AUC_filtered.append(val_metrics["AUC_filtered"])
-            fold_results.val_AUC_ovr.append(val_metrics["AUC_ovr"])
-            fold_results.val_maes.append(val_metrics["mae"])
-            fold_results.val_mses.append(val_metrics["mse"])
-            fold_results.val_cwces.append(val_metrics["cwce"])
+            fold_results.val_losses.append(round(val_metrics["avg_val_loss"], 4))
+            fold_results.val_accuracies.append(round(val_metrics["accuracy"], 4))
+            fold_results.val_AUC_filtered.append(round(val_metrics["AUC_filtered"], 4))
+            fold_results.val_AUC_ovr.append(round(val_metrics["AUC_ovr"], 4))
+            fold_results.val_maes.append(round(val_metrics["mae"], 4))
+            fold_results.val_mses.append(round(val_metrics["mse"], 4))
+            fold_results.val_cwces.append(round(val_metrics["cwce"], 4))
             # Write incremental results out to JSON:
             fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 
