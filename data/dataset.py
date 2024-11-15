@@ -198,9 +198,32 @@ class LIDC_IDRI_DATASET(Dataset):
         return nodule.nodule_roi, nodule.malignancy_consensus
 
 
+class PrecomputedNoduleROIs(Dataset):
+    def __init__(self, preprocessed_dir):
+        self.files = [f"{preprocessed_dir}/{f}" for f in os.listdir(preprocessed_dir)]
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, idx):
+        data: torch.Tensor = torch.load(self.files[idx])
+        # data[0][0] is the nodule ROI (the batch is saved in the file also
+        # data[1] is the malignancy score)
+        return data[0][0], data[1]
+
+
 # %%
 if __name__ == "__main__":
-    # # testing dataloader
+    # testing precomputed dataset
+    pdataset = PrecomputedNoduleROIs(
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_70C_3D"
+    )
+    loader = DataLoader(pdataset, batch_size=2, shuffle=False)
+    for i, (roi, label) in enumerate(loader):
+        print(roi.shape, label)
+        break
+
+    # testing dataloader
     dataset = LIDC_IDRI_DATASET(
         context_size=30, segmentation_configuration="none", n_dims="2.5D"
     )

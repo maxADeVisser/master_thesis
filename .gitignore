@@ -1,4 +1,5 @@
 lung_data/
+precomputed*
 out/
 .env
 max/
