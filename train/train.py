@@ -19,7 +19,7 @@ from coral_pytorch.losses import CornLoss
 from sklearn.model_selection import StratifiedGroupKFold
 from torch.utils.data import DataLoader, Subset
 
-from model.dataset import LIDC_IDRI_DATASET
+from data.dataset import LIDC_IDRI_DATASET
 from model.ResNet import (
     ResNet50,
     compute_class_probs_from_logits,
@@ -58,6 +58,7 @@ CV_FOLDS = pipeline_config.training.cross_validation_folds
 CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
 NUM_WORKERS = pipeline_config.training.num_workers
+NUM_WORKERS = 0
 PATIENCE = pipeline_config.training.patience
 MIN_DELTA = pipeline_config.training.min_delta
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -96,6 +97,7 @@ def train_epoch(
         optimizer.step()
 
         running_epoch_loss += loss.item()
+        break
 
     average_epoch_loss = running_epoch_loss / n_batches
     return average_epoch_loss
@@ -195,7 +197,7 @@ def train_model(
     experiment.start_time = start_time
     experiment.dataset.context_window = context_window_size
     experiment.id = f"{experiment.config_name}_{start_time.strftime('%d%m_%H%M')}"
-    experiment.training.gpu_used = torch.cuda.get_device_name(0)
+    # experiment.training.gpu_used = torch.cuda.get_device_name(0)
 
     # Create output directory for experiment:
     exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
@@ -221,7 +223,6 @@ def train_model(
         Output directory: {exp_out_dir}
 
         Device used: {DEVICE}
-        GPU: {torch.cuda.get_device_name(0)}
         """
     )
 
@@ -338,6 +339,7 @@ def train_model(
                 logger.info(f"Early stopping at epoch {epoch}")
                 fold_results.epoch_stopped = epoch
                 break
+            break
 
         fold_results.duration = dt.datetime.now() - fold_start_time
         fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")

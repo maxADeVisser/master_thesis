@@ -7,7 +7,7 @@ import torch.optim as optim
 from coral_pytorch.losses import CornLoss
 from torch.utils.data import DataLoader
 
-from model.dataset import LIDC_IDRI_DATASET
+from data.dataset import LIDC_IDRI_DATASET
 from model.ResNet import ResNet50
 from project_config import SEED, pipeline_config
 from utils.common_imports import *
