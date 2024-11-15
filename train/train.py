@@ -42,6 +42,7 @@ from utils.metrics import (
 from utils.visualisation import plot_loss, plot_val_error_distribution
 
 torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
 np.random.seed(SEED)
 
 # LOAD SCRIPT PARAMS:
