@@ -21,7 +21,7 @@ def get_ct_scan_slice_paths(
     - Returns ALL (multiple) the full CT scan file paths for a given patient
     - OR Returns the parent directory path of the CT scan for a given patient"""
     # BUG this sometimes does not return the first folder in the list??? Sometimes the annnotations folder is returned. I think this was the case for LIDC-IDRI-0068
-    directory = os.path.join(env_config.DATA_DIR, patient_id_dir)
+    directory = os.path.join(env_config.RAW_DATA_DIR, patient_id_dir)
 
     if not os.path.isdir(directory):
         raise ValueError(f"Provided path '{directory}' is not a valid directory.")

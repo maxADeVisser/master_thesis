@@ -4,7 +4,7 @@
       -1000,
       400
     ],
-    "context_window": 30,
+    "context_window": 40,
     "dimensionality": "2.5D",
     "segment_nodule": "none"
   },
@@ -13,7 +13,7 @@
     "num_classes": 5
   },
   "training": {
-    "batch_size": 16,
+    "batch_size": 32,
     "cross_validation_folds": 5,
     "cv_train_folds": 3,
     "do_cross_validation": true,

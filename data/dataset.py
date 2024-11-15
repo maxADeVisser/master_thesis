@@ -206,7 +206,7 @@ class PrecomputedNoduleROIs(Dataset):
         return len(self.files)
 
     def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
-        data: torch.Tensor = torch.load(self.files[idx])
+        data: torch.Tensor = torch.load(self.files[idx], weights_only=True)
         # data[0][0] is the nodule ROI (the batch is saved in the file also
         # data[1] is the malignancy score)
         return data[0], data[1]

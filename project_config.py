@@ -12,6 +12,8 @@ load_dotenv(".env")
 
 SEED = 39  # Seed for reproducibility
 
+pipeline_config = create_experiment_from_json("pipeline_parameters.json")
+
 
 class _EnvConfig:
     """
@@ -33,7 +35,8 @@ class _EnvConfig:
             lidc_idri_dir is not None
         ), "Please set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
         self.PROJECT_DIR = project_dir
-        self.DATA_DIR = lidc_idri_dir
+        self.RAW_DATA_DIR = lidc_idri_dir
+        self.PREPROCESSED_DATA_DIR = f"{project_dir}/data/precomputed_rois_{pipeline_config.dataset.context_window}C_{pipeline_config.dataset.dimensionality}"
         self.OUT_DIR = f"{project_dir}/out"
         self.patient_ids = sorted(
             [
@@ -102,5 +105,4 @@ class _EnvConfig:
 # Singleton pattern: only one instance of the Config class is created
 env_config = _EnvConfig()
 
-pipeline_config = create_experiment_from_json(out_dir=env_config.OUT_DIR)
 # %%

@@ -84,7 +84,7 @@ def make_encoding_mapping_file(reverse: bool = False) -> None:
     If @reverse then the mapping is reversed.
     """
     # read in a random dicom file:
-    dicom_file_path = f"{env_config.DATA_DIR}/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm"
+    dicom_file_path = f"{env_config.RAW_DATA_DIR}/LIDC-IDRI-0001/01-01-2000-NA-NA-30178/3000566.000000-NA-03192/1-001.dcm"
     assert os.path.exists(dicom_file_path), "First Dicom file not found"
     dicom_file = pydicom.dcmread(
         dicom_file_path,

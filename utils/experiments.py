@@ -160,13 +160,12 @@ class BaseExperimentConfig(BaseModel):
 
 
 def create_experiment_from_json(
-    out_dir: str,
     config_json_path: str = "pipeline_parameters.json",
 ) -> BaseExperimentConfig:
     """Load the configuration from the pipeline parameters JSON file."""
     with open(config_json_path, "r") as f:
         config = json.load(f)
-    return BaseExperimentConfig(out_dir=out_dir, **config)
+    return BaseExperimentConfig(**config)
 
 
 def load_experiment_from_json(
@@ -181,10 +180,10 @@ def load_experiment_from_json(
 # %%
 if __name__ == "__main__":
     name = "test"
-    out_dir = "out"
-    config_json_path = "pipeline_parameters.json"
-    test = create_experiment_from_json(out_dir, config_json_path)
-    test.write_experiment_to_json(out_dir)
+    test = create_experiment_from_json("pipeline_parameters.json")
+    from project_config import env_config
+
+    test.write_experiment_to_json(env_config.OUT_DIR)
 
     # config = load_experiment_from_json(
     #     "out/model_runs/c30_25d_1411_1620/run_c30_25d_1411_1620.json"
