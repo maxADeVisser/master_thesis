@@ -24,8 +24,8 @@ from utils.utils import get_scans_by_patient_id
 
 def main():
     # SCRIPT PARAMS
-    CONTEXT_WINDOW_SIZES = [10, 20, 30, 40]
-    DIMENSIONALITY = "2.5D"
+    CONTEXT_WINDOW_SIZES = [30, 50, 70]
+    DIMENSIONALITY = "3D"
     PROJECT_DIR = os.getenv("PROJECT_DIR")
 
     # Load the preprocessed nodule dataframe
@@ -76,8 +76,6 @@ def main():
 
             torch.save((nodule_roi, malignancy_consensus), f"{OUT_DIR}/instance{i}.pt")
 
-
-# ----------------------------------------------------------------------------------------------
 
 # %%
 if __name__ == "__main__":
