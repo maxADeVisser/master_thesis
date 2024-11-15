@@ -56,15 +56,15 @@ def fetch_model_weights(experiment_id: str, fold: int, user: str = "newuser") ->
     """
     Fetch the model weights from the HPC
     """
-    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/fold{fold}/model_fold{fold}.pth"
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/fold{fold}/model.pth"
     out_dir = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
     _transfer_hpc_to_local(hpc_out, out_dir)
 
 
 # %%
 if __name__ == "__main__":
-    experiment_id = "c30_25d_1411_1123"
-    job_id = 934
+    experiment_id = "c30_25d_1411_2252"
+    job_id = 1098
     fold = 0
     local_user = "maxvisser"  # maxvisser for personal computer
 
@@ -77,4 +77,4 @@ if __name__ == "__main__":
     get_experiment_json(experiment_id, local_path)
     update_loss_plot(experiment_id, fold, local_user)
     # update_error_distribution(experiment_id, fold, local_user)
-    # fetch_model_weights(experiment_id, fold, local_user)
+    fetch_model_weights(experiment_id, fold, local_user)

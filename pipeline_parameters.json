@@ -1,5 +1,5 @@
 {
-  "config_name": "c70_25d",
+  "config_name": "c30_25d",
   "dataset": {
     "clipping_bounds": [-1000, 400],
     "context_window": 30,

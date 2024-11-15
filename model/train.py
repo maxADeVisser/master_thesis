@@ -78,7 +78,7 @@ def train_epoch(
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
 
-    for inputs, labels in tqdm(train_loader, desc="Epoch Batches"):
+    for inputs, labels in tqdm(train_loader, desc="Batches"):
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
 
@@ -130,7 +130,7 @@ def evaluate_model(
 
     # (no gradient calculations needed during validation)
     with torch.no_grad():
-        for inputs, labels in tqdm(validation_loader, "Validation Batches"):
+        for inputs, labels in validation_loader:
             # move features and labels to GPU, get logits and compute loss:
             inputs, labels = inputs.to(DEVICE).float(), labels.to(DEVICE).int()
             logits = model(inputs)
