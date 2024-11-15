@@ -10,16 +10,15 @@ load_dotenv(".env")
 sys.path.append(os.getenv("PROJECT_DIR"))
 
 import datetime as dt
-from typing import Callable
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from coral_pytorch.losses import CornLoss
+from coral_pytorch.losses import corn_loss
 from sklearn.model_selection import StratifiedGroupKFold
 from torch.utils.data import DataLoader, Subset
 
-from data.dataset import LIDC_IDRI_DATASET
+from data.dataset import LIDC_IDRI_DATASET, PrecomputedNoduleROIs
 from model.ResNet import (
     ResNet50,
     compute_class_probs_from_logits,
@@ -58,7 +57,6 @@ CV_FOLDS = pipeline_config.training.cross_validation_folds
 CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
 BATCH_SIZE = pipeline_config.training.batch_size
 NUM_WORKERS = pipeline_config.training.num_workers
-NUM_WORKERS = 0
 PATIENCE = pipeline_config.training.patience
 MIN_DELTA = pipeline_config.training.min_delta
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -68,7 +66,6 @@ def train_epoch(
     model: nn.Module,
     train_loader: DataLoader,
     optimizer: optim.Optimizer,
-    criterion: nn.Module,
 ) -> float:
     """
     Trains the model for one epoch.
@@ -90,14 +87,13 @@ def train_epoch(
         logits = model(inputs)
         # class labels should start at 0 according to documentation:
         # https://raschka-research-group.github.io/coral-pytorch/api_subpackages/coral_pytorch.losses/
-        loss = criterion(logits, labels - 1)
+        loss = corn_loss(logits, torch.squeeze(labels) - 1, num_classes=NUM_CLASSES)
 
         # Backward pass and optimisation
         loss.backward()
         optimizer.step()
 
         running_epoch_loss += loss.item()
-        break
 
     average_epoch_loss = running_epoch_loss / n_batches
     return average_epoch_loss
@@ -105,7 +101,6 @@ def train_epoch(
 
 def evaluate_model(
     model: nn.Module,
-    criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
     validation_loader: DataLoader,
 ) -> dict:
     """Validates the model according performance metrics using the provided data loader."""
@@ -137,7 +132,7 @@ def evaluate_model(
             inputs, labels = inputs.to(DEVICE).float(), labels.to(DEVICE).int()
             logits = model(inputs)
             # (class labels should start at 0 according to corn loss documentation)
-            loss = criterion(logits, labels - 1)
+            loss = corn_loss(logits, labels - 1, num_classes=NUM_CLASSES)
             running_val_loss += loss.item()
 
             # move to CPU for metrics calculations:
@@ -197,7 +192,7 @@ def train_model(
     experiment.start_time = start_time
     experiment.dataset.context_window = context_window_size
     experiment.id = f"{experiment.config_name}_{start_time.strftime('%d%m_%H%M')}"
-    # experiment.training.gpu_used = torch.cuda.get_device_name(0)
+    experiment.training.gpu_used = torch.cuda.get_device_name(0)
 
     # Create output directory for experiment:
     exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
@@ -222,23 +217,32 @@ def train_model(
 
         Output directory: {exp_out_dir}
 
+        GPU: {torch.cuda.get_device_name(0)}
         Device used: {DEVICE}
         """
     )
 
-    dataset = LIDC_IDRI_DATASET(
-        context_size=context_window_size,
-        segmentation_configuration="none",
-        n_dims=data_dimensionality,
+    # dataset = LIDC_IDRI_DATASET(
+    #     context_size=context_window_size,
+    #     segmentation_configuration="none",
+    #     n_dims=data_dimensionality,
+    # )
+    preprocessed_data_dir = (
+        f"data/precomputed_rois_{CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
     )
+    assert os.path.exists(
+        preprocessed_data_dir
+    ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
+    dataset = PrecomputedNoduleROIs(preprocessed_dir=preprocessed_data_dir)
+    nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
 
     # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
     for fold, (train_idxs, val_idxs) in enumerate(
         sgkf.split(
-            X=dataset.nodule_df,
-            y=dataset.nodule_df["malignancy_consensus"],
-            groups=dataset.nodule_df["pid"],
+            X=nodule_df,
+            y=nodule_df["malignancy_consensus"],
+            groups=nodule_df["pid"],
         )
     ):
         logger.info(
@@ -267,7 +271,6 @@ def train_model(
         model = ResNet50(
             in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims=DATA_DIMENSIONALITY
         ).to(DEVICE)
-        criterion = CornLoss(num_classes=NUM_CLASSES)
         optimizer = optim.Adam(model.parameters(), lr=LR)
 
         train_subset = Subset(dataset, indices=train_idxs)
@@ -295,13 +298,11 @@ def train_model(
                     f"Learning rate adjusted to: {optimizer.param_groups[0]['lr']}"
                 )
 
-            avg_epoch_train_loss = train_epoch(
-                model, train_loader, optimizer, criterion
-            )
+            avg_epoch_train_loss = train_epoch(model, train_loader, optimizer)
             fold_results.train_losses.append(avg_epoch_train_loss)
 
             # Evaluate model:
-            val_metrics = evaluate_model(model, criterion, val_loader)
+            val_metrics = evaluate_model(model, val_loader)
             # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
             early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
 
@@ -339,7 +340,6 @@ def train_model(
                 logger.info(f"Early stopping at epoch {epoch}")
                 fold_results.epoch_stopped = epoch
                 break
-            break
 
         fold_results.duration = dt.datetime.now() - fold_start_time
         fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")

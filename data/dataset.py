@@ -39,6 +39,7 @@ class Nodule:
         self,
         nodule_record: pd.Series,
         nodule_context_size: int,
+        # TODO clean up if unused
         segmentation_setting: Literal["none", "remove_background", "remove_nodule"],
         nodule_dim: Literal["2.5D", "3D"] = "3D",
     ) -> None:
@@ -54,21 +55,20 @@ class Nodule:
             f"consensus_bbox_{nodule_context_size}"
         ]
         self.nodule_roi = self.get_nodule_roi()
-        self.nodule_roi = clip_and_normalise_volume(self.nodule_roi)
-
-        if segmentation_setting == "remove_background":
-            self.nodule_roi = self.segment_nodule(invert=False)
-        elif segmentation_setting == "remove_nodule":
-            self.nodule_roi = self.segment_nodule(invert=True)
-        elif segmentation_setting == "none":
-            pass
-        else:
-            raise ValueError(
-                f"Segmentation setting {segmentation_setting} not recognised. Please choose one of: ['none', 'remove_nodule', 'remove_background']"
-            )
-
         if self.nodule_dim == "2.5D":
             self.nodule_roi = transform_3d_to_25d(self.nodule_roi)
+        self.nodule_roi = clip_and_normalise_volume(self.nodule_roi)
+
+        # if segmentation_setting == "remove_background":
+        #     self.nodule_roi = self.segment_nodule(invert=False)
+        # elif segmentation_setting == "remove_nodule":
+        #     self.nodule_roi = self.segment_nodule(invert=True)
+        # elif segmentation_setting == "none":
+        #     pass
+        # else:
+        #     raise ValueError(
+        #         f"Segmentation setting {segmentation_setting} not recognised. Please choose one of: ['none', 'remove_nodule', 'remove_background']"
+        #     )
 
     def get_nodule_roi(self) -> torch.Tensor:
         """Returns the nodule region of interest from the scan based on the consensus bbox from the 4 annotators"""
@@ -199,29 +199,30 @@ class LIDC_IDRI_DATASET(Dataset):
 
 
 class PrecomputedNoduleROIs(Dataset):
-    def __init__(self, preprocessed_dir):
+    def __init__(self, preprocessed_dir: str) -> None:
         self.files = [f"{preprocessed_dir}/{f}" for f in os.listdir(preprocessed_dir)]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.files)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
         data: torch.Tensor = torch.load(self.files[idx])
         # data[0][0] is the nodule ROI (the batch is saved in the file also
         # data[1] is the malignancy score)
-        return data[0][0], data[1]
+        return data[0], data[1]
 
 
 # %%
 if __name__ == "__main__":
-    # testing precomputed dataset
+    # testing precomputed dataset ----------------
     pdataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_70C_3D"
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_50C_2.5D"
     )
     loader = DataLoader(pdataset, batch_size=2, shuffle=False)
     for i, (roi, label) in enumerate(loader):
-        print(roi.shape, label)
+        roi.shape
         break
+    # -----------------------
 
     # testing dataloader
     dataset = LIDC_IDRI_DATASET(
