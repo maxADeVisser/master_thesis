@@ -75,6 +75,9 @@ class ExperimentDataset(BaseModel):
         "3D",
         description="Dimensionality. If 2.5D, the middle +/- one slice is used. That is, it mimics a RGB image with 3 channels",
     )
+    data_augmentation: bool = Field(
+        ..., description="Whether to use data augmentation."
+    )
 
 
 class ExperimentModel(BaseModel):

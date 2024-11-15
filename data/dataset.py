@@ -5,6 +5,7 @@ import torch
 from pylidc.utils import consensus, volume_viewer
 from torch.utils.data import DataLoader, Dataset
 
+from data.data_augmentations import apply_augmentations
 from preprocessing.processing import clip_and_normalise_volume
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
@@ -106,7 +107,6 @@ class Nodule:
             x[0] : x[1], y[0] : y[1], z[0] : z[1]
         ]
         consensus_mask = torch.from_numpy(consensus_mask).to(dtype=torch.bool)
-        # consensus_mask = add_dialation(consensus_mask, dilation=1) # TODO does not work yet (needed?)
         if invert:
             consensus_mask = torch.logical_not(consensus_mask)
 
@@ -199,29 +199,34 @@ class LIDC_IDRI_DATASET(Dataset):
 
 
 class PrecomputedNoduleROIs(Dataset):
-    def __init__(self, preprocessed_dir: str) -> None:
+    def __init__(self, preprocessed_dir: str, data_augmentation: bool = True) -> None:
         self.files = [f"{preprocessed_dir}/{f}" for f in os.listdir(preprocessed_dir)]
+        self.data_augmentation = data_augmentation
 
     def __len__(self) -> int:
         return len(self.files)
 
     def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
         data: torch.Tensor = torch.load(self.files[idx], weights_only=True)
-        # data[0][0] is the nodule ROI (the batch is saved in the file also
-        # data[1] is the malignancy score)
-        return data[0], data[1]
+        feature, label = data[0], data[1]
+        if self.data_augmentation:
+            feature = apply_augmentations(feature)
+        return feature, label
 
 
 # %%
 if __name__ == "__main__":
     # testing precomputed dataset ----------------
+    import matplotlib.pyplot as plt
+
     pdataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_40C_2.5D"
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_70C_2.5D",
+        data_augmentation=True,
     )
     loader = DataLoader(pdataset, batch_size=2, shuffle=False)
     for i, (roi, label) in enumerate(loader):
-        roi.shape
-        label.shape
+        plt.imshow(roi[0][1], cmap="gray")
+        plt.show()
         break
     # -----------------------
 

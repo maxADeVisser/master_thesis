@@ -53,6 +53,7 @@ NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
 DATA_DIMENSIONALITY = pipeline_config.dataset.dimensionality
 CONTEXT_WINDOW_SIZE = pipeline_config.dataset.context_window
+DATA_AUGMENTATION = pipeline_config.dataset.data_augmentation
 DO_CROSS_VALIDATION = pipeline_config.training.do_cross_validation
 CV_FOLDS = pipeline_config.training.cross_validation_folds
 CV_TRAIN_FOLDS = pipeline_config.training.cv_train_folds
@@ -226,7 +227,10 @@ def train_model(
     assert os.path.exists(
         env_config.PREPROCESSED_DATA_DIR
     ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
-    dataset = PrecomputedNoduleROIs(preprocessed_dir=env_config.PREPROCESSED_DATA_DIR)
+    dataset = PrecomputedNoduleROIs(
+        preprocessed_dir=env_config.PREPROCESSED_DATA_DIR,
+        data_augmentation=DATA_AUGMENTATION,
+    )
     nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
 
     # --- Cross Validation ---

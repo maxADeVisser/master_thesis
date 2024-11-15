@@ -150,18 +150,3 @@ class TestEarlyStopping(TestCase):
             improved_loss,
             "Best loss should update to the improved loss.",
         )
-
-
-# TODO finish this test:
-# @patch("model.MEDMnist.ResNet.predict_binary_from_logits")
-# @patch("model.MEDMnist.ResNet.get_pred_malignancy_score_from_logits")
-# @patch("model.MEDMnist.ResNet.compute_class_probs_from_logits")
-# class TestValidateModel(TestCase):
-#     def setUp(self):
-#         global DEVICE
-
-#         # Set up a simple dataset and dataloader
-#         inputs = torch.randn(100, 10)  # 100 samples, 10 features
-#         labels = torch.randn(100, 1)  # 100 labels
-#         dataset = TensorDataset(inputs, labels)
-#         self.test_loader = DataLoader(dataset, batch_size=10)

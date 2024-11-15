@@ -63,18 +63,6 @@ def load_dicom_images_from_folder(scan_parent_dir: PATH) -> np.ndarray:
     return images
 
 
-# TODO remove when done?
-def calc_conv_output_dim(
-    in_dim: int, kernel_size: int, stride: int, padding: int
-) -> int:
-    """
-    Calculate the output dimension of a convolutional layer.
-    """
-    return ((in_dim - kernel_size + 2 * padding) / stride) + 1
-
-
 # %%
 if __name__ == "__main__":
     get_ct_scan_slice_paths("LIDC-IDRI-0001", return_parent_dir=True)
-
-    calc_conv_output_dim(in_dim=64, kernel_size=3, stride=1, padding=1)
