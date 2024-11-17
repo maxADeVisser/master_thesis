@@ -5,11 +5,14 @@ import pandas as pd
 import pylidc as pl
 import seaborn as sns
 from pylidc.utils import consensus, find_contours, volume_viewer
-from tqdm import tqdm
 
-from project_config import env_config, pipeline_config
+# from project_config import env_config, pipeline_config
 from utils.experiments import load_fold_from_json
-from utils.utils import get_scans_by_patient_id
+
+# from tqdm import tqdm
+
+
+# from utils.utils import get_scans_by_patient_id
 
 
 def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> None:
@@ -65,9 +68,15 @@ def plot_fold_accuracy(
 
 
 def plot_fold_results(
-    experiment_id: str, fold_num: int, rolling_window: int = 10
+    experiment_id: str, fold_num: int, rolling_window: int = 10, epochs_dampen: int = 2
 ) -> None:
-    """Visualises a fold results downloaded from the HPC"""
+    """
+    Visualises a fold results downloaded from the HPC.
+    @experiment_id: The ID of the experiment.
+    @fold_num: The fold number.
+    @rolling_window: The window size for the rolling average.
+    @epochs_dampen: The number of epochs to dampen the start of the loss plot.
+    """
     exp_path = f"hpc/jobs/{experiment_id}"
     fold_path = f"{exp_path}/fold_{fold_num}"
     fold = load_fold_from_json(f"{fold_path}/fold{fold_num}_{experiment_id}.json")
@@ -86,6 +95,21 @@ def plot_fold_results(
     ax5 = fig.add_subplot(gs[2, 0])
     ax6 = fig.add_subplot(gs[2, 1])
     ax7 = fig.add_subplot(gs[3, :])
+
+    if epochs_dampen > 0:
+        # set the first @epochs_damped epochs where the loss is very high to the mean of the rest of the epoch losses
+        dampen = (
+            lambda vals: [float(np.mean(vals[epochs_dampen:]))] * epochs_dampen
+            + vals[epochs_dampen:]
+        )
+        fold.val_maes = dampen(fold.val_maes)
+        fold.val_mses = dampen(fold.val_mses)
+        fold.val_AUC_filtered = dampen(fold.val_AUC_filtered)
+        fold.val_AUC_ovr = dampen(fold.val_AUC_ovr)
+        fold.val_accuracies = dampen(fold.val_accuracies)
+        fold.val_cwces = dampen(fold.val_cwces)
+        fold.train_losses = dampen(fold.train_losses)
+        fold.val_losses = dampen(fold.val_losses)
 
     # AX1 -- MAE
     sns.lineplot(x=epochs, y=fold.val_maes, ax=ax1, color="green")
@@ -186,15 +210,12 @@ def plot_fold_results(
     ax6.grid()
 
     # AX7 -- Loss Plot
-    # set the first 3 epochs where the loss is very high to the mean of the rest of the epochs
-    fold.train_losses[:4] = [np.mean(fold.train_losses[3:])] * 4
     sns.lineplot(
         x=epochs,
         y=fold.train_losses,
         ax=ax7,
         label="Train Loss",
     )
-    fold.val_losses[:4] = [np.mean(fold.val_losses[3:])] * 4
     sns.lineplot(
         x=epochs,
         y=fold.val_losses,
@@ -260,35 +281,35 @@ def show_segmentation_consensus(
     plt.show()
 
 
-def plot_scan_hounsfield_histogram(
-    pids: list[str],
-    bounds: tuple[int, int] = (
-        pipeline_config.dataset.clipping_bounds[0],
-        pipeline_config.dataset.clipping_bounds[1],
-    ),
-    bins: int = 80,
-) -> None:
-    """
-    Plots the histogram of Hounsfield units in a CT scan
-    @scan - a 3D numpy array of the CT scan
-    """
-    scan = get_scans_by_patient_id(pids[0], to_numpy=True)
+# def plot_scan_hounsfield_histogram(
+#     pids: list[str],
+#     bounds: tuple[int, int] = (
+#         pipeline_config.dataset.clipping_bounds[0],
+#         pipeline_config.dataset.clipping_bounds[1],
+#     ),
+#     bins: int = 80,
+# ) -> None:
+#     """
+#     Plots the histogram of Hounsfield units in a CT scan
+#     @scan - a 3D numpy array of the CT scan
+#     """
+#     scan = get_scans_by_patient_id(pids[0], to_numpy=True)
 
-    for pid in tqdm(range(1, len(pids)), desc="Loading Scans"):
-        next_pid_scan = get_scans_by_patient_id(
-            env_config.patient_ids[pid], to_numpy=True
-        )
-        scan = np.concatenate([scan, next_pid_scan], axis=2)
+#     for pid in tqdm(range(1, len(pids)), desc="Loading Scans"):
+#         next_pid_scan = get_scans_by_patient_id(
+#             env_config.patient_ids[pid], to_numpy=True
+#         )
+#         scan = np.concatenate([scan, next_pid_scan], axis=2)
 
-    print("Plotting...")
-    plt.title(f"Hounsfield Units (HU) Distribution for {len(pids)} Scans")
-    plt.hist(scan.flatten(), bins=bins, color="c")
-    plt.axvline(x=bounds[0], color="r", linestyle="--", label="Lower Bound")
-    plt.axvline(x=bounds[1], color="b", linestyle="--", label="Upper Bound")
-    plt.legend()
-    plt.xlabel("Hounsfield Units (HU)")
-    plt.ylabel("Frequency")
-    plt.show()
+#     print("Plotting...")
+#     plt.title(f"Hounsfield Units (HU) Distribution for {len(pids)} Scans")
+#     plt.hist(scan.flatten(), bins=bins, color="c")
+#     plt.axvline(x=bounds[0], color="r", linestyle="--", label="Lower Bound")
+#     plt.axvline(x=bounds[1], color="b", linestyle="--", label="Upper Bound")
+#     plt.legend()
+#     plt.xlabel("Hounsfield Units (HU)")
+#     plt.ylabel("Frequency")
+#     plt.show()
 
 
 def plot_slices(
@@ -357,16 +378,16 @@ if __name__ == "__main__":
     #     # save_path="out/test.png",
     # )
 
-    # TESTING
-    plot_scan_hounsfield_histogram(env_config.patient_ids[:50], bins=80)
+    # # TESTING
+    # plot_scan_hounsfield_histogram(env_config.patient_ids[:50], bins=80)
 
-    # TESTING
-    pid = "LIDC-IDRI-0010"
-    pid_scan = get_scans_by_patient_id(pid, to_numpy=False)
-    show_segmentation_consensus(pid_scan, 2)
+    # # TESTING
+    # pid = "LIDC-IDRI-0010"
+    # pid_scan = get_scans_by_patient_id(pid, to_numpy=False)
+    # show_segmentation_consensus(pid_scan, 2)
 
-    # TESTING
-    visualise_scan_interactively("LIDC-IDRI-0010")
+    # # TESTING
+    # visualise_scan_interactively("LIDC-IDRI-0010")
 
-    plot_fold_results("c30_3D_1711_1513", fold_num=1)
+    plot_fold_results("c30_3D_1711_1513", fold_num=2, epochs_dampen=3)
 # %%

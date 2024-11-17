@@ -11,12 +11,10 @@ from project_config import env_config
 np.int = int
 np.float = float
 
-PATH = str  # type alias
-
 
 def get_ct_scan_slice_paths(
     patient_id_dir: str, return_parent_dir: bool = False
-) -> list[PATH] | PATH:
+) -> list[str] | str:
     """Dending on @return_parent_dir_only flag:
     - Returns ALL (multiple) the full CT scan file paths for a given patient
     - OR Returns the parent directory path of the CT scan for a given patient"""
@@ -52,7 +50,7 @@ def get_scans_by_patient_id(
 
 
 # TODO this can be replaced by @get_scans_by_patient_id
-def load_dicom_images_from_folder(scan_parent_dir: PATH) -> np.ndarray:
+def load_dicom_images_from_folder(scan_parent_dir: str) -> np.ndarray:
     """Returns a 3D numpy array of the CT scan images in the given directory."""
     dicom_files = [
         pydicom.dcmread(os.path.join(scan_parent_dir, f))
