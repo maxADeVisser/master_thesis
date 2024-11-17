@@ -3,6 +3,7 @@
 # %%
 import os
 import sys
+from typing import Literal
 
 import numpy as np
 from dotenv import load_dotenv
@@ -24,20 +25,23 @@ from utils.utils import get_scans_by_patient_id
 
 def main():
     # SCRIPT PARAMS
-    CONTEXT_WINDOW_SIZES = [30, 50, 70]
+    CONTEXT_WINDOW_SIZES = [30]
     DIMENSIONALITY = "3D"
     PROJECT_DIR = os.getenv("PROJECT_DIR")
+    DATASET_VERSION: Literal["hold_out", "full"] = "hold_out"
+    _holdout_indicator = "hold_out" if DATASET_VERSION == "hold_out" else ""
 
     # Load the preprocessed nodule dataframe
-    processed_nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
+    # nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
+    nodule_df = pd.read_csv(env_config.hold_out_nodule_df_file)
     for cws in CONTEXT_WINDOW_SIZES:
-        processed_nodule_df[f"consensus_bbox_{cws}"] = processed_nodule_df[
-            f"consensus_bbox_{cws}"
-        ].apply(ast.literal_eval)
+        nodule_df[f"consensus_bbox_{cws}"] = nodule_df[f"consensus_bbox_{cws}"].apply(
+            ast.literal_eval
+        )
 
     # create the directories for the precomputed ROIs
     for cws in CONTEXT_WINDOW_SIZES:
-        OUT_DIR = f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{DIMENSIONALITY}"
+        OUT_DIR = f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{DIMENSIONALITY}{_holdout_indicator}"
         if not os.path.exists(OUT_DIR):
             os.makedirs(OUT_DIR)
         else:
@@ -45,9 +49,9 @@ def main():
 
     # loop over nodules and precompute the ROIs at different context windows sizes:
     for i, row in tqdm(
-        processed_nodule_df.iterrows(),
+        nodule_df.iterrows(),
         desc="Precomputing ROIs",
-        total=len(processed_nodule_df),
+        total=len(nodule_df),
     ):
         # NOTE: Load the scan once per nodule (a bottleneck operation we want to avoid doing to many times)
         scan: np.ndarray = get_scans_by_patient_id(row["pid"], to_numpy=True)
@@ -69,7 +73,7 @@ def main():
 
             nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).unsqueeze(0).float()
 
-            OUT_DIR = f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{DIMENSIONALITY}"
+            OUT_DIR = f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{DIMENSIONALITY}{_holdout_indicator}"
             if DIMENSIONALITY == "2.5D":
                 nodule_roi = transform_3d_to_25d(nodule_roi)
             nodule_roi = clip_and_normalise_volume(nodule_roi)

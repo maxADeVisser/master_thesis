@@ -71,7 +71,7 @@ def fetch_model_weights(experiment_id: str, fold: int, user: str = "newuser") ->
 if __name__ == "__main__":
     experiment_id = "c30_3D_1711_1513"
     job_id = 1393
-    local_user = "maxvisser"  # maxvisser for personal computer
+    local_user = "maxvisser"
     local_exp_path = (
         f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
     )
@@ -80,13 +80,12 @@ if __name__ == "__main__":
         os.makedirs(local_exp_path)
 
     # Experiment level data
-    get_job_stdout(job_id, local_exp_path)  # check
-
-    get_experiment_json(experiment_id, local_exp_path)  # check
+    get_job_stdout(job_id, local_exp_path)
+    get_experiment_json(experiment_id, local_exp_path)
 
     # Fold level data
     # folds = [0, 1, 2, 3, 4]
-    folds = [0, 1]
+    folds = [2, 3]
     for f in folds:
         fold_path = f"{local_exp_path}/fold_{f}"
         if not os.path.exists(fold_path):
