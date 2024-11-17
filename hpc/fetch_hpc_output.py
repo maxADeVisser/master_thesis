@@ -84,8 +84,8 @@ if __name__ == "__main__":
     get_experiment_json(experiment_id, local_exp_path)
 
     # Fold level data
-    # folds = [0, 1, 2, 3, 4]
-    folds = [2, 3]
+    folds = [0, 1, 2, 3, 4]
+    # folds = [2, 3]
     for f in folds:
         fold_path = f"{local_exp_path}/fold_{f}"
         if not os.path.exists(fold_path):

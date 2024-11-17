@@ -1,7 +1,7 @@
 {
   "dataset": {
     "clipping_bounds": [-1000, 400],
-    "context_window": 30,
+    "context_window": 50,
     "data_augmentation": true,
     "dimensionality": "3D",
     "segment_nodule": "none"
