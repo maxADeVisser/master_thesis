@@ -61,7 +61,11 @@ def plot_fold_results(
     exp_path = f"hpc/jobs/{experiment_id}"
     fold_path = f"{exp_path}/fold_{fold_num}"
     fold = load_fold_from_json(f"{fold_path}/fold{fold_num}_{experiment_id}.json")
-    fold_num_epochs = fold.epoch_stopped
+    fold_num_epochs = len(fold.val_losses)
+    if fold.epoch_stopped is None:
+        print("NOTE: Fold has not finished training yet!")
+
+    epochs = range(fold_num_epochs)
 
     fig = plt.figure(figsize=(10, 10), constrained_layout=True)
     gs = fig.add_gridspec(nrows=3, ncols=2, height_ratios=[1, 1, 1.5])
@@ -72,34 +76,26 @@ def plot_fold_results(
     ax5 = fig.add_subplot(gs[2, :])
 
     # AX1
+    sns.lineplot(x=epochs, y=fold.val_maes, ax=ax1, color="green")
     sns.lineplot(
-        x=range(fold_num_epochs),
-        y=fold.val_maes,
-        ax=ax1,
-    )
-    sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=get_rolling_avg(fold.val_maes, rolling_window),
         ax=ax1,
         alpha=0.5,
-        color="green",
+        color="red",
     )
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("MAE")
     ax1.grid()
 
     # AX2
+    sns.lineplot(x=epochs, y=fold.val_mses, ax=ax2, color="green")
     sns.lineplot(
-        x=range(fold_num_epochs),
-        y=fold.val_mses,
-        ax=ax2,
-    )
-    sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=get_rolling_avg(fold.val_mses, rolling_window),
         ax=ax2,
         alpha=0.5,
-        color="green",
+        color="red",
     )
     ax2.set_xlabel("Epoch")
     ax2.set_ylabel("MSE")
@@ -107,16 +103,17 @@ def plot_fold_results(
 
     # AX3
     sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=fold.val_AUC_filtered,
         ax=ax3,
+        color="green",
     )
     sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=get_rolling_avg(fold.val_AUC_filtered, rolling_window),
         ax=ax3,
         alpha=0.5,
-        color="green",
+        color="red",
     )
     ax3.set_xlabel("Epoch")
     ax3.set_ylabel("AUC Filtered")
@@ -124,16 +121,17 @@ def plot_fold_results(
 
     # AX4
     sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=fold.val_AUC_ovr,
         ax=ax4,
+        color="green",
     )
     sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=get_rolling_avg(fold.val_AUC_ovr, rolling_window),
         ax=ax4,
         alpha=0.5,
-        color="green",
+        color="red",
     )
     ax4.set_xlabel("Epoch")
     ax4.set_ylabel("AUC OVR")
@@ -141,13 +139,13 @@ def plot_fold_results(
 
     # AX5
     sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=fold.train_losses,
         ax=ax5,
         label="Train Loss",
     )
     sns.lineplot(
-        x=range(fold_num_epochs),
+        x=epochs,
         y=fold.val_losses,
         ax=ax5,
         label="Val Loss",
@@ -319,5 +317,7 @@ if __name__ == "__main__":
     # TESTING
     visualise_scan_interactively("LIDC-IDRI-0010")
 
-    plot_fold_results("c30_3D_1711_1002", 3)
+    experiment_id = "c30_3D_1711_1002"
+    fold_num = 3
+    plot_fold_results(experiment_id, fold_num)
 # %%

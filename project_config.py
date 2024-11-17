@@ -38,13 +38,19 @@ class _EnvConfig:
         self.RAW_DATA_DIR = lidc_idri_dir
         self.PREPROCESSED_DATA_DIR = f"{project_dir}/data/precomputed_rois_{pipeline_config.dataset.context_window}C_{pipeline_config.dataset.dimensionality}"
         self.OUT_DIR = f"{project_dir}/out"
-        self.patient_ids = sorted(
-            [
-                pid
-                for pid in os.listdir(lidc_idri_dir)
-                if os.path.isdir(os.path.join(lidc_idri_dir, pid))
-            ]
-        )
+        try:
+            self.patient_ids = sorted(
+                [
+                    pid
+                    for pid in os.listdir(lidc_idri_dir)
+                    if os.path.isdir(os.path.join(lidc_idri_dir, pid))
+                ]
+            )
+        except FileNotFoundError:
+            print(
+                "WARNING: The LIDC-IDRI dataset directory is not found. Please set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
+            )
+
         self.nodule_df_file = f"{project_dir}/preprocessing/nodule_df.csv"
         self.processed_nodule_df_file = (
             f"{project_dir}/preprocessing/processed_nodule_df.csv"
