@@ -17,7 +17,6 @@ def _transfer_hpc_to_local(hpc_path: str, local_path: str) -> None:
 def get_job_stdout(job_id: int, dest_dir: str) -> None:
     """
     Fetch the latest stdout data from the HPC
-    see the experiment_ids in the `out` directory on the HPC.
     """
     hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/job.{job_id}.out"
     _transfer_hpc_to_local(hpc_out, dest_dir)
@@ -25,10 +24,17 @@ def get_job_stdout(job_id: int, dest_dir: str) -> None:
 
 def get_experiment_json(experiment_id: str, dest_dir: str) -> None:
     """
-    Fetch the latest stdout data from the HPC
-    see the experiment_ids in the `out` directory on the HPC.
+    Fetch the final experiment json file from the HPC
     """
     hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/run_{experiment_id}.json"
+    _transfer_hpc_to_local(hpc_out, dest_dir)
+
+
+def get_fold_json(experiment_id: str, fold: int, dest_dir: str) -> None:
+    """
+    Fetch the final experiment json file from the HPC
+    """
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/model_runs/{experiment_id}/fold{fold}/fold{fold}_{experiment_id}.json"
     _transfer_hpc_to_local(hpc_out, dest_dir)
 
 
@@ -63,18 +69,26 @@ def fetch_model_weights(experiment_id: str, fold: int, user: str = "newuser") ->
 
 # %%
 if __name__ == "__main__":
-    experiment_id = "c30_25d_1411_2252"
-    job_id = 1098
-    fold = 0
+    experiment_id = "c30_3D_1711_1002"
+    job_id = 1378
     local_user = "maxvisser"  # maxvisser for personal computer
 
-    # Create out folder
-    local_path = f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
-    if not os.path.exists(local_path):
-        os.makedirs(local_path)
+    local_exp_path = (
+        f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
+    )
 
-    get_job_stdout(job_id, local_path)
-    get_experiment_json(experiment_id, local_path)
-    update_loss_plot(experiment_id, fold, local_user)
-    # update_error_distribution(experiment_id, fold, local_user)
-    fetch_model_weights(experiment_id, fold, local_user)
+    # Experiment level data
+    # get_job_stdout(job_id, local_exp_path)  # check
+    # get_experiment_json(experiment_id, local_exp_path)  # check
+
+    # Fold level data
+    folds = [0, 1, 2, 3, 4]
+    for f in folds:
+        fold_path = f"{local_exp_path}/fold_{f}"
+        if not os.path.exists(fold_path):
+            os.makedirs(fold_path)
+
+        # get_fold_json(experiment_id, f, fold_path)
+        update_loss_plot(experiment_id, f, local_user)
+        # update_error_distribution(experiment_id, f, local_user)
+        # fetch_model_weights(experiment_id, fold, local_user)

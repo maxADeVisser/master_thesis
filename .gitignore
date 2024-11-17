@@ -14,6 +14,7 @@ mlartifacts/
 *.pth
 *.out
 run_*
+fold*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
