@@ -14,6 +14,8 @@ from acsconv.converters import Conv3dConverter
 
 from project_config import SEED, pipeline_config
 
+DROPOUT_RATE = pipeline_config.training.dropout_rate
+
 torch.manual_seed(SEED)
 
 
@@ -100,8 +102,12 @@ class ResNet(nn.Module):
             self._make_layer(512, num_blocks[3], stride=2),
             nn.AdaptiveAvgPool2d((1, 1)),
         )
-        self.corn_classifier_layer = nn.Linear(
-            in_features=512 * Bottleneck.expansion, out_features=num_classes - 1
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=DROPOUT_RATE),  # added dropout layer
+            # corn classifier layer:
+            nn.Linear(
+                in_features=512 * Bottleneck.expansion, out_features=num_classes - 1
+            ),
         )
 
     def _make_layer(self, planes: int, num_blocks: int, stride: int) -> nn.Sequential:
@@ -126,7 +132,7 @@ class ResNet(nn.Module):
     def forward(self, x) -> torch.Tensor:
         features = self.features(x)
         flattened = features.view(features.size(0), -1)
-        logits = self.corn_classifier_layer(flattened)
+        logits = self.classifier(flattened)
         return logits
 
     def get_feature_vector(self, x) -> torch.Tensor:

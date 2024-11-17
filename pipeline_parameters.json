@@ -15,6 +15,7 @@
     "cross_validation_folds": 5,
     "cv_train_folds": 5,
     "do_cross_validation": true,
+    "dropout_rate": 0.3,
     "learning_rate": 0.001,
     "min_delta": 0.01,
     "num_epochs": 100,

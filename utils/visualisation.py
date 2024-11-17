@@ -317,7 +317,5 @@ if __name__ == "__main__":
     # TESTING
     visualise_scan_interactively("LIDC-IDRI-0010")
 
-    experiment_id = "c30_3D_1711_1002"
-    fold_num = 3
-    plot_fold_results(experiment_id, fold_num)
+    plot_fold_results("c30_3D_1711_1002", fold_num=4)
 # %%

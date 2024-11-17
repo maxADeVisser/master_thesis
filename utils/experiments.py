@@ -97,6 +97,7 @@ class ExperimentTraining(BaseModel):
         ..., gt=0, description="Learning rate for the optimizer."
     )
     num_epochs: int = Field(..., ge=1, description="Number of epochs for training.")
+    dropout_rate: float | None = Field(..., ge=0, lt=1, description="Dropout rate.")
     do_cross_validation: bool = Field(
         ...,
         description="Whether to do cross-validation or only train on a single fold.",
