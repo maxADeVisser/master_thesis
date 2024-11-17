@@ -210,6 +210,7 @@ def train_model(
         BATCH_SIZE: {BATCH_SIZE}
         CONTEXT_WINDOW_SIZE: {context_window_size}
         DATA DIMENSIONALITY: {data_dimensionality}
+        DATA AUGMENTATION: {DATA_AUGMENTATION}
         DO_CROSS_VALIDATION: {DO_CROSS_VALIDATION}
         CROSS_VALIDATION: {cross_validation}
         CV_FOLDS: {CV_FOLDS}
@@ -287,14 +288,6 @@ def train_model(
 
         # --- Training Loop ---
         for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc="Epoch"):
-            if epoch == 50 or epoch == 75:
-                # decreasing learning rate at specified epochs:
-                for param_group in optimizer.param_groups:
-                    param_group["lr"] *= 0.1
-                logger.info(
-                    f"Learning rate adjusted to: {optimizer.param_groups[0]['lr']}"
-                )
-
             avg_epoch_train_loss = train_epoch(model, train_loader, optimizer)
             fold_results.train_losses.append(avg_epoch_train_loss)
 

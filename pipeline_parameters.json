@@ -1,20 +1,17 @@
 {
   "dataset": {
-    "clipping_bounds": [
-      -1000,
-      400
-    ],
-    "context_window": 70,
+    "clipping_bounds": [-1000, 400],
+    "context_window": 30,
     "data_augmentation": true,
     "dimensionality": "3D",
     "segment_nodule": "none"
   },
   "model": {
-    "in_channels": 3,
+    "in_channels": 1,
     "num_classes": 5
   },
   "training": {
-    "batch_size": 32,
+    "batch_size": 16,
     "cross_validation_folds": 5,
     "cv_train_folds": 5,
     "do_cross_validation": true,
@@ -22,6 +19,6 @@
     "min_delta": 0.01,
     "num_epochs": 100,
     "num_workers": 8,
-    "patience": 20
+    "patience": 30
   }
 }
