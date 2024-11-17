@@ -171,6 +171,15 @@ def create_experiment_from_json(
     return BaseExperimentConfig(**config)
 
 
+def load_fold_from_json(
+    experiment_file: str,
+) -> TrainingFold:
+    """Load the configuration from the pipeline parameters JSON file."""
+    with open(experiment_file, "r") as f:
+        fold = json.load(f)
+    return TrainingFold(**fold)
+
+
 def load_experiment_from_json(
     experiment_file: str,
 ) -> BaseExperimentConfig:

@@ -1,11 +1,14 @@
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pylidc as pl
+import seaborn as sns
 from pylidc.utils import consensus, find_contours, volume_viewer
 from tqdm import tqdm
 
 from project_config import env_config, pipeline_config
+from utils.experiments import load_fold_from_json
 from utils.utils import get_scans_by_patient_id
 
 
@@ -49,6 +52,114 @@ def plot_loss(train_losses: list[float], val_losses, out_dir: str) -> None:
     plt.legend()
     plt.savefig(f"{out_dir}/loss_plot.png")
     plt.close()
+
+
+def plot_fold_results(
+    experiment_id: str, fold_num: int, rolling_window: int = 10
+) -> None:
+    """Visualises a fold results downloaded from the HPC"""
+    exp_path = f"hpc/jobs/{experiment_id}"
+    fold_path = f"{exp_path}/fold_{fold_num}"
+    fold = load_fold_from_json(f"{fold_path}/fold{fold_num}_{experiment_id}.json")
+    fold_num_epochs = fold.epoch_stopped
+
+    fig = plt.figure(figsize=(10, 10), constrained_layout=True)
+    gs = fig.add_gridspec(nrows=3, ncols=2, height_ratios=[1, 1, 1.5])
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, 0])
+    ax4 = fig.add_subplot(gs[1, 1])
+    ax5 = fig.add_subplot(gs[2, :])
+
+    # AX1
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=fold.val_maes,
+        ax=ax1,
+    )
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=get_rolling_avg(fold.val_maes, rolling_window),
+        ax=ax1,
+        alpha=0.5,
+        color="green",
+    )
+    ax1.set_xlabel("Epoch")
+    ax1.set_ylabel("MAE")
+    ax1.grid()
+
+    # AX2
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=fold.val_mses,
+        ax=ax2,
+    )
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=get_rolling_avg(fold.val_mses, rolling_window),
+        ax=ax2,
+        alpha=0.5,
+        color="green",
+    )
+    ax2.set_xlabel("Epoch")
+    ax2.set_ylabel("MSE")
+    ax2.grid()
+
+    # AX3
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=fold.val_AUC_filtered,
+        ax=ax3,
+    )
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=get_rolling_avg(fold.val_AUC_filtered, rolling_window),
+        ax=ax3,
+        alpha=0.5,
+        color="green",
+    )
+    ax3.set_xlabel("Epoch")
+    ax3.set_ylabel("AUC Filtered")
+    ax3.grid()
+
+    # AX4
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=fold.val_AUC_ovr,
+        ax=ax4,
+    )
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=get_rolling_avg(fold.val_AUC_ovr, rolling_window),
+        ax=ax4,
+        alpha=0.5,
+        color="green",
+    )
+    ax4.set_xlabel("Epoch")
+    ax4.set_ylabel("AUC OVR")
+    ax4.grid()
+
+    # AX5
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=fold.train_losses,
+        ax=ax5,
+        label="Train Loss",
+    )
+    sns.lineplot(
+        x=range(fold_num_epochs),
+        y=fold.val_losses,
+        ax=ax5,
+        label="Val Loss",
+    )
+    ax5.set_title(f"Train vs. Validation Loss")
+    ax5.set_xlabel("Epoch")
+    ax5.set_ylabel("CORN Loss")
+    ax5.grid()
+
+    plt.suptitle(f"Fold {fold_num} Validation Metrics")
+    plt.savefig(f"{fold_path}/fold_metric_results.png")
+    plt.show()
 
 
 def show_segmentation_consensus(
@@ -172,6 +283,11 @@ def plot_slices(
     plt.show()
 
 
+def get_rolling_avg(values: list[float], w: int = 10) -> list[float]:
+    """Util func for plotting"""
+    return pd.Series(values).rolling(window=w).mean().to_list()
+
+
 def visualise_scan_interactively(pid: str) -> None:
     scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).first()
     volume_viewer(scan.to_volume(verbose=False))
@@ -202,4 +318,6 @@ if __name__ == "__main__":
 
     # TESTING
     visualise_scan_interactively("LIDC-IDRI-0010")
+
+    plot_fold_results("c30_3D_1711_1002", 3)
 # %%
