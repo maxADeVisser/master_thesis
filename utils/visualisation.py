@@ -54,6 +54,16 @@ def plot_loss(train_losses: list[float], val_losses, out_dir: str) -> None:
     plt.close()
 
 
+def plot_fold_accuracy(
+    experiment_id: str, fold_num: int, rolling_window: int = 10
+) -> None:
+    """Visualises a fold results downloaded from the HPC"""
+    exp_path = f"hpc/jobs/{experiment_id}"
+    fold_path = f"{exp_path}/fold_{fold_num}"
+    fold = load_fold_from_json(f"{fold_path}/fold{fold_num}_{experiment_id}.json")
+    fold_num_epochs = len(fold.val_losses)
+
+
 def plot_fold_results(
     experiment_id: str, fold_num: int, rolling_window: int = 10
 ) -> None:
@@ -67,15 +77,17 @@ def plot_fold_results(
 
     epochs = range(fold_num_epochs)
 
-    fig = plt.figure(figsize=(10, 10), constrained_layout=True)
-    gs = fig.add_gridspec(nrows=3, ncols=2, height_ratios=[1, 1, 1.5])
+    fig = plt.figure(figsize=(10, 12), constrained_layout=True)
+    gs = fig.add_gridspec(nrows=4, ncols=2, height_ratios=[1, 1, 1, 1.2])
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[0, 1])
     ax3 = fig.add_subplot(gs[1, 0])
     ax4 = fig.add_subplot(gs[1, 1])
-    ax5 = fig.add_subplot(gs[2, :])
+    ax5 = fig.add_subplot(gs[2, 0])
+    ax6 = fig.add_subplot(gs[2, 1])
+    ax7 = fig.add_subplot(gs[3, :])
 
-    # AX1
+    # AX1 -- MAE
     sns.lineplot(x=epochs, y=fold.val_maes, ax=ax1, color="green")
     sns.lineplot(
         x=epochs,
@@ -88,7 +100,7 @@ def plot_fold_results(
     ax1.set_ylabel("MAE")
     ax1.grid()
 
-    # AX2
+    # AX2 -- MSE
     sns.lineplot(x=epochs, y=fold.val_mses, ax=ax2, color="green")
     sns.lineplot(
         x=epochs,
@@ -101,7 +113,7 @@ def plot_fold_results(
     ax2.set_ylabel("MSE")
     ax2.grid()
 
-    # AX3
+    # AX3 -- AUC Filtered
     sns.lineplot(
         x=epochs,
         y=fold.val_AUC_filtered,
@@ -119,7 +131,7 @@ def plot_fold_results(
     ax3.set_ylabel("AUC Filtered")
     ax3.grid()
 
-    # AX4
+    # AX4 -- AUC OVR
     sns.lineplot(
         x=epochs,
         y=fold.val_AUC_ovr,
@@ -137,23 +149,62 @@ def plot_fold_results(
     ax4.set_ylabel("AUC OVR")
     ax4.grid()
 
-    # AX5
+    # AX5 -- Validation Accuracy
+    sns.lineplot(
+        x=epochs,
+        y=fold.val_accuracies,
+        ax=ax5,
+        color="green",
+    )
+    sns.lineplot(
+        x=epochs,
+        y=get_rolling_avg(fold.val_accuracies, rolling_window),
+        ax=ax5,
+        alpha=0.5,
+        color="red",
+    )
+    ax5.set_xlabel("Epoch")
+    ax5.set_ylabel("Validation Accuracy")
+    ax5.grid()
+
+    # AX6 -- Class-wise Calibration Error
+    sns.lineplot(
+        x=epochs,
+        y=fold.val_cwces,
+        ax=ax6,
+        color="green",
+    )
+    sns.lineplot(
+        x=epochs,
+        y=get_rolling_avg(fold.val_cwces, rolling_window),
+        ax=ax6,
+        alpha=0.5,
+        color="red",
+    )
+    ax6.set_xlabel("Epoch")
+    ax6.set_ylabel("Class-wise Calibration Error")
+    ax6.grid()
+
+    # AX7 -- Loss Plot
+    # set the first 3 epochs where the loss is very high to the mean of the rest of the epochs
+    fold.train_losses[:4] = [np.mean(fold.train_losses[3:])] * 4
     sns.lineplot(
         x=epochs,
         y=fold.train_losses,
-        ax=ax5,
+        ax=ax7,
         label="Train Loss",
     )
+    fold.val_losses[:4] = [np.mean(fold.val_losses[3:])] * 4
     sns.lineplot(
         x=epochs,
         y=fold.val_losses,
-        ax=ax5,
+        ax=ax7,
         label="Val Loss",
     )
-    ax5.set_title(f"Train vs. Validation Loss")
-    ax5.set_xlabel("Epoch")
-    ax5.set_ylabel("CORN Loss")
-    ax5.grid()
+    ax7.set_title(f"Train vs. Validation Loss")
+    ax7.set_xlabel("Epoch")
+    ax7.set_ylabel("CORN Loss")
+    ax7.grid()
 
     plt.suptitle(f"Fold {fold_num} Validation Metrics")
     plt.savefig(f"{fold_path}/fold_metric_results.png")
@@ -317,5 +368,5 @@ if __name__ == "__main__":
     # TESTING
     visualise_scan_interactively("LIDC-IDRI-0010")
 
-    plot_fold_results("c30_3D_1711_1002", fold_num=4)
+    plot_fold_results("c30_3D_1711_1513", fold_num=1)
 # %%
