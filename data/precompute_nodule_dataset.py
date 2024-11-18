@@ -24,9 +24,9 @@ from utils.utils import load_scan
 
 
 def main():
-    # SCRIPT PARAMS
-    CONTEXT_WINDOW_SIZES = [30]
-    DIMENSIONALITY = "3D"
+    # SCRIPT PARAMS (which dataset configurations to precompute)
+    CONTEXT_WINDOW_SIZES = [30, 50, 70]
+    DIMENSIONALITY = ["2.5D", "3D"]
     DATASET_VERSION: Literal["hold_out", "full"] = "full"
 
     # Load the preprocessed nodule dataframe
@@ -47,11 +47,14 @@ def main():
 
     # create the directories for the precomputed ROIs
     for cws in CONTEXT_WINDOW_SIZES:
-        OUT_DIR = f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{DIMENSIONALITY}{_holdout_indicator}"
-        if not os.path.exists(OUT_DIR):
-            os.makedirs(OUT_DIR)
-        else:
-            raise FileExistsError(f"{OUT_DIR} already exists. Reset first")
+        for dim in DIMENSIONALITY:
+            OUT_DIR = (
+                f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{dim}{_holdout_indicator}"
+            )
+            if not os.path.exists(OUT_DIR):
+                os.makedirs(OUT_DIR)
+            else:
+                raise FileExistsError(f"{OUT_DIR} already exists. Reset first")
 
     # loop over nodules and precompute the ROIs at different context windows sizes:
     for _, row in tqdm(
@@ -80,12 +83,15 @@ def main():
 
             nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).unsqueeze(0).float()
 
-            OUT_DIR = f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{DIMENSIONALITY}{_holdout_indicator}"
-            if DIMENSIONALITY == "2.5D":
-                nodule_roi = transform_3d_to_25d(nodule_roi)
-            nodule_roi = clip_and_normalise_volume(nodule_roi)
+            for dim in DIMENSIONALITY:
+                OUT_DIR = f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{dim}{_holdout_indicator}"
+                if dim == "2.5D":
+                    nodule_roi = transform_3d_to_25d(nodule_roi)
+                nodule_roi = clip_and_normalise_volume(nodule_roi)
 
-            torch.save((nodule_roi, malignancy_consensus), f"{OUT_DIR}/{nodule_id}.pt")
+                torch.save(
+                    (nodule_roi, malignancy_consensus), f"{OUT_DIR}/{nodule_id}.pt"
+                )
 
 
 # %%
