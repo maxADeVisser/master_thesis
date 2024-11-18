@@ -36,9 +36,6 @@ dataset = PrecomputedNoduleROIs(preprocessed_dir=processed_dir_path)
 loader = DataLoader(dataset, batch_size, shuffle=False)
 n_samples = len(dataset)
 n_batches = len(loader)
-# assert (
-#     n_samples == 2063
-# ), f"WARINING: There are not 2063 preprocessed ROIs, but {n_samples}"
 print("dataset samples:", n_samples)
 print("batches:", n_batches)
 
@@ -47,10 +44,11 @@ all_embeddings = torch.empty(
     size=(n_samples, feature_vector_size), dtype=torch.float, device="cpu"
 )
 all_labels = torch.empty(size=(n_samples,), dtype=torch.long, device="cpu")
+all_nodule_ids = torch.empty(size=(n_samples,), dtype=torch.long, device="cpu")
 
 start_idx = 0
 with torch.no_grad():
-    for i, (inputs, labels) in tqdm(
+    for _, (inputs, labels, nodule_ids) in tqdm(
         enumerate(loader), desc="Creating Embeddings (batches)", total=n_batches
     ):
         batch_embeddings = model.get_feature_vector(inputs)
@@ -60,6 +58,7 @@ with torch.no_grad():
 
         all_embeddings[start_idx:end_idx, :] = batch_embeddings
         all_labels[start_idx:end_idx] = labels
+        all_nodule_ids[start_idx:end_idx] = nodule_ids
         start_idx += cur_batch_size
 
 # save the embeddings and labels

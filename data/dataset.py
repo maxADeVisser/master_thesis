@@ -10,7 +10,7 @@ from preprocessing.processing import clip_and_normalise_volume
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
-from utils.utils import get_scans_by_patient_id
+from utils.utils import load_scan
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
@@ -45,7 +45,8 @@ class Nodule:
         nodule_dim: Literal["2.5D", "3D"] = "3D",
     ) -> None:
         self.patient_id = nodule_record["pid"]
-        self.nodule_dim = nodule_dim
+        self.nodule_idx = nodule_record["nodule_idx"]
+        self.nodule_id = f"{self.patient_id}_{self.nodule_idx}"
         self.annotation_ids = nodule_record["nodule_annotation_ids"]
         self.pylidc_annotations = [
             pl.query(pl.Annotation).filter(pl.Annotation.id == ann_id).first()
@@ -56,7 +57,7 @@ class Nodule:
             f"consensus_bbox_{nodule_context_size}"
         ]
         self.nodule_roi = self.get_nodule_roi()
-        if self.nodule_dim == "2.5D":
+        if nodule_dim == "2.5D":
             self.nodule_roi = transform_3d_to_25d(self.nodule_roi)
         self.nodule_roi = clip_and_normalise_volume(self.nodule_roi)
 
@@ -73,7 +74,7 @@ class Nodule:
 
     def get_nodule_roi(self) -> torch.Tensor:
         """Returns the nodule region of interest from the scan based on the consensus bbox from the 4 annotators"""
-        scan: np.ndarray = get_scans_by_patient_id(self.patient_id, to_numpy=True)
+        scan: np.ndarray = load_scan(self.patient_id, to_numpy=True)
         x_bounds, y_bounds, z_bounds = self.nodule_consensus_bbox
         nodule_roi = scan[
             x_bounds[0] : x_bounds[1],
@@ -185,8 +186,8 @@ class LIDC_IDRI_DATASET(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
         """
-        Retrieves a single nodule volume and its
-        corresponding consensus malignancy score
+        Retrieves a single nodule (3D volume or 2.5D with 3 channels) and its
+        corresponding consensus malignancy score and nodule id.
         """
         nodule = Nodule(
             nodule_record=self.nodule_df.iloc[idx],
@@ -194,24 +195,29 @@ class LIDC_IDRI_DATASET(Dataset):
             segmentation_setting=self.segmentation_configuration,
             nodule_dim=self.n_dims,
         )
-
-        return nodule.nodule_roi, nodule.malignancy_consensus
+        return nodule.nodule_roi, nodule.malignancy_consensus, nodule.nodule_id
 
 
 class PrecomputedNoduleROIs(Dataset):
+    """
+    Use the data/precompute_nodule_dataset.py script to precompute the nodule ROIs and save them to disk.
+    """
+
     def __init__(self, preprocessed_dir: str, data_augmentation: bool = True) -> None:
-        self.files = [f"{preprocessed_dir}/{f}" for f in os.listdir(preprocessed_dir)]
+        preprocessed_files = sorted(os.listdir(preprocessed_dir))
+        self.files = [f"{preprocessed_dir}/{f}" for f in preprocessed_files]
+        self.nodule_ids = [n.split(".")[0] for n in preprocessed_files]
         self.data_augmentation = data_augmentation
 
     def __len__(self) -> int:
         return len(self.files)
 
-    def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor, str]:
         data: torch.Tensor = torch.load(self.files[idx], weights_only=True)
         feature, label = data[0], data[1]
         if self.data_augmentation:
             feature = apply_augmentations(feature)
-        return feature, label
+        return feature, label, self.nodule_ids[idx]
 
 
 # %%
@@ -220,34 +226,30 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     pdataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_70C_2.5D",
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_30C_3D",
         data_augmentation=True,
     )
     loader = DataLoader(pdataset, batch_size=2, shuffle=False)
-    for i, (roi, label) in enumerate(loader):
-        plt.imshow(roi[0][1], cmap="gray")
-        plt.show()
-        break
+    for i, (roi, label, nodule_id) in enumerate(loader):
+        print(nodule_id)
+        # plt.imshow(roi[0][1], cmap="gray")
+        # plt.show()
     # -----------------------
 
     # testing dataloader
     dataset = LIDC_IDRI_DATASET(
-        context_size=30, segmentation_configuration="none", n_dims="2.5D"
+        context_size=70, segmentation_configuration="none", n_dims="2.5D"
     )
-    train_loader = DataLoader(dataset, batch_size=1, shuffle=True)
-    roi, label = next(iter(train_loader))
-    print(roi.shape)
+    train_loader = DataLoader(dataset, batch_size=2, shuffle=True)
+    for i, (roi, label, nodule_id) in enumerate(train_loader):
+        print(roi.shape)
+        print(label)
+        print(nodule_id)
+        break
     middle_slice = roi.shape[-1] // 2
     plt.imshow(roi[0][1], cmap="gray")
     plt.title(f"Label malignancy score: {label[0]}")
     plt.show()
-
-    # # Testing data set:
-    # dataset = LIDC_IDRI_DATASET(img_dim=30)
-    # roi_consensus, label = dataset.__getitem__(0)
-    # plt.imshow(roi_consensus[:, :, 35], cmap="gray")
-    # plt.title(f"Label malignancy score: {label}")
-    # plt.show()
 
     # Test Nodule
     IMG_DIM = 70

@@ -57,7 +57,7 @@ if __name__ == "__main__":
         data_augmentation=True,
     )
     loader = DataLoader(dataset, batch_size=2, shuffle=True)
-    feature, _ = next(iter(loader))
+    feature, _, _ = next(iter(loader))
     feature.shape
 
     # 3D case:

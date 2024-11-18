@@ -20,18 +20,18 @@ from tqdm import tqdm
 from data.dataset import transform_3d_to_25d
 from preprocessing.processing import clip_and_normalise_volume
 from project_config import env_config
-from utils.utils import get_scans_by_patient_id
+from utils.utils import load_scan
 
 
 def main():
     # SCRIPT PARAMS
     CONTEXT_WINDOW_SIZES = [30]
     DIMENSIONALITY = "3D"
-    PROJECT_DIR = os.getenv("PROJECT_DIR")
     DATASET_VERSION: Literal["hold_out", "full"] = "full"
-    _holdout_indicator = "hold_out" if DATASET_VERSION == "hold_out" else ""
 
     # Load the preprocessed nodule dataframe
+    PROJECT_DIR = os.getenv("PROJECT_DIR")
+    _holdout_indicator = "hold_out" if DATASET_VERSION == "hold_out" else ""
     if DATASET_VERSION == "full":
         nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
     else:
@@ -40,6 +40,10 @@ def main():
         nodule_df[f"consensus_bbox_{cws}"] = nodule_df[f"consensus_bbox_{cws}"].apply(
             ast.literal_eval
         )
+    # Create nodule IDs:
+    nodule_df["nodule_id"] = (
+        nodule_df["pid"].astype(str) + "_" + nodule_df["nodule_idx"].astype(str)
+    )
 
     # create the directories for the precomputed ROIs
     for cws in CONTEXT_WINDOW_SIZES:
@@ -50,13 +54,14 @@ def main():
             raise FileExistsError(f"{OUT_DIR} already exists. Reset first")
 
     # loop over nodules and precompute the ROIs at different context windows sizes:
-    for i, row in tqdm(
+    for _, row in tqdm(
         nodule_df.iterrows(),
         desc="Precomputing ROIs",
         total=len(nodule_df),
     ):
         # NOTE: Load the scan once per nodule (a bottleneck operation we want to avoid doing to many times)
-        scan: np.ndarray = get_scans_by_patient_id(row["pid"], to_numpy=True)
+        scan: np.ndarray = load_scan(row["pid"], to_numpy=True)
+        nodule_id = row["pid"] + "_" + str(row["nodule_idx"])
         malignancy_consensus = row["malignancy_consensus"]
 
         # For each context, precompute the ROI
@@ -80,7 +85,7 @@ def main():
                 nodule_roi = transform_3d_to_25d(nodule_roi)
             nodule_roi = clip_and_normalise_volume(nodule_roi)
 
-            torch.save((nodule_roi, malignancy_consensus), f"{OUT_DIR}/instance{i}.pt")
+            torch.save((nodule_roi, malignancy_consensus), f"{OUT_DIR}/{nodule_id}.pt")
 
 
 # %%

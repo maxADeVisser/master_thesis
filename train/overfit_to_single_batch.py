@@ -36,7 +36,7 @@ optimizer = optim.Adam(model.parameters(), lr=LR)
 dataset = LIDC_IDRI_DATASET(
     context_size=30, n_dims=DATA_DIMENSIONALITY, segmentation_configuration="none"
 )
-batch_features, batch_labels = next(iter(DataLoader(dataset, batch_size=16)))
+batch_features, batch_labels, _ = next(iter(DataLoader(dataset, batch_size=16)))
 batch_features, batch_labels = batch_features.to(DEVICE), batch_labels.to(DEVICE)
 
 model.train()

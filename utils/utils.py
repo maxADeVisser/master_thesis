@@ -41,9 +41,7 @@ def get_ct_scan_slice_paths(
             return [os.path.join(directory, f) for f in dcm_files]
 
 
-def get_scans_by_patient_id(
-    patient_id: str, to_numpy: bool = True
-) -> list[pl.Scan] | np.ndarray:
+def load_scan(patient_id: str, to_numpy: bool = True) -> list[pl.Scan] | np.ndarray:
     """Returns the first scan for a given patient_id (i think there is only one scan per patient)"""
     scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == patient_id).first()
     return scan.to_volume(verbose=False) if to_numpy else scan
