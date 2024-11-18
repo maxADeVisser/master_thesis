@@ -22,6 +22,8 @@ acsconv = { git = "https://github.com/M3DV/ACSConv" }
 coral-pytorch = "^1.4.0"
 seaborn = "^0.13.2"
 scikit-learn = "^1.5.2"
+plotly = "^5.24.1"
+nbformat = "^5.10.4"
 
 [tool.poetry.group.dev.dependencies]
 tensorboard = "^2.18.0"
