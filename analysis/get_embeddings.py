@@ -17,7 +17,8 @@ experiment_id = "c30_3D_1711_1513"
 fold = 3
 n_dims = "3D"
 batch_size = 8
-processed_dir_path = f"{env_config.PROJECT_DIR}/data/precomputed_rois_30C_3D"
+hold_out = True
+processed_dir_path = f"{env_config.PROJECT_DIR}/data/precomputed_rois_30C_3D{'hold_out' if hold_out else ''}"
 # ---------------------
 
 weights_path = (
@@ -35,9 +36,9 @@ dataset = PrecomputedNoduleROIs(preprocessed_dir=processed_dir_path)
 loader = DataLoader(dataset, batch_size, shuffle=False)
 n_samples = len(dataset)
 n_batches = len(loader)
-assert (
-    n_samples == 2063
-), f"WARINING: There are not 2063 preprocessed ROIs, but {n_samples}"
+# assert (
+#     n_samples == 2063
+# ), f"WARINING: There are not 2063 preprocessed ROIs, but {n_samples}"
 print("dataset samples:", n_samples)
 print("batches:", n_batches)
 
@@ -62,5 +63,11 @@ with torch.no_grad():
         start_idx += cur_batch_size
 
 # save the embeddings and labels
-np.save(file=f"{embeddings_out}/embeddings.npy", arr=all_embeddings.numpy())
-np.save(file=f"{embeddings_out}/labels.npy", arr=all_labels.numpy())
+np.save(
+    file=f"{embeddings_out}/embeddings{'_holdout' if hold_out else ''}.npy",
+    arr=all_embeddings.numpy(),
+)
+np.save(
+    file=f"{embeddings_out}/labels{'_holdout' if hold_out else ''}.npy",
+    arr=all_labels.numpy(),
+)

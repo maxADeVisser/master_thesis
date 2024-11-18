@@ -10,16 +10,20 @@ from project_config import SEED
 
 fold = 3
 experiment_id = "c30_3D_1711_1513"
+hold_out = False
+hold_indicator = "_holdout" if hold_out else ""
 out = f"out/embeddings/{experiment_id}/fold{fold}"
-embeddings = np.load(f"{out}/embeddings.npy")
-labels = np.load(f"{out}/labels.npy")
+embeddings = np.load(f"{out}/embeddings{hold_indicator}.npy")
+labels = np.load(f"{out}/labels{hold_indicator}.npy")
 print(embeddings.shape, labels.shape)
 
 tnse = TSNE(n_components=2, perplexity=30, random_state=SEED)
 tnse_embeddings = tnse.fit_transform(embeddings)
-np.save(f"{out}/tnse_embeddings.npy", tnse_embeddings)
+# np.save(f"{out}/tnse_embeddings{hold_indicator}.npy", tnse_embeddings)
 
-# tnse_embeddings = np.load(tnse_embeddings_out)  # these are 2D embeddings
+tnse_embeddings = np.load(
+    f"{out}/tnse_embeddings{hold_indicator}.npy"
+)  # these are 2D embeddings
 tnse_df = pd.DataFrame.from_records(tnse_embeddings)
 tnse_df["label"] = labels
 tnse_df
@@ -38,7 +42,7 @@ sns.scatterplot(
 )
 plt.legend(loc="upper right", title="True\nMalignancy\nScore")
 plt.title("t-SNE embeddings of Nodule ROIs")
-plt.savefig(f"{out}/tnse_embeddings_plot.png")
+plt.savefig(f"{out}/tnse_embeddings_plot{hold_indicator}.png")
 plt.axis("off")
 plt.show()
 
@@ -57,7 +61,8 @@ fig = scatter_3d(
 # make the dot size smaller
 fig.update_traces(marker=dict(size=4))
 pio.write_html(
-    fig, file=f"out/embeddings/{experiment_id}_fold{fold}/tnse_embeddings_plot.html"
+    fig,
+    file=f"out/embeddings/{experiment_id}_fold{fold}/tnse_embeddings_plot{hold_indicator}.html",
 )
 fig.show()
 
