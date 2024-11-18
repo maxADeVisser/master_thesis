@@ -12,7 +12,7 @@ mlartifacts/
 *tar.gz
 .DS_Store
 *.pth
-*.out
+job.*.out
 run_*
 fold*
 
