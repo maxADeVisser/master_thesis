@@ -1,32 +1,48 @@
+from typing import Literal
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.io as pio
 import seaborn as sns
+import umap
 from plotly.express import scatter_3d
 from sklearn.manifold import TSNE
 
 from project_config import SEED
 
+# SCRIPT PARAMS ---------
 fold = 3
 experiment_id = "c30_3D_1711_1513"
 hold_out = False
+reduction_algo: Literal["umap", "tsne"] = "umap"
+# -----------------------
+
 hold_indicator = "_holdout" if hold_out else ""
 out = f"out/embeddings/{experiment_id}/fold{fold}"
-embeddings = np.load(f"{out}/embeddings{hold_indicator}.npy")
+model_embeddings = np.load(f"{out}/embeddings{hold_indicator}.npy")
 labels = np.load(f"{out}/labels{hold_indicator}.npy")
-print(embeddings.shape, labels.shape)
+print(model_embeddings.shape, labels.shape)
 
-tnse = TSNE(n_components=2, perplexity=30, random_state=SEED)
-tnse_embeddings = tnse.fit_transform(embeddings)
-# np.save(f"{out}/tnse_embeddings{hold_indicator}.npy", tnse_embeddings)
+# Compute the 2D embeddings:
+if reduction_algo == "tnse":
+    tnse = TSNE(n_components=2, perplexity=30, random_state=SEED)
+    dim_reduced_embeddings = tnse.fit_transform(model_embeddings)
+elif reduction_algo == "umap":
+    reducer = umap.UMAP(random_state=SEED)
+    dim_reduced_embeddings = reducer.fit_transform(model_embeddings)
 
-tnse_embeddings = np.load(
-    f"{out}/tnse_embeddings{hold_indicator}.npy"
-)  # these are 2D embeddings
-tnse_df = pd.DataFrame.from_records(tnse_embeddings)
+np.save(
+    f"{out}/{reduction_algo}_embeddings{hold_indicator}.npy", dim_reduced_embeddings
+)
+
+# LOAD - these are 2D embeddings:
+# dim_reduced_embeddings = np.load(
+#     f"{out}/{reduction_algo}_embeddings{hold_indicator}.npy"
+# )
+
+tnse_df = pd.DataFrame.from_records(dim_reduced_embeddings)
 tnse_df["label"] = labels
-tnse_df
 
 # plot the tnse embeddings
 plt.figure(figsize=(10, 10))
@@ -41,8 +57,8 @@ sns.scatterplot(
     # size="subtlety",
 )
 plt.legend(loc="upper right", title="True\nMalignancy\nScore")
-plt.title("t-SNE embeddings of Nodule ROIs")
-plt.savefig(f"{out}/tnse_embeddings_plot{hold_indicator}.png")
+plt.title(f"{reduction_algo} embeddings of Nodule ROIs")
+plt.savefig(f"{out}/{reduction_algo}_embeddings_plot{hold_indicator}.png")
 plt.axis("off")
 plt.show()
 
