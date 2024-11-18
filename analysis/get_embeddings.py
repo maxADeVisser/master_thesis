@@ -5,49 +5,62 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from data.dataset import LIDC_IDRI_DATASET
+from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import load_resnet_model
+from project_config import env_config
 
 # TODO seperate the train and validation sets when getting the embeddings!
-experiment_id = "c50_25d_1311_1450"
-fold = 0
-out_dir = f"hpc/jobs/{experiment_id}/fold_{fold}"
-weights_path = f"{out_dir}/model_fold{fold}.pth"
-n_dims = "2.5D"
-embeddings_out = f"out/embeddings/fold{fold}/embeddings.npy"
-if not os.path.exists(embeddings_out):
-    os.makedirs(os.path.dirname(embeddings_out), exist_ok=True)
+# QUESTION which data to do the embedding on? (using train and validation now for testing)
 
-model = load_resnet_model(weights_path, in_channels=3, dims=n_dims)
+# --- SCRIPT PARAMS ---
+experiment_id = "c30_3D_1711_1513"
+fold = 3
+n_dims = "3D"
+batch_size = 8
+processed_dir_path = f"{env_config.PROJECT_DIR}/data/precomputed_rois_30C_3D"
+# ---------------------
+
+weights_path = (
+    f"{env_config.PROJECT_DIR}/hpc/jobs/{experiment_id}/fold_{fold}/model.pth"
+)
+embeddings_out = f"{env_config.PROJECT_DIR}/out/embeddings/{experiment_id}/fold{fold}"
+if not os.path.exists(embeddings_out):
+    os.makedirs(embeddings_out)
+ic = 1 if n_dims == "3D" else 3  # for 2.5D or 3D
+
+model = load_resnet_model(weights_path, in_channels=ic, dims=n_dims)
 model.eval()
 
-# QUESTION which data to do the embedding on?
-dataset = LIDC_IDRI_DATASET(
-    context_size=50,
-    segmentation_configuration="none",
-    n_dims=n_dims,
-    # nodule_df_path="preprocessing/hold_out_nodule_df.csv",
-)
-loader = DataLoader(dataset, batch_size=8, shuffle=False)
+dataset = PrecomputedNoduleROIs(preprocessed_dir=processed_dir_path)
+loader = DataLoader(dataset, batch_size, shuffle=False)
 n_samples = len(dataset)
 n_batches = len(loader)
-print("dataset:", n_samples)
+assert (
+    n_samples == 2063
+), f"WARINING: There are not 2063 preprocessed ROIs, but {n_samples}"
+print("dataset samples:", n_samples)
 print("batches:", n_batches)
 
-all_embeddings = torch.empty(n_samples, 8, 2048, dtype=torch.float, device="cpu")
+feature_vector_size = 2048  # size of the feature vector from the ResNet model
+all_embeddings = torch.empty(
+    size=(n_samples, feature_vector_size), dtype=torch.float, device="cpu"
+)
+all_labels = torch.empty(size=(n_samples,), dtype=torch.long, device="cpu")
+
 start_idx = 0
 with torch.no_grad():
-    for i, (inputs, _) in tqdm(
-        enumerate(loader), desc="Getting embeddings", total=n_batches
+    for i, (inputs, labels) in tqdm(
+        enumerate(loader), desc="Creating Embeddings (batches)", total=n_batches
     ):
         batch_embeddings = model.get_feature_vector(inputs)
 
-        batch_size = inputs.size(0)
-        end_idx = start_idx + batch_size
-        all_embeddings[start_idx:end_idx] = batch_embeddings
-        start_idx += batch_size
-# BUG i think there is a problem with the last batch. It fails there
+        cur_batch_size = inputs.size(0)
+        end_idx = start_idx + cur_batch_size
 
-# reshape lthe tensor to (n_samples, 2048):
-all_embeddings = all_embeddings.view(n_samples, -1).numpy()
-np.save(embeddings_out, all_embeddings)
+        all_embeddings[start_idx:end_idx, :] = batch_embeddings
+        all_labels[start_idx:end_idx] = labels
+        start_idx += cur_batch_size
+
+# save the embeddings and labels
+np.save(file=f"{embeddings_out}/embeddings.npy", arr=all_embeddings.numpy())
+np.save(file=f"{embeddings_out}/labels.npy", arr=all_labels.numpy())
