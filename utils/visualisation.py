@@ -1,4 +1,6 @@
 # %%
+from collections import Counter
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,36 +17,32 @@ from utils.experiments import load_fold_from_json
 # from utils.utils import get_scans_by_patient_id
 
 
-def plot_val_error_distribution(validation_erros: list[int], out_dir: str) -> None:
+def plot_val_error_distribution(
+    validation_erros: list[int], out_dir: str | None = None, show: bool = False
+) -> None:
     """
     Plots the distribution of validation errors.
     """
-    plt.hist(
-        validation_erros,
-        bins=range(min(validation_erros), max(validation_erros) + 2),
-        edgecolor="black",
-        align="left",
-    )
-    plt.axvline(
-        x=np.mean(validation_erros),
-        color="red",
-        linestyle="--",
-        label=f"Mean Error: {np.mean(validation_erros):.2f}",
-    )
-    plt.axvline(
-        x=np.median(validation_erros),
-        color="orange",
-        linestyle="--",
-        label=f"Median Error: {np.median(validation_erros):.2f}",
-    )
-    plt.legend()
-    plt.xlabel("Validation Malignancy Error")
+    res = Counter(validation_erros)
+    all_numbers = list(res.keys())
+    counts = list(res.values())
+    plt.bar(all_numbers, counts)
+    for i in range(len(all_numbers)):
+        plt.text(all_numbers[i], counts[i], str(counts[i]), ha="center", va="bottom")
+    plt.xlabel("Malignancy Error")
     plt.ylabel("Frequency")
-    plt.savefig(f"{out_dir}/error_distribution.png")
-    plt.close()
+    if out_dir:
+        plt.savefig(f"{out_dir}/error_distribution.png")
+    if not show:
+        plt.close()
+        return
+    else:
+        plt.show()
 
 
-def plot_loss(train_losses: list[float], val_losses, out_dir: str) -> None:
+def plot_loss(
+    train_losses: list[float], val_losses, out_dir: str | None = None
+) -> None:
     """
     Plots the training and validation loss across epochs.
     """
