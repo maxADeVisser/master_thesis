@@ -28,12 +28,14 @@ def main():
     CONTEXT_WINDOW_SIZES = [30]
     DIMENSIONALITY = "3D"
     PROJECT_DIR = os.getenv("PROJECT_DIR")
-    DATASET_VERSION: Literal["hold_out", "full"] = "hold_out"
+    DATASET_VERSION: Literal["hold_out", "full"] = "full"
     _holdout_indicator = "hold_out" if DATASET_VERSION == "hold_out" else ""
 
     # Load the preprocessed nodule dataframe
-    # nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
-    nodule_df = pd.read_csv(env_config.hold_out_nodule_df_file)
+    if DATASET_VERSION == "full":
+        nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
+    else:
+        nodule_df = pd.read_csv(env_config.hold_out_nodule_df_file)
     for cws in CONTEXT_WINDOW_SIZES:
         nodule_df[f"consensus_bbox_{cws}"] = nodule_df[f"consensus_bbox_{cws}"].apply(
             ast.literal_eval
