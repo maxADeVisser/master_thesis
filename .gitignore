@@ -15,6 +15,7 @@ mlartifacts/
 job.*.out
 run_*
 fold*
+annotations*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
