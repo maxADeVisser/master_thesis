@@ -12,6 +12,7 @@ from sklearn.manifold import TSNE
 from project_config import SEED
 
 # SCRIPT PARAMS ---------
+# TODO remove TNSE stuff from here. this should be in the get_embeddings.py script
 fold = 3
 experiment_id = "c30_3D_1711_1513"
 hold_out = False

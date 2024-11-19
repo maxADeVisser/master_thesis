@@ -75,6 +75,9 @@ def plot_fold_results(
     @rolling_window: The window size for the rolling average.
     @epochs_dampen: The number of epochs to dampen the start of the loss plot.
     """
+    model_info = experiment_id.split("_")[:2]
+    model_context_size = model_info[0]
+    model_dimensionality = model_info[1]
     exp_path = f"hpc/jobs/{experiment_id}"
     fold_path = f"{exp_path}/fold_{fold_num}"
     fold = load_fold_from_json(f"{fold_path}/fold{fold_num}_{experiment_id}.json")
@@ -225,7 +228,9 @@ def plot_fold_results(
     ax7.set_ylabel("CORN Loss")
     ax7.grid()
 
-    plt.suptitle(f"Fold {fold_num} Validation Metrics")
+    plt.suptitle(
+        f"Model {model_context_size} | {model_dimensionality} - Fold {fold_num} Validation Metrics"
+    )
     plt.savefig(f"{fold_path}/fold_metric_results.png")
     plt.show()
 
@@ -387,5 +392,5 @@ if __name__ == "__main__":
     # # TESTING
     # visualise_scan_interactively("LIDC-IDRI-0010")
 
-    plot_fold_results("c30_3D_1711_1513", fold_num=3, epochs_dampen=3)
+    plot_fold_results("c30_25D_1911_0928", fold_num=4, epochs_dampen=3)
 # %%

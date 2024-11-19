@@ -5,7 +5,7 @@ import torch
 
 from model.ResNet import (
     compute_class_probs_from_logits,
-    get_pred_malignancy_score_from_logits,
+    get_pred_malignancy_from_logits,
     predict_binary_from_logits,
 )
 
@@ -29,7 +29,7 @@ class TestPredictMalignancyFromLogits(unittest.TestCase):
             ]
         )
         expected_output = torch.tensor([1, 2, 3, 4, 5])
-        output = get_pred_malignancy_score_from_logits(self.logits)
+        output = get_pred_malignancy_from_logits(self.logits)
         self.assertTrue(torch.equal(output, expected_output))
         mock_get_unconditional_probas.assert_called_once_with(self.logits)
 

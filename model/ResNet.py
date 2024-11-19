@@ -308,7 +308,7 @@ if __name__ == "__main__":
 
     get_unconditional_probas(logits)
 
-    get_pred_malignancy_score_from_logits(logits)
+    get_pred_malignancy_from_logits(logits)
 
     # Binary inference (this gives the binary classification)
     # predict_binary_from_logits(logits)
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         uncond = get_unconditional_probas(logits)
-        preds = get_pred_malignancy_score_from_logits(logits)
+        preds = get_pred_malignancy_from_logits(logits)
         class_probas = compute_class_probs_from_logits(logits)
 
     uncond

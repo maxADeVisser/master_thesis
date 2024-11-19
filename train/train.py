@@ -22,7 +22,7 @@ from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import (
     ResNet50,
     compute_class_probs_from_logits,
-    get_pred_malignancy_score_from_logits,
+    get_pred_malignancy_from_logits,
     predict_binary_from_logits,
 )
 from project_config import SEED, env_config, pipeline_config
@@ -142,7 +142,7 @@ def evaluate_model(
 
             # Get predictions and labels:
             binary_probas = predict_binary_from_logits(logits, return_probs=True)
-            malignancy_scores = get_pred_malignancy_score_from_logits(logits)
+            malignancy_scores = get_pred_malignancy_from_logits(logits)
             class_probas = compute_class_probs_from_logits(logits)
 
             # Fill the preallocated tensors with the predictions and labels
@@ -229,7 +229,7 @@ def train_model(
         env_config.PREPROCESSED_DATA_DIR
     ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
     dataset = PrecomputedNoduleROIs(
-        preprocessed_dir=env_config.PREPROCESSED_DATA_DIR,
+        prepcomputed_dir=env_config.PREPROCESSED_DATA_DIR,
         data_augmentation=DATA_AUGMENTATION,
     )
     nodule_df = pd.read_csv(env_config.processed_nodule_df_file)

@@ -203,9 +203,9 @@ class PrecomputedNoduleROIs(Dataset):
     Use the data/precompute_nodule_dataset.py script to precompute the nodule ROIs and save them to disk.
     """
 
-    def __init__(self, preprocessed_dir: str, data_augmentation: bool = True) -> None:
-        preprocessed_files = sorted(os.listdir(preprocessed_dir))
-        self.files = [f"{preprocessed_dir}/{f}" for f in preprocessed_files]
+    def __init__(self, prepcomputed_dir: str, data_augmentation: bool = True) -> None:
+        preprocessed_files = sorted(os.listdir(prepcomputed_dir))
+        self.files = [f"{prepcomputed_dir}/{f}" for f in preprocessed_files]
         self.nodule_ids = [n.split(".")[0] for n in preprocessed_files]
         self.data_augmentation = data_augmentation
 
