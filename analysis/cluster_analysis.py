@@ -15,7 +15,7 @@ from project_config import SEED
 fold = 3
 experiment_id = "c30_3D_1711_1513"
 hold_out = False
-reduction_algo: Literal["umap", "tsne"] = "umap"
+reduction_algo: Literal["umap", "tsne"] = "tsne"
 # -----------------------
 
 hold_indicator = "_holdout" if hold_out else ""
@@ -25,7 +25,7 @@ labels = np.load(f"{out}/labels{hold_indicator}.npy")
 print(model_embeddings.shape, labels.shape)
 
 # Compute the 2D embeddings:
-if reduction_algo == "tnse":
+if reduction_algo == "tsne":
     tnse = TSNE(n_components=2, perplexity=30, random_state=SEED)
     dim_reduced_embeddings = tnse.fit_transform(model_embeddings)
 elif reduction_algo == "umap":
