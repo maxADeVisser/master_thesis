@@ -10,29 +10,31 @@ from utils.logger_setup import logger
 
 np.random.seed(SEED)
 
-# SCIPRT PARAMS:
+# --- SCIPRT PARAMS ---
 IMAGE_DIMS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 MAX_IMG_DIM_USED = 70
+CSV_FILE_NAME = f"nodule_df"
+verbose = False
+# ---------------------
+
 assert (
     MAX_IMG_DIM_USED in IMAGE_DIMS
 ), "The maximum image dimensions needs to be in the @image_dims list"
-CSV_FILE_NAME = f"nodule_df"
-verbose = False
 logger.info(
-    f"Creating nodule df with image_dims: {IMAGE_DIMS} as {CSV_FILE_NAME}.csv ..."
+    f"\nCreating nodule df with image_dims: {IMAGE_DIMS} as {CSV_FILE_NAME}.csv ..."
 )
 
 
 def calculate_consensus(annotation_variable_values: list[int]) -> int:
     """
     Calculate the consensus of discrete annotation variable values
+    as the rounded mean of the values.
     """
     round_to_nearest = lambda x: math.floor(x + 0.5)
-    # return median_high(annotation_variable_values)
     return round_to_nearest(np.mean(annotation_variable_values))
 
 
-def get_malignancy_label(malignancy_scores: tuple[int]) -> str:
+def get_cancer_label(malignancy_scores: tuple[int]) -> str:
     """
     Return the consensun malignancy label based on the median high of the annotations.
     If the median high is greater than 3, the nodule is labelled as "Malignant".
@@ -153,9 +155,7 @@ def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> N
     nodule_df["subtlety_consensus"] = nodule_df["subtlety_scores"].apply(
         calculate_consensus
     )
-    nodule_df["cancer_label"] = nodule_df["malignancy_scores"].apply(
-        get_malignancy_label
-    )
+    nodule_df["cancer_label"] = nodule_df["malignancy_scores"].apply(get_cancer_label)
 
     # TYPE CASTING
     nodule_df = nodule_df.assign(
@@ -163,6 +163,11 @@ def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> N
         nodule_idx=nodule_df["nodule_idx"].astype("int"),
         malignancy_consensus=nodule_df["malignancy_consensus"].astype("int"),
         cancer_label=nodule_df["cancer_label"].astype("category"),
+    )
+
+    # Create nodule ID:
+    nodule_df["nodule_id"] = (
+        nodule_df["pid"] + "_" + nodule_df["nodule_idx"].astype(str)
     )
 
     # VERIFICATIONS:
@@ -197,12 +202,13 @@ def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> N
 
     # WRITE FILE:
     try:
-        nodule_df.to_csv(f"{env_config.OUT_DIR}/{file_name}.csv", index=False)
-        logger.info(f"nodule_df saved to:\n{env_config.OUT_DIR}/{file_name}.csv")
+        file_path = f"{env_config.PROJECT_DIR}/preprocessing/{file_name}.csv"
+        nodule_df.to_csv(file_path, index=False)
+        logger.info(f"nodule_df saved to:\n{file_path}")
     except Exception as e:
         logger.error(f"Error saving nodule_df dataframe: {e}")
 
 
 # %%
 if __name__ == "__main__":
-    create_nodule_df()
+    create_nodule_df(CSV_FILE_NAME)
