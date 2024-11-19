@@ -211,7 +211,7 @@ def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
     return class_probas.float()
 
 
-def get_pred_malignancy_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
+def get_pred_malignancy_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given output logits, return the malignancy rank.
 
