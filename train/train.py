@@ -89,7 +89,7 @@ def train_epoch(
         logits = model(inputs)
         # class labels should start at 0 according to documentation:
         # https://raschka-research-group.github.io/coral-pytorch/api_subpackages/coral_pytorch.losses/
-        loss = corn_loss(logits, torch.squeeze(labels) - 1, num_classes=NUM_CLASSES)
+        loss = corn_loss(logits, labels - 1, num_classes=NUM_CLASSES)
 
         # Backward pass and optimisation
         loss.backward()
