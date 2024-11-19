@@ -21,29 +21,18 @@ nodule_roi_jpg_dir = (
 pred_df_path = (
     f"{env_config.OUT_DIR}/predictions/{experiment_id}/pred_nodule_df_fold{fold}.csv"
 )
-embeddings_df_path = (
-    f"{env_config.OUT_DIR}/embeddings/{experiment_id}/fold{fold}/embeddings_df.csv"
-)
 pred_nodule_df = pd.read_csv(pred_df_path).set_index("nodule_id")
-embeddings_df = pd.read_csv(embeddings_df_path).set_index("nodule_id")
-
-# TODO do not delete the dataset everytime. We need to load the existing one instead.
 dataset_name = f"C{context_size}_Nodule_ROIs"
-if dataset_name in fo.list_datasets():
-    fo.delete_dataset(dataset_name)
-
 
 # --- CREATE DATASET ---
 # (Only run once - stores in a MongoDB database)
 dataset = fo.Dataset.from_images_patt(
-    images_patt=f"{nodule_roi_jpg_dir}/*.jpg", name=dataset_name
+    images_patt=f"{nodule_roi_jpg_dir}/*.jpg", name=dataset_name, persistent=True
 )
-# dataset = fo.load_dataset(dataset_name)
 
 for sample in dataset:
     nodule_id = sample.filename.split(".")[0]
     row = pred_nodule_df.loc[nodule_id]
-    row_embed = embeddings_df.loc[nodule_id]
 
     # Store classification in a field name of your choice
     sample["nodule_id"] = nodule_id
@@ -62,29 +51,29 @@ for sample in dataset:
     sample.save()
 
 # Map sample IDs to nodule ID annoying and complex mapping ...
-nodule_id_sample_id_mapping = {sample["nodule_id"]: sample.id for sample in dataset}
-nodule_id_sample_id_mapping = (
-    pd.DataFrame.from_dict(nodule_id_sample_id_mapping, orient="index")
-    .reset_index()
-    .rename(columns={"index": "nodule_id", 0: "sample_id"})
-)
+# nodule_id_sample_id_mapping = {sample["nodule_id"]: sample.id for sample in dataset}
+# nodule_id_sample_id_mapping = (
+#     pd.DataFrame.from_dict(nodule_id_sample_id_mapping, orient="index")
+#     .reset_index()
+#     .rename(columns={"index": "nodule_id", 0: "sample_id"})
+# )
 
-fiftyone_df = pd.merge(pred_nodule_df, nodule_id_sample_id_mapping, on="nodule_id")
-fiftyone_df = pd.merge(fiftyone_df, embeddings_df, on="nodule_id")
+# fiftyone_df = pd.merge(pred_nodule_df, nodule_id_sample_id_mapping, on="nodule_id")
+# fiftyone_df = pd.merge(fiftyone_df, embeddings_df, on="nodule_id")
 
-# get the format needed for the compute_visualization function:
-sample_id_embedding_mapping = dict(
-    zip(fiftyone_df["sample_id"], zip(fiftyone_df["x_embed"], fiftyone_df["y_embed"]))
-)
-# Needs to be in numpy format:
-sample_id_embedding_mapping = {
-    k: np.array(v) for k, v in sample_id_embedding_mapping.items()
-}
+# # get the format needed for the compute_visualization function:
+# sample_id_embedding_mapping = dict(
+#     zip(fiftyone_df["sample_id"], zip(fiftyone_df["x_embed"], fiftyone_df["y_embed"]))
+# )
+# # Needs to be in numpy format:
+# sample_id_embedding_mapping = {
+#     k: np.array(v) for k, v in sample_id_embedding_mapping.items()
+# }
 
-fob.compute_visualization(
-    samples=dataset, points=sample_id_embedding_mapping, brain_key="img_viz"
-)
+# fob.compute_visualization(
+#     samples=dataset, points=sample_id_embedding_mapping, brain_key="img_viz"
+# )
 
 # --- LAUNCH APP ---
-session = fo.launch_app(dataset=dataset, port=5151)
-session.wait()
+# session = fo.launch_app(dataset=dataset, port=5151)
+# session.wait()
