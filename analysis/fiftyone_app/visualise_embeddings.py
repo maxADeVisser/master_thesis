@@ -1,4 +1,4 @@
-from typing import Literal
+import json
 
 import fiftyone as fo
 import fiftyone.brain as fob
@@ -7,9 +7,12 @@ import pandas as pd
 
 from project_config import env_config
 
-context_size: Literal[30, 50, 70] = 30
-experiment_id = "c30_3D_1711_1513"
-fold = 3
+with open("experiment_analysis_parameters.json", "r") as f:
+    config = json.load(f)
+
+context_size = config["context_size"]
+experiment_id = config["experiment_id"]
+fold = config["fold"]
 
 dataset = fo.load_dataset(f"C{context_size}_Nodule_ROIs")
 

@@ -1,4 +1,5 @@
 # %%
+import json
 from collections import Counter
 
 import matplotlib.pyplot as plt
@@ -55,16 +56,6 @@ def plot_loss(
     plt.close()
 
 
-def plot_fold_accuracy(
-    experiment_id: str, fold_num: int, rolling_window: int = 10
-) -> None:
-    """Visualises a fold results downloaded from the HPC"""
-    exp_path = f"hpc/jobs/{experiment_id}"
-    fold_path = f"{exp_path}/fold_{fold_num}"
-    fold = load_fold_from_json(f"{fold_path}/fold{fold_num}_{experiment_id}.json")
-    fold_num_epochs = len(fold.val_losses)
-
-
 def plot_fold_results(
     experiment_id: str, fold_num: int, rolling_window: int = 10, epochs_dampen: int = 2
 ) -> None:
@@ -82,8 +73,6 @@ def plot_fold_results(
     fold_path = f"{exp_path}/fold_{fold_num}"
     fold = load_fold_from_json(f"{fold_path}/fold{fold_num}_{experiment_id}.json")
     fold_num_epochs = len(fold.val_losses)
-    if fold.epoch_stopped is None:
-        print("NOTE: Fold has not finished training yet!")
 
     epochs = range(fold_num_epochs)
 
@@ -392,5 +381,10 @@ if __name__ == "__main__":
     # # TESTING
     # visualise_scan_interactively("LIDC-IDRI-0010")
 
-    plot_fold_results("c30_25D_1911_0928", fold_num=4, epochs_dampen=3)
+    with open("experiment_analysis_parameters.json", "r") as f:
+        config = json.load(f)
+    dampen_epochs = 3
+    plot_fold_results(
+        config["experiment_id"], fold_num=config["fold"], epochs_dampen=dampen_epochs
+    )
 # %%

@@ -1,3 +1,4 @@
+import json
 import os
 
 import pandas as pd
@@ -15,21 +16,26 @@ from project_config import SEED, env_config
 
 # QUESTION which data to do the embedding on? (using train and validation now for testing)
 
+with open("experiment_analysis_parameters.json", "r") as f:
+    config = json.load(f)
+
 # --- SCRIPT PARAMS ---
-experiment_id = "c30_3D_1711_1513"
-context_size = 30
-fold = 3
-n_dims = "3D"
+experiment_id = config["experiment_id"]
+context_size = config["context_size"]
+fold = config["fold"]
+n_dims = config["dimensionality"]
 batch_size = 8
-processed_dir_path = f"{env_config.PROJECT_DIR}/data/precomputed_rois_30C_3D"
-processed_holdout_dir_path = f"{processed_dir_path}hold_out"
 # ---------------------
 
+processed_dir_path = (
+    f"{env_config.PROJECT_DIR}/data/precomputed_rois_{context_size}C_{n_dims}"
+)
+processed_holdout_dir_path = f"{processed_dir_path}hold_out"
 if not os.path.exists(processed_dir_path) or not os.path.exists(
     processed_holdout_dir_path
 ):
     raise FileNotFoundError(
-        f"Precomputed ROIs not found for {context_size} | {n_dims}. Precompute the nodule ROIs first"
+        f"Precomputed ROIs not found for {context_size} | {n_dims} (both holdout and full needs to be there). Precompute all the nodule ROIs first using precomputed_nodule_dataset.py"
     )
 
 embeddings_out = f"{env_config.PROJECT_DIR}/out/embeddings/{experiment_id}/fold{fold}"

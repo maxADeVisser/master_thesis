@@ -1,3 +1,5 @@
+import json
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.io as pio
@@ -8,9 +10,12 @@ from project_config import env_config
 
 # SCRIPT PARAMS ---------
 # TODO remove TNSE stuff from here. this should be in the get_embeddings.py script
-fold = 3
-experiment_id = "c30_3D_1711_1513"
-hold_out = False
+with open("experiment_analysis_parameters.json", "r") as f:
+    config = json.load(f)
+
+fold = config["fold"]
+experiment_id = config["experiment_id"]
+hold_out = config["holdout_set"]
 # -----------------------
 
 hold_indicator = "_holdout" if hold_out else ""

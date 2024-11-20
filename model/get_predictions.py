@@ -1,3 +1,4 @@
+import json
 import os
 
 import pandas as pd
@@ -8,28 +9,36 @@ from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import get_pred_malignancy_from_logits, load_resnet_model
 from project_config import env_config
 
-# --- SCRIPT PARAMS ---
-CONTEXT_WINDOW_SIZE = 50
-experiment_id = "c50_25D_1911_1125"
-dimensionality = "2.5D"
-fold = 0
+with open("experiment_analysis_parameters.json", "r") as f:
+    config = json.load(f)
 
-precomputed_dir = f"{env_config.PROJECT_DIR}/data/precomputed_rois_{CONTEXT_WINDOW_SIZE}C_{dimensionality}"
+# --- SCRIPT PARAMS ---
+context_size = config["context_size"]
+experiment_id = config["experiment_id"]
+dimensionality = config["dimensionality"]
+fold = config["fold"]
+
+precomputed_dir = (
+    f"{env_config.PROJECT_DIR}/data/precomputed_rois_{context_size}C_{dimensionality}"
+)
+assert os.path.exists(
+    precomputed_dir
+), f"Precomputed ROIs not found at {precomputed_dir}. Run precomputed_nodule_dataset.py first"
+
 pred_out_dir = f"{env_config.OUT_DIR}/predictions/{experiment_id}"
+
+if not os.path.exists(pred_out_dir):
+    os.makedirs(pred_out_dir, exist_ok=True)
+
 pred_out_file = f"{pred_out_dir}/pred_nodule_df_fold{fold}.csv"
 if os.path.exists(pred_out_file):
     raise FileExistsError(f"Predictions already exist at {pred_out_file}. Reset first")
-if not os.path.exists(pred_out_dir):
-    os.makedirs(pred_out_dir, exist_ok=True)
 
 weights_path = (
     f"{env_config.PROJECT_DIR}/hpc/jobs/{experiment_id}/fold_{fold}/model.pth"
 )
 
 nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
-nodule_df["nodule_id"] = (
-    nodule_df["pid"].astype(str) + "_" + nodule_df["nodule_idx"].astype(str)
-)
 
 in_channels = 1 if dimensionality == "3D" else 3
 model = load_resnet_model(
