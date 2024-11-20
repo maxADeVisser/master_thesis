@@ -192,6 +192,11 @@ def get_unconditional_probas(logits: torch.Tensor) -> torch.Tensor:
 def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given the logits, return the class probabilities.
+
+    Params
+    ---
+    @logits: The model's output logits
+        tensor of shape (batch_size, num_classes)
     Returns tensor of shape (batch_size, num_classes)
     """
     uncond_probas = get_unconditional_probas(logits)
@@ -206,6 +211,28 @@ def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
         dim=1,
     )
     return class_probas.float()
+
+
+def get_malignancy_rank_confidence(
+    logits: torch.Tensor, predicted_ranks: torch.Tensor
+) -> torch.Tensor:
+    """
+    Given the logits and the predicted rank, return the confidence of the predicted rank.
+    The confidence is the probability of the predicted rank being correct:
+    P(y_i = r_i) = P(y_i > r_i-1) - P(y_i > r_i)
+    where r_i is the predicted rank.
+    For rank 0 (r_i = 1), the confidence is 1 - P(y_i > 1),
+    and for rank 4 (r_i = 5), the confidence is P(y_i > 4).
+
+    @logits is the model's output logits
+    @predicted_rank is the rank index (1 to 5)
+    """
+    class_probas = compute_class_probs_from_logits(logits)
+    batch_size = logits.size(0)
+    confidences = torch.zeros(batch_size)
+    for i in range(batch_size):
+        confidences[i] = class_probas[i, predicted_ranks[i] - 1]
+    return confidences
 
 
 def get_pred_malignancy_from_logits(logits: torch.Tensor) -> torch.Tensor:

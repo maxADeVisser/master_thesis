@@ -16,7 +16,7 @@ fold = config["fold"]
 # ---------------------
 
 
-def create_fiftyone_nodule_dataset(delete_if_exists: bool = False) -> None:
+def create_fiftyone_nodule_dataset(overwrite_if_exists: bool = False) -> None:
     nodule_roi_jpg_dir = (
         f"{env_config.PROJECT_DIR}/data/middle_slice_images_c{context_size}"
     )
@@ -31,20 +31,12 @@ def create_fiftyone_nodule_dataset(delete_if_exists: bool = False) -> None:
     dataset_name = f"C{context_size}_Nodule_ROIs"
 
     # --- CREATE DATASET ---
-    if not delete_if_exists and dataset_name in fo.list_datasets():
-        raise FileExistsError(
-            f"Dataset {dataset_name} already exists in fiftyone database. Reset first"
-        )
-
-    if delete_if_exists and dataset_name in fo.list_datasets():
-        try:
-            fo.delete_dataset(dataset_name)
-        except:
-            raise Exception(f"Could not delete dataset {dataset_name}")
-
-    # (Only run once - stores in a MongoDB database)
     dataset = fo.Dataset.from_images_patt(
-        images_patt=f"{nodule_roi_jpg_dir}/*.jpg", name=dataset_name, persistent=True
+        images_patt=f"{nodule_roi_jpg_dir}/*.jpg",
+        name=dataset_name,
+        persistent=True,
+        overwrite=overwrite_if_exists,
+        progress=True,
     )
 
     for sample in dataset:
@@ -55,9 +47,12 @@ def create_fiftyone_nodule_dataset(delete_if_exists: bool = False) -> None:
         sample["nodule_id"] = nodule_id
 
         # TODO add confidence? can we get the confidence?:
-        sample["prediction"] = fo.Classification(label=str(row["pred"]))
+        sample["prediction"] = fo.Classification(
+            label=str(row["pred"]),
+            confidence=float(row["confidence"]),
+        )
         sample["malignancy_consensus"] = fo.Classification(
-            label=str(row["malignancy_consensus"])
+            label=str(row["malignancy_consensus"]),
         )
         sample["malignancy_scores"] = row["malignancy_scores"]
         sample["cancer_label"] = row["cancer_label"]
@@ -99,4 +94,4 @@ def create_fiftyone_nodule_dataset(delete_if_exists: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    create_fiftyone_nodule_dataset(delete_if_exists=False)
+    create_fiftyone_nodule_dataset(overwrite_if_exists=True)
