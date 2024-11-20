@@ -7,6 +7,7 @@ import pandas as pd
 
 from project_config import env_config
 
+# TODO put the path to the experiment_analysis_parameters.json file into the env_config in all places where used
 with open("experiment_analysis_parameters.json", "r") as f:
     config = json.load(f)
 
@@ -40,7 +41,7 @@ sample_id_embedding_mapping = {
 }
 
 fob.compute_visualization(
-    samples=dataset, points=sample_id_embedding_mapping, brain_key="img_viz"
+    samples=dataset, points=sample_id_embedding_mapping, brain_key="resnet50_embeddings"
 )
 
 session = fo.launch_app(dataset=dataset, port=5151)
