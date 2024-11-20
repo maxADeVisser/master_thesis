@@ -172,18 +172,15 @@ def ResNet50(
 
 def get_conditional_probas(logits: torch.Tensor) -> torch.Tensor:
     """
-    Process the output logits to obtain the conditional probabilities for each rank. That is, the probability of the rank being greater than or equal to the current rank, given that it is greater than the previous rank:
-    For node k in the output layer, the probability of the rank being k or greater for input x is:
-    f_k(x_i) = P(y_i > r_k | y_i > r_k-1)
+    Compute the conditional probabilities P(y_i > r_k | y_i > r_k-1) for each rank k -> the probability of the rank being greater than or equal to the current rank, given that it is greater than the previous rank
     """
     return torch.sigmoid(logits)
 
 
 def get_unconditional_probas(logits: torch.Tensor) -> torch.Tensor:
     """
-    Obtain the unconditional probabilities for each rank using the conditional probabilities
-    and the chain rule of probability.
-    That is, return P(y_i > r_k) for each rank k.
+    Compute the unconditional probabilities P(y_i > r_k) for each rank k using the chain rule:
+    P(y_i > r_k) = P(y_i > r_k | y_i > r_k-1) * P(y_i > r_k-1).
     """
     conditional_probas = get_conditional_probas(logits)
     # chain rule of probability:
@@ -226,7 +223,7 @@ def get_pred_malignancy_from_logits(logits: torch.Tensor) -> torch.Tensor:
         tensor of shape (batch_size,)
     """
     uncond_probas = get_unconditional_probas(logits)
-    predicted_levels = 0.5 <= uncond_probas
+    predicted_levels = 0.5 < uncond_probas
     predicted_rank = torch.sum(predicted_levels, dim=1) + 1
     """NOTE: i think that the +1 is not added in the @corn_label_from_logits function, because the function returns the rank index, and not the rank value itself. But we can do this here, since we are predicting a score from 1 to 5"""
     return predicted_rank.int()
