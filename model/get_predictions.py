@@ -9,10 +9,10 @@ from model.ResNet import get_pred_malignancy_from_logits, load_resnet_model
 from project_config import env_config
 
 # --- SCRIPT PARAMS ---
-CONTEXT_WINDOW_SIZE = 30
-experiment_id = "c30_3D_1711_1513"
-dimensionality = "3D"
-fold = 3
+CONTEXT_WINDOW_SIZE = 50
+experiment_id = "c50_25D_1911_1125"
+dimensionality = "2.5D"
+fold = 0
 
 precomputed_dir = f"{env_config.PROJECT_DIR}/data/precomputed_rois_{CONTEXT_WINDOW_SIZE}C_{dimensionality}"
 pred_out_dir = f"{env_config.OUT_DIR}/predictions/{experiment_id}"
@@ -31,10 +31,13 @@ nodule_df["nodule_id"] = (
     nodule_df["pid"].astype(str) + "_" + nodule_df["nodule_idx"].astype(str)
 )
 
-model = load_resnet_model(weights_path=weights_path, in_channels=1, dims=dimensionality)
+in_channels = 1 if dimensionality == "3D" else 3
+model = load_resnet_model(
+    weights_path=weights_path, in_channels=in_channels, dims=dimensionality
+)
 model.eval()
 
-dataset = PrecomputedNoduleROIs(precomputed_dir)
+dataset = PrecomputedNoduleROIs(precomputed_dir, data_augmentation=False)
 loader = DataLoader(dataset, batch_size=16, shuffle=False)
 all_preds = []
 all_labels = []

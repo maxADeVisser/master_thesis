@@ -24,15 +24,16 @@ from utils.utils import load_scan
 
 
 def main():
-    # SCRIPT PARAMS (which dataset configurations to precompute)
-    CONTEXT_WINDOW_SIZES = [30, 50, 70]
-    DIMENSIONALITY = ["2.5D", "3D"]
-    DATASET_VERSION: Literal["hold_out", "full"] = "full"
+    # --- SCRIPT PARAMS ---
+    CONTEXT_WINDOW_SIZES = [70]
+    DIMENSIONALITY = ["3D"]
+    DATASET_VERSION: Literal["hold_out", "train"] = "train"
+    # ---------------------
 
     # Load the preprocessed nodule dataframe
     PROJECT_DIR = os.getenv("PROJECT_DIR")
     _holdout_indicator = "hold_out" if DATASET_VERSION == "hold_out" else ""
-    if DATASET_VERSION == "full":
+    if DATASET_VERSION == "train":
         nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
     else:
         nodule_df = pd.read_csv(env_config.hold_out_nodule_df_file)
