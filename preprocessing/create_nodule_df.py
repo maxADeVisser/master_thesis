@@ -17,13 +17,6 @@ CSV_FILE_NAME = f"nodule_df"
 verbose = False
 # ---------------------
 
-assert (
-    MAX_IMG_DIM_USED in IMAGE_DIMS
-), "The maximum image dimensions needs to be in the @image_dims list"
-logger.info(
-    f"\nCreating nodule df with image_dims: {IMAGE_DIMS} as {CSV_FILE_NAME}.csv ..."
-)
-
 
 def calculate_consensus(annotation_variable_values: list[int]) -> int:
     """
@@ -98,34 +91,55 @@ def compute_consensus_bbox(
     return (x_dim, y_dim, z_dim)
 
 
-def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> None:
+def create_nodule_df(file_name: str, add_bbox: bool = True) -> None:
     dict_df = {}
     for pid in tqdm(env_config.patient_ids, desc="Processing patients"):
         scan: list[pl.Scan] = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
-        scan: pl.Scan = scan[0]
-        scan_dims = scan.to_volume(verbose=verbose).shape if add_bbox else None
+        scan: pl.Scan = scan[0]  # use the first scan
+        scan_volume = scan.to_volume(verbose=verbose).shape if add_bbox else None
 
         # Get the annotations for the individual nodules in the scan:
-        nodules_annotation: list[list[pl.Annotation]] = scan.cluster_annotations(
+        scan_nodule_annotation: list[list[pl.Annotation]] = scan.cluster_annotations(
             verbose=verbose
         )
 
-        if len(nodules_annotation) >= 1:
-            for nodule_idx, nodule_anns in enumerate(nodules_annotation):
-                nodule_id = f"{nodule_idx}_{pid}"
+        if len(scan_nodule_annotation) >= 1:
+            for nodule_idx, nodule_anns in enumerate(scan_nodule_annotation):
+                nodule_id = f"{pid}_{nodule_idx}"
                 dict_df[nodule_id] = {
-                    "pid": pid,
+                    "scan_id": pid,
                     "nodule_idx": nodule_idx,
-                    "ann_mean_diameter": np.mean([ann.diameter for ann in nodule_anns]),
-                    "ann_mean_volume": np.mean([ann.volume for ann in nodule_anns]),
+                    "scan_slice_thickness": scan.slice_thickness,
+                    "scan_slice_spacing": scan.slice_spacing,
+                    "scan_pixel_spacing": scan.pixel_spacing,
+                    "scan_contrast_used": scan.contrast_used,
+                    "malignancy_scores": tuple([ann.malignancy for ann in nodule_anns]),
+                    "subtlety_scores": tuple([ann.subtlety for ann in nodule_anns]),
+                    "ann_internalStructure_scores": tuple(
+                        [ann.internalStructure for ann in nodule_anns]
+                    ),
+                    "ann_calcification_scores": tuple(
+                        [ann.calcification for ann in nodule_anns]
+                    ),
+                    "ann_sphericity_scores": tuple(
+                        [ann.sphericity for ann in nodule_anns]
+                    ),
+                    "ann_margin_scores": tuple([ann.margin for ann in nodule_anns]),
+                    "ann_lobulation_scores": tuple(
+                        [ann.lobulation for ann in nodule_anns]
+                    ),
+                    "ann_spiculation_scores": tuple(
+                        [ann.spiculation for ann in nodule_anns]
+                    ),
+                    "ann_texture_scores": tuple([ann.texture for ann in nodule_anns]),
                     "nodule_annotation_ids": tuple(
                         [int(ann.id) for ann in nodule_anns]
                     ),
                     "nodule_annotation_count": len(nodule_anns),
-                    "malignancy_scores": tuple([ann.malignancy for ann in nodule_anns]),
-                    "subtlety_scores": tuple([ann.subtlety for ann in nodule_anns]),
+                    "ann_mean_diameter": np.mean([ann.diameter for ann in nodule_anns]),
+                    "ann_mean_volume": np.mean([ann.volume for ann in nodule_anns]),
                 }
 
                 if add_bbox:
@@ -138,36 +152,69 @@ def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> N
                     # Compute the consensus bbox at different img dimensions:
                     for img_dim in IMAGE_DIMS:
                         (x_dim, y_dim, z_dim) = compute_consensus_bbox(
-                            img_dim, consensus_centroid, scan_dims
+                            img_dim, consensus_centroid, scan_volume
                         )
                         dict_df[nodule_id][f"consensus_bbox_{img_dim}"] = (
                             x_dim,
                             y_dim,
                             z_dim,
                         )
-
-    nodule_df = pd.DataFrame.from_dict(dict_df, orient="index").reset_index()
+    nodule_df = (
+        pd.DataFrame.from_dict(dict_df, orient="index")
+        .reset_index(drop=False)
+        .rename({"index": "nodule_id"}, axis=1)
+    )
 
     # CALCULATE CONSENSUS OF MALIGNANCY SCORES:
     nodule_df["malignancy_consensus"] = nodule_df["malignancy_scores"].apply(
         calculate_consensus
     )
+    nodule_df["cancer_label"] = nodule_df["malignancy_scores"].apply(get_cancer_label)
     nodule_df["subtlety_consensus"] = nodule_df["subtlety_scores"].apply(
         calculate_consensus
     )
-    nodule_df["cancer_label"] = nodule_df["malignancy_scores"].apply(get_cancer_label)
+    nodule_df["internalStructure_consensus"] = nodule_df[
+        "ann_internalStructure_scores"
+    ].apply(calculate_consensus)
+    nodule_df["calcification_consensus"] = nodule_df["ann_calcification_scores"].apply(
+        calculate_consensus
+    )
+    nodule_df["sphericity_consensus"] = nodule_df["ann_sphericity_scores"].apply(
+        calculate_consensus
+    )
+    nodule_df["margin_consensus"] = nodule_df["ann_margin_scores"].apply(
+        calculate_consensus
+    )
+    nodule_df["lobulation_consensus"] = nodule_df["ann_lobulation_scores"].apply(
+        calculate_consensus
+    )
+    nodule_df["spiculation_consensus"] = nodule_df["ann_spiculation_scores"].apply(
+        calculate_consensus
+    )
+    nodule_df["texture_consensus"] = nodule_df["ann_texture_scores"].apply(
+        calculate_consensus
+    )
 
     # TYPE CASTING
     nodule_df = nodule_df.assign(
-        pid=nodule_df["pid"].astype("string"),
+        nodule_id=nodule_df["nodule_id"].astype("string"),
+        scan_id=nodule_df["scan_id"].astype("string"),
         nodule_idx=nodule_df["nodule_idx"].astype("int"),
         malignancy_consensus=nodule_df["malignancy_consensus"].astype("int"),
+        internalStructure_consensus=nodule_df["internalStructure_consensus"].astype(
+            "int"
+        ),
+        calcification_consensus=nodule_df["calcification_consensus"].astype("int"),
+        sphericity_consensus=nodule_df["sphericity_consensus"].astype("int"),
+        margin_consensus=nodule_df["margin_consensus"].astype("int"),
+        lobulation_consensus=nodule_df["lobulation_consensus"].astype("int"),
+        spiculation_consensus=nodule_df["spiculation_consensus"].astype("int"),
+        texture_consensus=nodule_df["texture_consensus"].astype("int"),
+        scan_slice_thickness=nodule_df["scan_slice_thickness"].astype("float"),
+        scan_slice_spacing=nodule_df["scan_slice_spacing"].astype("float"),
+        scan_pixel_spacing=nodule_df["scan_pixel_spacing"].astype("float"),
+        scan_contrast_used=nodule_df["scan_contrast_used"].astype("bool"),
         cancer_label=nodule_df["cancer_label"].astype("category"),
-    )
-
-    # Create nodule ID:
-    nodule_df["nodule_id"] = (
-        nodule_df["pid"] + "_" + nodule_df["nodule_idx"].astype(str)
     )
 
     # VERIFICATIONS:
@@ -211,4 +258,11 @@ def create_nodule_df(file_name: str = CSV_FILE_NAME, add_bbox: bool = True) -> N
 
 # %%
 if __name__ == "__main__":
+    assert (
+        MAX_IMG_DIM_USED in IMAGE_DIMS
+    ), "The maximum image dimensions needs to be in the @image_dims list"
+    logger.info(
+        f"\nCreating nodule df with image_dims: {IMAGE_DIMS} as {CSV_FILE_NAME}.csv"
+    )
+
     create_nodule_df(CSV_FILE_NAME)
