@@ -14,7 +14,7 @@
     "num_classes": 5
   },
   "training": {
-    "batch_size": 16,
+    "batch_size": 2,
     "cross_validation_folds": 5,
     "cv_train_folds": 5,
     "do_cross_validation": true,

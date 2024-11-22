@@ -21,15 +21,18 @@ from tqdm import tqdm
 from data.dataset import transform_3d_to_25d
 from preprocessing.processing import clip_and_normalise_volume
 from project_config import env_config
+from utils.data_models import ExperimentAnalysis
 from utils.utils import load_scan
 
+# SCRIPT PARAMS ---------
 with open("experiment_analysis_parameters.json", "r") as f:
-    config = json.load(f)
+    config = ExperimentAnalysis.model_validate(json.load(f))
+
 
 # --- SCRIPT PARAMS ---
-context_windows: list[int] = config["precompute_nodule_dataset"]["context_sizes"]
-dimensionalities: list[str] = config["precompute_nodule_dataset"]["dimensionalities"]
-holdout_set: bool = config["holdout_set"]
+context_windows = config.precompute_nodule_dataset.context_windows
+dimensionalities = config.precompute_nodule_dataset.dimensionalities
+holdout_set: bool = config.holdout_set
 # ---------------------
 
 dataset_version: Literal["hold_out", "train"] = "hold_out" if holdout_set else "train"

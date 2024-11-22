@@ -7,15 +7,15 @@ import seaborn as sns
 from plotly.express import scatter_3d
 
 from project_config import env_config
+from utils.data_models import ExperimentAnalysis
 
 # SCRIPT PARAMS ---------
-# TODO remove TNSE stuff from here. this should be in the get_embeddings.py script
 with open("experiment_analysis_parameters.json", "r") as f:
-    config = json.load(f)
+    config = ExperimentAnalysis.model_validate(json.load(f))
 
-fold = config["fold"]
-experiment_id = config["experiment_id"]
-hold_out = config["holdout_set"]
+fold = config.analysis.fold
+experiment_id = config.experiment_id
+hold_out = config.holdout_set
 # -----------------------
 
 hold_indicator = "_holdout" if hold_out else ""

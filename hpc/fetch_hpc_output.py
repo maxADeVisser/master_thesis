@@ -88,11 +88,15 @@ def fetch_all_final_experiment_results(
 # %%
 if __name__ == "__main__":
     # TODO clean this up
-    with open("experiment_analysis_parameters.json", "r") as f:
-        config = json.load(f)
 
-    experiment_id = config["experiment_id"]
-    job_id = config["job_id"]
+    from utils.data_models import ExperimentAnalysis
+
+    # SCRIPT PARAMS ---------
+    with open("experiment_analysis_parameters.json", "r") as f:
+        config = ExperimentAnalysis.model_validate(json.load(f))
+
+    experiment_id = config.experiment_id
+    job_id = config.hpc_job_id
 
     local_user = "newuser"
     local_exp_path = (
@@ -107,7 +111,7 @@ if __name__ == "__main__":
     get_experiment_json(experiment_id, local_exp_path)
 
     # Fold level data
-    folds = config["folds"]
+    folds = config.analysis.folds
     for f in folds:
         fold_path = f"{local_exp_path}/fold_{f}"
         if not os.path.exists(fold_path):

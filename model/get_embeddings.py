@@ -10,20 +10,24 @@ from tqdm import tqdm
 from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import load_resnet_model
 from project_config import SEED, env_config
+from utils.data_models import ExperimentAnalysis
 
 # TODO seperate the train and validation sets when getting the embeddings!
 # TODO also add the embeddings for the holdout set and make a flag indicating them
 
 # QUESTION which data to do the embedding on? (using train and validation now for testing)
 
+
+# SCRIPT PARAMS ---------
 with open("experiment_analysis_parameters.json", "r") as f:
-    config = json.load(f)
+    config = ExperimentAnalysis.model_validate(json.load(f))
+
 
 # --- SCRIPT PARAMS ---
-experiment_id = config["experiment_id"]
-context_size = config["context_size"]
-fold = config["fold"]
-n_dims = config["dimensionality"]
+experiment_id = config.experiment_id
+context_size = config.analysis.context_size
+fold = config.analysis.fold
+n_dims = config.analysis.dimensionality
 batch_size = 8
 # ---------------------
 

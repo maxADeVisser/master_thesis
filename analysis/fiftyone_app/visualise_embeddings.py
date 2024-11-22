@@ -6,14 +6,18 @@ import numpy as np
 import pandas as pd
 
 from project_config import env_config
+from utils.data_models import ExperimentAnalysis
 
 # TODO put the path to the experiment_analysis_parameters.json file into the env_config in all places where used
-with open("experiment_analysis_parameters.json", "r") as f:
-    config = json.load(f)
 
-context_size = config["analysis"]["context_size"]
-experiment_id = config["experiment_id"]
-fold = config["analysis"]["fold"]
+# SCRIPT PARAMS ---------
+with open("experiment_analysis_parameters.json", "r") as f:
+    config = ExperimentAnalysis.model_validate(json.load(f))
+
+
+context_size = config.analysis.context_size
+experiment_id = config.experiment_id
+fold = config.analysis.fold
 
 dataset = fo.load_dataset(f"C{context_size}_Nodule_ROIs")
 

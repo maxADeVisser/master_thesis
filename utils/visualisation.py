@@ -10,12 +10,7 @@ import seaborn as sns
 from pylidc.utils import consensus, find_contours, volume_viewer
 
 # from project_config import env_config, pipeline_config
-from utils.experiments import load_fold_from_json
-
-# from tqdm import tqdm
-
-
-# from utils.utils import get_scans_by_patient_id
+from utils.data_models import load_fold_from_json
 
 
 def plot_val_error_distribution(
@@ -381,10 +376,13 @@ if __name__ == "__main__":
     # # TESTING
     # visualise_scan_interactively("LIDC-IDRI-0010")
 
+    from utils.data_models import ExperimentAnalysis
+
     with open("experiment_analysis_parameters.json", "r") as f:
-        config = json.load(f)
+        config = ExperimentAnalysis.model_validate(json.load(f))
+
     dampen_epochs = 3
     plot_fold_results(
-        config["experiment_id"], fold_num=config["fold"], epochs_dampen=dampen_epochs
+        config.experiment_id, fold_num=config.analysis.fold, epochs_dampen=dampen_epochs
     )
 # %%

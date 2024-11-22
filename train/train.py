@@ -27,8 +27,8 @@ from model.ResNet import (
 )
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
+from utils.data_models import TrainingFold
 from utils.early_stopping import EarlyStopping
-from utils.experiments import TrainingFold
 from utils.logger_setup import logger
 from utils.metrics import (
     compute_accuracy,

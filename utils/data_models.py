@@ -6,6 +6,45 @@ from pydantic import BaseModel, Field
 from utils.common_imports import *
 
 
+class PrecomputeNoduleDataset(BaseModel):
+    context_windows: list[int] = Field(
+        ..., description="List of context window sizes to precompute."
+    )
+    dimensionalities: list[Literal["2.5D", "3D"]] = Field(
+        ..., description="Dimensionalities to compute"
+    )
+
+
+class SingleExperimentAnalysis(BaseModel):
+    context_size: int = Field(..., description="The size of the context window.")
+    dimensionality: Literal["2.5D", "3D"] = Field(..., description="Dimensionality.")
+    fold: int = Field(..., description="The fold to be analysed.")
+    folds: list[int] = Field(..., description="List of folds to be analysed.")
+
+
+class ExperimentAnalysis(BaseModel):
+    """
+    Used to configure parameters that determine which specific experiment or set of experiments to be analysed using the different analysis scripts.
+    """
+
+    experiment_id: str = Field(
+        ...,
+        description="The ID of the experiment to be analysed. E.g. c30_3D_1711_1513",
+    )
+    holdout_set: bool = Field(
+        ..., description="Whether to use the holdout set for the analysis."
+    )
+    hpc_job_id: int = Field(
+        ..., description="The ID of the HPC job that ran the experiment."
+    )
+    precompute_nodule_dataset: PrecomputeNoduleDataset = Field(
+        ..., description="Parameters for precomputing the nodule dataset."
+    )
+    analysis: SingleExperimentAnalysis = Field(
+        ..., description="Parameters for analysing a single experiment."
+    )
+
+
 class TrainingFold(BaseModel):
     fold_id: str = Field(..., description="ID of the fold (e.g. fold0_experimentID)")
     train_idxs: list[int] = Field(
@@ -201,4 +240,5 @@ if __name__ == "__main__":
     # config = load_experiment_from_json(
     #     "out/model_runs/c30_25d_1411_1620/run_c30_25d_1411_1620.json"
     # )
+    # config.fold_results[0].latest_eval_metrics
     # config.fold_results[0].latest_eval_metrics

@@ -5,7 +5,7 @@ import os
 
 from dotenv import load_dotenv
 
-from utils.experiments import create_experiment_from_json
+from utils.data_models import create_experiment_from_json
 
 load_dotenv(".env")
 
