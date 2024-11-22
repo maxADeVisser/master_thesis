@@ -204,10 +204,46 @@ class PrecomputedNoduleROIs(Dataset):
     """
 
     def __init__(self, prepcomputed_dir: str, data_augmentation: bool = True) -> None:
+        logger.info(f"\nLoading precomputed nodule dataset from: {prepcomputed_dir}")
         preprocessed_files = sorted(os.listdir(prepcomputed_dir))
         self.files = [f"{prepcomputed_dir}/{f}" for f in preprocessed_files]
         self.nodule_ids = [n.split(".")[0] for n in preprocessed_files]
         self.data_augmentation = data_augmentation
+
+        # load the first file to get the shape of the data and verify that the it matches the pipeline config settings
+        dimensionality = pipeline_config.dataset.dimensionality
+        in_channels = pipeline_config.model.in_channels
+        context_size = pipeline_config.dataset.context_window
+        data = torch.load(self.files[0], weights_only=True)
+        if dimensionality == "2.5D":
+            assert data[0].shape == (
+                3,
+                context_size,
+                context_size,
+            ), f"Shape of the precomputed data: {data[0].shape} does not match the expected shape: {3, context_size, context_size}"
+        elif dimensionality == "3D":
+            assert data[0].shape == (
+                1,
+                context_size,
+                context_size,
+                context_size,
+            ), f"Shape of the precomputed data: {data[0].shape} does not match the expected shape: {1, context_size, context_size, context_size}"
+
+        assert len(self.files) == len(
+            self.nodule_ids
+        ), "Number of files and nodule ids do not match"
+
+        logger.info(
+            f"""
+            Precomputed nodule dataset loaded successfully with parameters:
+            Precomputed directory path: {prepcomputed_dir}
+            Number of nodules: {len(self.files)}
+            Dimensionality: {dimensionality}
+            Context size: {context_size}
+            In channels: {in_channels}
+            Data augmentation: {self.data_augmentation}
+            """
+        )
 
     def __len__(self) -> int:
         return len(self.files)
