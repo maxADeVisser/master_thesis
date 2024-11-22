@@ -65,6 +65,32 @@ for cws in context_windows:
         )
         os.makedirs(OUT_DIR)
 
+
+def _process_loaded_nodule(
+    input_nodule: torch.Tensor,
+    cws: Literal[10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+    dim: Literal["2.5D", "3D"],
+) -> torch.Tensor:
+    """Util func to process the loaded input_nodule."""
+    if dim == "2.5D":
+        processed_nodule = transform_3d_to_25d(input_nodule)
+        processed_nodule = clip_and_normalise_volume(processed_nodule)
+        assert processed_nodule.shape == (
+            3,
+            cws,
+            cws,
+        ), f"Incorrect shape for 2.5D ROI: {processed_nodule.shape}. Should be ({(3, cws, cws)})"
+    elif dim == "3D":
+        processed_nodule = clip_and_normalise_volume(input_nodule)
+        assert processed_nodule.shape == (
+            1,
+            cws,
+            cws,
+            cws,
+        ), f"Incorrect shape for 3D ROI: {processed_nodule.shape}. Should be ({(1, cws, cws, cws)})"
+    return processed_nodule
+
+
 # loop over nodules and precompute the ROIs at the specified context windows and dimensionalities:
 for _, row in tqdm(
     nodule_df.iterrows(),
@@ -83,36 +109,15 @@ for _, row in tqdm(
             y_bounds[0] : y_bounds[1],
             z_bounds[0] : z_bounds[1],
         ]
-        assert nodule_roi.shape == (
-            cws,
-            cws,
-            cws,
-        ), f"ROI shape is not correct for context window {cws}"
-
         nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).unsqueeze(0).float()
 
         for dim in dimensionalities:
             OUT_DIR = (
                 f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{dim}{_holdout_indicator}"
             )
-            if dim == "2.5D":
-                nodule_roi = transform_3d_to_25d(nodule_roi)
-            nodule_roi = clip_and_normalise_volume(nodule_roi)
-
-            if dim == "3D":
-                assert nodule_roi.shape == (
-                    1,
-                    cws,
-                    cws,
-                    cws,
-                ), f"Incorrect shape for 3D ROI: {nodule_roi.shape}. Should be ({(1, cws, cws, cws)})"
-            elif dim == "2.5D":
-                assert nodule_roi.shape == (
-                    3,
-                    cws,
-                    cws,
-                ), f"Incorrect shape for 2.5D ROI: {nodule_roi.shape}. Should be ({(3, cws, cws)})"
+            processed_nodule_roi = _process_loaded_nodule(nodule_roi, cws, dim)
 
             torch.save(
-                (nodule_roi, malignancy_consensus), f"{OUT_DIR}/{row['nodule_id']}.pt"
+                (processed_nodule_roi, malignancy_consensus),
+                f"{OUT_DIR}/{row['nodule_id']}.pt",
             )
