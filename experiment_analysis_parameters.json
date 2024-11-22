@@ -1,17 +1,24 @@
 {
-    "context_size": 70,
-    "context_sizes": [
-        70
-    ],
-    "dimensionalities": [
-        "2.5D"
-    ],
-    "dimensionality": "2.5D",
+    "analysis": {
+        "context_size": 70,
+        "dimensionality": "2.5D",
+        "fold": 0,
+        "folds": [
+            0
+        ]
+    },
     "experiment_id": "c70_25D_1911_1411",
-    "fold": 0,
-    "folds": [
-        0
-    ],
     "holdout_set": true,
-    "job_id": 1682
+    "job_id": 1682,
+    "precompute_nodule_dataset": {
+        "context_sizes": [
+            30,
+            50,
+            70
+        ],
+        "dimensionalities": [
+            "2.5D",
+            "3D"
+        ]
+    }
 }
