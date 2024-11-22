@@ -78,7 +78,9 @@ def train_epoch(
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
 
-    for inputs, labels, _ in train_loader:
+    for inputs, labels, _ in tqdm(
+        train_loader, desc="Batch", total=n_batches
+    ):  # DEBUGGING
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
 
@@ -240,7 +242,7 @@ def train_model(
         sgkf.split(
             X=nodule_df,
             y=nodule_df["malignancy_consensus"],
-            groups=nodule_df["pid"],
+            groups=nodule_df["scan_id"],
         )
     ):
         logger.info(

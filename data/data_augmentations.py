@@ -5,12 +5,17 @@ import torch
 import torchvision.transforms as transforms
 
 from project_config import SEED, pipeline_config
+from utils.logger_setup import logger
 
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 random.seed(SEED)
 
 DIMENSIONALITY = pipeline_config.dataset.dimensionality
+
+# DEBUGGING:
+BATCH_SIZE = pipeline_config.training.batch_size
+CONTEXT_SIZE = pipeline_config.dataset.context_window
 
 
 def random_90_degree_rotation_2D(image: torch.Tensor) -> torch.Tensor:
@@ -21,13 +26,40 @@ def random_90_degree_rotation_2D(image: torch.Tensor) -> torch.Tensor:
 
 def random_90_degree_rotation_3D(tensor3D: torch.Tensor) -> torch.Tensor:
     """Randomly rotate the 3D input tensor by 90 degrees along each axis with a independent probability of 0.5"""
+    logger.info(f"shape of input tensor to func before anything: {tensor3D.shape}")
+
     tensor3D = torch.squeeze(tensor3D, dim=0)  # remove the channel dimension
-    k_x = random.choice([0, 1, 2, 3])
-    k_y = random.choice([0, 1, 2, 3])
+    original_shape = tensor3D.shape
+    assert original_shape == (
+        CONTEXT_SIZE,
+        CONTEXT_SIZE,
+        CONTEXT_SIZE,
+    ), f"Shape of squeezed input tensor is not (30, 30, 30). It is {original_shape}"
+
     k_z = random.choice([0, 1, 2, 3])
-    tensor3D = torch.rot90(tensor3D, k=k_x, dims=(1, 2))  # rotate around x-axis
-    tensor3D = torch.rot90(tensor3D, k=k_y, dims=(0, 2))  # rotate around y-axis
-    tensor3D = torch.rot90(tensor3D, k=k_z, dims=(0, 1))  # rotate around z-axis
+    tensor3D = torch.rot90(tensor3D, k=k_z, dims=(1, 2))
+    assert (
+        tensor3D.shape == original_shape
+    ), "Shape mismatch after rotation around z-axis. Original shape (after squeezing): {}, new shape: {}".format(
+        original_shape, tensor3D.shape
+    )
+
+    k_y = random.choice([0, 1, 2, 3])
+    tensor3D = torch.rot90(tensor3D, k=k_y, dims=(0, 2))
+    assert (
+        tensor3D.shape == original_shape
+    ), "Shape mismatch after rotation around y-axis. Original shape: {}, new shape: {}".format(
+        original_shape, tensor3D.shape
+    )
+
+    k_x = random.choice([0, 1, 2, 3])
+    tensor3D = torch.rot90(tensor3D, k=k_x, dims=(0, 1))
+    assert (
+        tensor3D.shape == original_shape
+    ), "Shape mismatch after rotation around x-axis. Original shape: {}, new shape: {}".format(
+        original_shape, tensor3D.shape
+    )
+
     # add the channel dimension back
     tensor3D = torch.unsqueeze(tensor3D, dim=0)
     return tensor3D

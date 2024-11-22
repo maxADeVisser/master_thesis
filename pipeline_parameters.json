@@ -6,11 +6,11 @@
     ],
     "context_window": 30,
     "data_augmentation": true,
-    "dimensionality": "2.5D",
+    "dimensionality": "3D",
     "segment_nodule": "none"
   },
   "model": {
-    "in_channels": 3,
+    "in_channels": 1,
     "num_classes": 5
   },
   "training": {
