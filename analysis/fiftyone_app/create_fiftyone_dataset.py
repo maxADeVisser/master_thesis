@@ -10,13 +10,15 @@ with open("experiment_analysis_parameters.json", "r") as f:
     config = json.load(f)
 
 # --- SCRIPT PARAMS ---
-context_size = config["context_size"]
+context_size = config["analysis"]["context_size"]
 experiment_id = config["experiment_id"]
-fold = config["fold"]
+fold = config["analysis"]["fold"]
 # ---------------------
 
 
-def create_fiftyone_nodule_dataset(overwrite_if_exists: bool = False) -> None:
+def create_fiftyone_nodule_dataset(
+    dataset_name: str, overwrite_if_exists: bool = False
+) -> None:
     nodule_roi_jpg_dir = (
         f"{env_config.PROJECT_DIR}/data/middle_slice_images_c{context_size}"
     )
@@ -28,9 +30,6 @@ def create_fiftyone_nodule_dataset(overwrite_if_exists: bool = False) -> None:
     except FileNotFoundError:
         raise FileNotFoundError(f"Predictions not found. Run get_predictions.py first")
 
-    dataset_name = f"C{context_size}_Nodule_ROIs"
-
-    # --- CREATE DATASET ---
     dataset = fo.Dataset.from_images_patt(
         images_patt=f"{nodule_roi_jpg_dir}/*.jpg",
         name=dataset_name,
@@ -46,7 +45,6 @@ def create_fiftyone_nodule_dataset(overwrite_if_exists: bool = False) -> None:
         # Store classification in a field name of your choice
         sample["nodule_id"] = nodule_id
 
-        # TODO add confidence? can we get the confidence?:
         sample["prediction"] = fo.Classification(
             label=str(row["pred"]),
             confidence=float(row["confidence"]),
@@ -94,4 +92,6 @@ def create_fiftyone_nodule_dataset(overwrite_if_exists: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    create_fiftyone_nodule_dataset(overwrite_if_exists=True)
+    create_fiftyone_nodule_dataset(
+        f"C{context_size}_Nodule_ROIs", overwrite_if_exists=True
+    )

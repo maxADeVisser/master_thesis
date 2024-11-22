@@ -17,10 +17,10 @@ with open("experiment_analysis_parameters.json", "r") as f:
     config = json.load(f)
 
 # --- SCRIPT PARAMS ---
-context_size = config["context_size"]
+context_size = config["analysis"]["context_size"]
 experiment_id = config["experiment_id"]
-dimensionality = config["dimensionality"]
-fold = config["fold"]
+dimensionality = config["analysis"]["dimensionality"]
+fold = config["analysis"]["fold"]
 
 precomputed_dir = (
     f"{env_config.PROJECT_DIR}/data/precomputed_rois_{context_size}C_{dimensionality}"

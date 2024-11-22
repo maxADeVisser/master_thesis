@@ -68,6 +68,23 @@ def fetch_model_weights(experiment_id: str, fold: int, user: str = "newuser") ->
     _transfer_hpc_to_local(hpc_out, out_dir)
 
 
+def fetch_all_final_experiment_results(
+    experiment_ids: list[str], user: str = "newuser"
+) -> None:
+    """Fetch all the final results from the HPC for each experiment in the list
+
+    Args:
+        experiment_ids (list[str]): List of experiment ids to fetch
+        user (str, optional): _description_. Defaults to "newuser".
+    """
+    for e in experiment_ids:
+        local_exp_path = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{e}"
+        if not os.path.exists(f"{local_exp_path}/{e}"):
+            os.makedirs(f"{local_exp_path}/{e}")
+
+        get_experiment_json(e, f"{local_exp_path}")
+
+
 # %%
 if __name__ == "__main__":
     # TODO clean this up
@@ -100,3 +117,15 @@ if __name__ == "__main__":
         update_loss_plot(experiment_id, f, local_user)
         update_error_distribution(experiment_id, f, local_user)
         fetch_model_weights(experiment_id, f, local_user)
+
+    # FETCH RESULTS FOR TREND PLOT
+    # experiments = [
+    #     "c30_3D_1711_1513",
+    #     "c50_3D_1711_2149",
+    #     "c30_25D_1911_0928",
+    #     "c50_25D_1911_1125",
+    #     "c70_25D_1911_1411",
+    # ]
+    # fetch_all_final_experiment_results(experiments)
+
+    # %%

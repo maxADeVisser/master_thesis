@@ -11,9 +11,9 @@ from project_config import env_config
 with open("experiment_analysis_parameters.json", "r") as f:
     config = json.load(f)
 
-context_size = config["context_size"]
+context_size = config["analysis"]["context_size"]
 experiment_id = config["experiment_id"]
-fold = config["fold"]
+fold = config["analysis"]["fold"]
 
 dataset = fo.load_dataset(f"C{context_size}_Nodule_ROIs")
 
