@@ -215,6 +215,8 @@ class PrecomputedNoduleROIs(Dataset):
         in_channels = pipeline_config.model.in_channels
         context_size = pipeline_config.dataset.context_window
         data = torch.load(self.files[0], weights_only=True)
+
+        # Verify that the shape of the precomputed data matches the expected shape
         if dimensionality == "2.5D":
             assert data[0].shape == (
                 3,

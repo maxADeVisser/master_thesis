@@ -26,8 +26,6 @@ def random_90_degree_rotation_2D(image: torch.Tensor) -> torch.Tensor:
 
 def random_90_degree_rotation_3D(tensor3D: torch.Tensor) -> torch.Tensor:
     """Randomly rotate the 3D input tensor by 90 degrees along each axis with a independent probability of 0.5"""
-    logger.info(f"shape of input tensor to func before anything: {tensor3D.shape}")
-
     tensor3D = torch.squeeze(tensor3D, dim=0)  # remove the channel dimension
     original_shape = tensor3D.shape
     assert original_shape == (
