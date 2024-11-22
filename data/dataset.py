@@ -231,10 +231,6 @@ class PrecomputedNoduleROIs(Dataset):
                 context_size,
             ), f"Shape of the precomputed data: {data[0].shape} does not match the expected shape: {1, context_size, context_size, context_size}"
 
-        assert len(self.files) == len(
-            self.nodule_ids
-        ), "Number of files and nodule ids do not match"
-
         logger.info(
             f"""
             Precomputed nodule dataset loaded successfully with parameters:

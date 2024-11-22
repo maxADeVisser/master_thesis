@@ -99,7 +99,7 @@ for _, row in tqdm(
 ):
     # NOTE: Load the scan once per nodule (a bottleneck operation we want to avoid doing to many times)
     scan: np.ndarray = load_scan(row["scan_id"], to_numpy=True)
-    malignancy_consensus = row["malignancy_consensus"]
+    label = row["malignancy_consensus"]
 
     # For each context, precompute the ROI
     for cws in context_windows:
@@ -118,6 +118,6 @@ for _, row in tqdm(
             processed_nodule_roi = _process_loaded_nodule(nodule_roi, cws, dim)
 
             torch.save(
-                (processed_nodule_roi, malignancy_consensus),
+                (processed_nodule_roi, label),
                 f"{OUT_DIR}/{row['nodule_id']}.pt",
             )

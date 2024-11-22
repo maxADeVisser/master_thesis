@@ -8,7 +8,7 @@
         ]
     },
     "experiment_id": "c70_25D_1911_1411",
-    "holdout_set": true,
+    "holdout_set": false,
     "job_id": 1682,
     "precompute_nodule_dataset": {
         "context_sizes": [
