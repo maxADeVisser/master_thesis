@@ -230,10 +230,6 @@ def train_model(
     assert os.path.exists(
         env_config.PREPROCESSED_DATA_DIR
     ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
-    dataset = PrecomputedNoduleROIs(
-        prepcomputed_dir=env_config.PREPROCESSED_DATA_DIR,
-        data_augmentation=DATA_AUGMENTATION,
-    )
     nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
 
     # --- Cross Validation ---
@@ -273,13 +269,25 @@ def train_model(
         ).to(DEVICE)
         optimizer = optim.Adam(model.parameters(), lr=LR)
 
-        train_subset = Subset(dataset, indices=train_idxs)
-        train_loader = DataLoader(
-            train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
+        train_dataset = PrecomputedNoduleROIs(
+            prepcomputed_dir=env_config.PREPROCESSED_DATA_DIR,
+            data_augmentation=DATA_AUGMENTATION,
+            indices=train_idxs,
         )
-        val_subset = Subset(dataset, indices=val_idxs)
+        train_loader = DataLoader(
+            train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
+        )
+
+        validation_dataset = PrecomputedNoduleROIs(
+            prepcomputed_dir=env_config.PREPROCESSED_DATA_DIR,
+            data_augmentation=False,
+            indices=val_idxs,
+        )
         val_loader = DataLoader(
-            val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS
+            validation_dataset,
+            batch_size=BATCH_SIZE,
+            shuffle=False,
+            num_workers=NUM_WORKERS,
         )
 
         early_stopper = EarlyStopping(

@@ -77,12 +77,12 @@ def fetch_all_final_experiment_results(
         experiment_ids (list[str]): List of experiment ids to fetch
         user (str, optional): _description_. Defaults to "newuser".
     """
-    for e in experiment_ids:
-        local_exp_path = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{e}"
-        if not os.path.exists(f"{local_exp_path}/{e}"):
-            os.makedirs(f"{local_exp_path}/{e}")
+    for exp in experiment_ids:
+        local_exp_path = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{exp}"
+        if not os.path.exists(f"{local_exp_path}"):
+            os.makedirs(f"{local_exp_path}")
 
-        get_experiment_json(e, f"{local_exp_path}")
+        get_experiment_json(exp, f"{local_exp_path}")
 
 
 # %%

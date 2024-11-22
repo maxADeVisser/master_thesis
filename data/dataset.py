@@ -15,6 +15,10 @@ from utils.utils import load_scan
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
+dimensionality = pipeline_config.dataset.dimensionality
+in_channels = pipeline_config.model.in_channels
+context_size = pipeline_config.dataset.context_window
+
 
 def transform_3d_to_25d(volume: torch.Tensor) -> torch.Tensor:
     """
@@ -34,19 +38,20 @@ class Nodule:
     @nodule_record: a single row from the nodule dataframe.
     @nodule_context_size: the size of the nodule context to be used for the nodule ROI.
     @segmentation_setting determines if/how the nodule is segmented from the scan.
+    @nodule_dim: the dimensionality of the nodule ROI. Can be either "2.5D" or "3D"
     """
 
     def __init__(
         self,
         nodule_record: pd.Series,
         nodule_context_size: int,
-        # TODO clean up if unused
         segmentation_setting: Literal["none", "remove_background", "remove_nodule"],
         nodule_dim: Literal["2.5D", "3D"] = "3D",
     ) -> None:
         self.patient_id = nodule_record["pid"]
         self.nodule_idx = nodule_record["nodule_idx"]
         self.nodule_id = f"{self.patient_id}_{self.nodule_idx}"
+        self.nodule_dim = nodule_dim
         self.annotation_ids = nodule_record["nodule_annotation_ids"]
         self.pylidc_annotations = [
             pl.query(pl.Annotation).filter(pl.Annotation.id == ann_id).first()
@@ -56,21 +61,18 @@ class Nodule:
         self.nodule_consensus_bbox = nodule_record[
             f"consensus_bbox_{nodule_context_size}"
         ]
+
         self.nodule_roi = self.get_nodule_roi()
         if nodule_dim == "2.5D":
             self.nodule_roi = transform_3d_to_25d(self.nodule_roi)
         self.nodule_roi = clip_and_normalise_volume(self.nodule_roi)
 
-        # if segmentation_setting == "remove_background":
-        #     self.nodule_roi = self.segment_nodule(invert=False)
-        # elif segmentation_setting == "remove_nodule":
-        #     self.nodule_roi = self.segment_nodule(invert=True)
-        # elif segmentation_setting == "none":
-        #     pass
-        # else:
-        #     raise ValueError(
-        #         f"Segmentation setting {segmentation_setting} not recognised. Please choose one of: ['none', 'remove_nodule', 'remove_background']"
-        #     )
+        if segmentation_setting == "remove_background":
+            self.nodule_roi = self.segment_nodule(invert=False)
+        elif segmentation_setting == "remove_nodule":
+            self.nodule_roi = self.segment_nodule(invert=True)
+        elif segmentation_setting == "none":
+            pass
 
     def get_nodule_roi(self) -> torch.Tensor:
         """Returns the nodule region of interest from the scan based on the consensus bbox from the 4 annotators"""
@@ -81,7 +83,7 @@ class Nodule:
             y_bounds[0] : y_bounds[1],
             z_bounds[0] : z_bounds[1],
         ]
-        # Convert to pytorch tensor and add channel dimension
+        # Add channel dimension:
         nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).unsqueeze(0).float()
         return nodule_roi
 
@@ -203,17 +205,24 @@ class PrecomputedNoduleROIs(Dataset):
     Use the data/precompute_nodule_dataset.py script to precompute the nodule ROIs and save them to disk.
     """
 
-    def __init__(self, prepcomputed_dir: str, data_augmentation: bool = True) -> None:
+    def __init__(
+        self,
+        prepcomputed_dir: str,
+        data_augmentation: bool = True,
+        indices: list[int] | None = None,  # for cross-validation
+    ) -> None:
         logger.info(f"\nLoading precomputed nodule dataset from: {prepcomputed_dir}")
         preprocessed_files = sorted(os.listdir(prepcomputed_dir))
+        if indices:
+            preprocessed_files = [preprocessed_files[i] for i in indices]
+            indices_message = f"\nSubset of {len(indices)} indices are used"
+        else:
+            indices_message = ""
         self.files = [f"{prepcomputed_dir}/{f}" for f in preprocessed_files]
         self.nodule_ids = [n.split(".")[0] for n in preprocessed_files]
         self.data_augmentation = data_augmentation
 
         # load the first file to get the shape of the data and verify that the it matches the pipeline config settings
-        dimensionality = pipeline_config.dataset.dimensionality
-        in_channels = pipeline_config.model.in_channels
-        context_size = pipeline_config.dataset.context_window
         data = torch.load(self.files[0], weights_only=True)
 
         # Verify that the shape of the precomputed data matches the expected shape
@@ -235,7 +244,7 @@ class PrecomputedNoduleROIs(Dataset):
             f"""
             Precomputed nodule dataset loaded successfully with parameters:
             Precomputed directory path: {prepcomputed_dir}
-            Number of nodules: {len(self.files)}
+            Number of nodules: {len(self.files)} {indices_message}
             Dimensionality: {dimensionality}
             Context size: {context_size}
             In channels: {in_channels}
