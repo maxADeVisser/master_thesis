@@ -213,7 +213,7 @@ class PrecomputedNoduleROIs(Dataset):
     ) -> None:
         logger.info(f"\nLoading precomputed nodule dataset from: {prepcomputed_dir}")
         preprocessed_files = sorted(os.listdir(prepcomputed_dir))
-        if indices:
+        if indices is not None:
             preprocessed_files = [preprocessed_files[i] for i in indices]
             indices_message = f"\nSubset of {len(indices)} indices are used"
         else:
