@@ -1,24 +1,16 @@
 {
-    "analysis": {
-        "context_size": 30,
-        "dimensionality": "3D",
-        "fold": 3,
-        "folds": [
-            0
-        ]
-    },
-    "experiment_id": "c30_3D_1711_1513",
-    "holdout_set": false,
-    "hpc_job_id": 1682,
-    "precompute_nodule_dataset": {
-        "context_windows": [
-            30,
-            50,
-            70
-        ],
-        "dimensionalities": [
-            "2.5D",
-            "3D"
-        ]
-    }
+  "analysis": {
+    "context_size": 70,
+    "dimensionality": "3D",
+    "fold": 0,
+    "folds": [0, 1, 2, 3, 4]
+  },
+  "experiment_id": "c70_3D_2211_2126",
+  "holdout_set": false,
+  "hpc_job_id": 1682,
+  "precompute_nodule_dataset": {
+    "context_windows": [20, 40, 60],
+    "dimensionalities": ["2.5D"],
+    "holdout_set": false
+  }
 }

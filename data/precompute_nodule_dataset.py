@@ -32,7 +32,7 @@ with open("experiment_analysis_parameters.json", "r") as f:
 # --- SCRIPT PARAMS ---
 context_windows = config.precompute_nodule_dataset.context_windows
 dimensionalities = config.precompute_nodule_dataset.dimensionalities
-holdout_set: bool = config.holdout_set
+holdout_set: bool = config.precompute_nodule_dataset.holdout_set
 # ---------------------
 
 dataset_version: Literal["hold_out", "train"] = "hold_out" if holdout_set else "train"

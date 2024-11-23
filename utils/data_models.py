@@ -13,6 +13,7 @@ class PrecomputeNoduleDataset(BaseModel):
     dimensionalities: list[Literal["2.5D", "3D"]] = Field(
         ..., description="Dimensionalities to compute"
     )
+    holdout_set: bool = Field(..., description="Whether to compute the holdout set.")
 
 
 class SingleExperimentAnalysis(BaseModel):
