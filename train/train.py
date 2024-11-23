@@ -78,9 +78,7 @@ def train_epoch(
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
 
-    for inputs, labels, _ in tqdm(
-        train_loader, desc="Batch", total=n_batches
-    ):  # DEBUGGING
+    for inputs, labels, _ in train_loader:
         # Move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
 

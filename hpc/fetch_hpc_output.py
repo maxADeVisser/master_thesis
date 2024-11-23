@@ -98,7 +98,7 @@ if __name__ == "__main__":
     experiment_id = config.experiment_id
     job_id = config.hpc_job_id
 
-    local_user = "newuser"
+    local_user = "maxvisser"
     local_exp_path = (
         f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
     )
@@ -118,9 +118,9 @@ if __name__ == "__main__":
             os.makedirs(fold_path)
 
         get_fold_json(experiment_id, f, fold_path)
-        update_loss_plot(experiment_id, f, local_user)
-        update_error_distribution(experiment_id, f, local_user)
-        fetch_model_weights(experiment_id, f, local_user)
+        # update_loss_plot(experiment_id, f, local_user)
+        # update_error_distribution(experiment_id, f, local_user)
+        # fetch_model_weights(experiment_id, f, local_user)
 
     # FETCH RESULTS FOR TREND PLOT
     # experiments = [
@@ -130,6 +130,6 @@ if __name__ == "__main__":
     #     "c50_25D_1911_1125",
     #     "c70_25D_1911_1411",
     # ]
-    # fetch_all_final_experiment_results(experiments)
+    # fetch_all_final_experiment_results(experiments, user="maxvisser")
 
     # %%
