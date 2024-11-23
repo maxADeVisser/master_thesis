@@ -280,7 +280,7 @@ def train_model(
 
         validation_dataset = PrecomputedNoduleROIs(
             prepcomputed_dir=env_config.PREPROCESSED_DATA_DIR,
-            data_augmentation=False,
+            data_augmentation=DATA_AUGMENTATION,
             indices=val_idxs,
         )
         val_loader = DataLoader(
