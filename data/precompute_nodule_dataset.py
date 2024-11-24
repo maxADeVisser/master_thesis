@@ -102,6 +102,7 @@ for _, row in tqdm(
 ):
     # NOTE: Load the scan once per nodule (a bottleneck operation we want to avoid doing to many times)
     scan: np.ndarray = load_scan(row["scan_id"], to_numpy=True)
+
     label = row["malignancy_consensus"]
 
     # For each context, precompute the ROI

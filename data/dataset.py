@@ -48,7 +48,7 @@ class Nodule:
         segmentation_setting: Literal["none", "remove_background", "remove_nodule"],
         nodule_dim: Literal["2.5D", "3D"] = "3D",
     ) -> None:
-        self.patient_id = nodule_record["pid"]
+        self.patient_id = nodule_record["scan_id"]
         self.nodule_idx = nodule_record["nodule_idx"]
         self.nodule_id = f"{self.patient_id}_{self.nodule_idx}"
         self.nodule_dim = nodule_dim

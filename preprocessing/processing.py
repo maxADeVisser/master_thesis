@@ -16,7 +16,7 @@ def clip_and_normalise_volume(
     nodule_scan: torch.Tensor,
     min_bound: int = LOWER_BOUND,
     max_bound: int = HIGHER_BOUND,
-) -> np.ndarray:
+) -> torch.Tensor:
     """
     Clip range to @min_bound and @max_bound and normalize the scan to be in the range of [0, 1].
     - CT scans store raw voxel intensity in Hounsfield units (HU). Above 400 are bones with different radiointensity, so this is used as a higher bound. A threshold between -1000 and 400 is commonly used to normalize CT scans.
