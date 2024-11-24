@@ -198,7 +198,7 @@ def train_model(
     experiment.start_time = start_time
     experiment.dataset.context_window = context_window_size
     experiment.id = f"{experiment.config_name}_{start_time.strftime('%d%m_%H%M')}"
-    # experiment.training.gpu_used = torch.cuda.get_device_name(0)
+    experiment.training.gpu_used = torch.cuda.get_device_name(0)
 
     assert os.path.exists(
         env_config.PREPROCESSED_DATA_DIR
@@ -210,6 +210,7 @@ def train_model(
         os.makedirs(exp_out_dir)
 
     experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
+    nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
 
     logger.info(
         f"""
