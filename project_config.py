@@ -36,7 +36,7 @@ class _EnvConfig:
         ), "Please set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
         self.PROJECT_DIR = project_dir
         self.RAW_DATA_DIR = lidc_idri_dir
-        self.PREPROCESSED_DATA_DIR = f"{project_dir}/data/precomputed_rois_{pipeline_config.dataset.context_window}C_{pipeline_config.dataset.dimensionality}"
+        self.PREPROCESSED_DATA_DIR = f"{project_dir}/data/precomputed_resampled_rois_{pipeline_config.dataset.context_window}C_{pipeline_config.dataset.dimensionality}"
         self.OUT_DIR = f"{project_dir}/out"
         try:
             self.patient_ids = sorted(
