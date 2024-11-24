@@ -308,7 +308,9 @@ def train_model(
             # Evaluate model:
             val_metrics = evaluate_model(model, val_loader)
             # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
-            early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
+            early_stopper(
+                val_loss=val_metrics["avg_val_loss"], epoch=epoch, model=model
+            )
 
             fold_results.best_loss = early_stopper.best_loss
             fold_results.best_loss_epoch = early_stopper.best_loss_epoch
