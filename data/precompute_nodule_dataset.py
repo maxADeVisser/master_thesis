@@ -19,7 +19,7 @@ import torch
 from tqdm import tqdm
 
 from data.dataset import transform_3d_to_25d
-from preprocessing.processing import clip_and_normalise_volume
+from preprocessing.processing import clip_and_normalise_volume, resample_voxel_size
 from project_config import env_config
 from utils.data_models import ExperimentAnalysis
 from utils.utils import load_scan
@@ -102,6 +102,9 @@ for _, row in tqdm(
 ):
     # NOTE: Load the scan once per nodule (a bottleneck operation we want to avoid doing to many times)
     scan: np.ndarray = load_scan(row["scan_id"], to_numpy=True)
+    scan, _ = resample_voxel_size(
+        scan, row["scan_pixel_spacing"], row["scan_slice_thickness"]
+    )
 
     label = row["malignancy_consensus"]
 

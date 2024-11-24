@@ -1,0 +1,1 @@
+these should be safe to delete. I have checked that the recomputed onces with the nodule_id included are identical to the old ones. However, keeping them just incase.

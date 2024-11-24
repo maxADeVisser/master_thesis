@@ -4,6 +4,7 @@
 import itertools
 import math
 
+from preprocessing.processing import resample_voxel_size
 from project_config import SEED, env_config
 from utils.common_imports import *
 from utils.logger_setup import logger
@@ -11,7 +12,7 @@ from utils.logger_setup import logger
 np.random.seed(SEED)
 
 # --- SCIPRT PARAMS ---
-IMAGE_DIMS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+BBOX_SIZES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 MAX_IMG_DIM_USED = 70
 CSV_FILE_NAME = f"nodule_df"
 verbose = False
@@ -59,22 +60,24 @@ def compute_consensus_centroid(
 
 
 def compute_consensus_bbox(
-    image_dim: int,
-    consensus_centroid: tuple[int, int, int],
+    bbox_size: Literal[10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+    consensus_centroid: tuple[float, float, float],
     scan_dims: tuple[int, int, int],
 ) -> tuple[tuple[int]]:
     """
-    Computes the POSSIBLE consensus bbox with standardise dimensions of size @image_dim. If the bbox along a axis exceeds the edge of the scan, it is cut off at that point. That is, there is not guarantee that the copmuted bbox will have standardised dimensions on all axes.
+    Computes the POSSIBLE consensus bbox with standardise dimensions of size @bbox_size.
+    If the bbox along a axis exceeds the edge of the scan, it is cut off at that point.
+    That is, there is not guarantee that the copmuted bbox will have standardised dimensions on all axes.
     """
 
     def _compute_bbox_dim(
-        axis_centroid: int, axis_scan_dim: int, image_dim: int
+        axis_centroid: float, axis_scan_dim: int, bbox_size: int
     ) -> tuple[int]:
         """
         Computes the bounding bbox dimension for a single axis
         """
-        bbox_start_dim = axis_centroid - (image_dim // 2)
-        bbox_end_dim = axis_centroid + (image_dim // 2)
+        bbox_start_dim = axis_centroid - (bbox_size // 2)
+        bbox_end_dim = axis_centroid + (bbox_size // 2)
 
         if bbox_start_dim < 0:
             bbox_start_dim = 0
@@ -84,28 +87,55 @@ def compute_consensus_bbox(
 
     x_centroid, y_centroid, z_centroid = consensus_centroid
     x_scan_dim, y_scan_dim, z_scan_dim = scan_dims
-    x_dim = _compute_bbox_dim(x_centroid, x_scan_dim, image_dim)
-    y_dim = _compute_bbox_dim(y_centroid, y_scan_dim, image_dim)
-    z_dim = _compute_bbox_dim(z_centroid, z_scan_dim, image_dim)
+    x_dim = _compute_bbox_dim(x_centroid, x_scan_dim, bbox_size)
+    y_dim = _compute_bbox_dim(y_centroid, y_scan_dim, bbox_size)
+    z_dim = _compute_bbox_dim(z_centroid, z_scan_dim, bbox_size)
 
     return (x_dim, y_dim, z_dim)
 
 
-def create_nodule_df(file_name: str, add_bbox: bool = True) -> None:
+def compute_resampled_consensus_centroid(
+    nodule_anns: list[pl.Annotation], scaling_factors: list[float]
+) -> tuple[int]:
+    # Compute the consensus centroid:
+    nonresampled_consensus_centroid: tuple[int, int, int] = compute_consensus_centroid(
+        nodule_anns
+    )
+    # Transform the centroid to the resampled scan space:
+    resampled_consensus_centroid = [
+        int(np.round(scaler * coord))
+        for scaler, coord in zip(scaling_factors, nonresampled_consensus_centroid)
+    ]
+    return resampled_consensus_centroid
+
+
+def create_nodule_df(file_name: str) -> None:
+    """
+    NOTE: this function computes the consensus bbox for the nodules for the resampled scan space
+    """
     dict_df = {}
+
+    # For each scan:
     for pid in tqdm(env_config.patient_ids, desc="Processing patients"):
         scan: list[pl.Scan] = pl.query(pl.Scan).filter(pl.Scan.patient_id == pid).all()
         if len(scan) > 1:
             logger.debug(f"A patient {pid} has more than one scan: {len(scan)}")
         scan: pl.Scan = scan[0]  # use the first scan
-        scan_volume = scan.to_volume(verbose=verbose).shape if add_bbox else None
-
         # Get the annotations for the individual nodules in the scan:
         scan_nodule_annotation: list[list[pl.Annotation]] = scan.cluster_annotations(
             verbose=verbose
         )
 
+        scan_volume = scan.to_volume(verbose=verbose)
+        resampled_scan, scaling_factors = resample_voxel_size(
+            scan_volume,
+            scan.pixel_spacing,
+            scan.slice_thickness,
+            target_spacing=(1.0, 1.0, 1.0),  # Resample to 1mm x 1mm x 1mm
+        )
+
         if len(scan_nodule_annotation) >= 1:
+            # For each nodule in the scan:
             for nodule_idx, nodule_anns in enumerate(scan_nodule_annotation):
                 nodule_id = f"{pid}_{nodule_idx}"
                 dict_df[nodule_id] = {
@@ -142,23 +172,27 @@ def create_nodule_df(file_name: str, add_bbox: bool = True) -> None:
                     "ann_mean_volume": np.mean([ann.volume for ann in nodule_anns]),
                 }
 
-                if add_bbox:
-                    # Compute the consensus centroid and bbox for the nodule:
-                    consensus_centroid: tuple[int, int, int] = (
-                        compute_consensus_centroid(nodule_anns)
-                    )
-                    dict_df[nodule_id]["consensus_centroid"] = consensus_centroid
+                resampled_consensus_centroid = compute_resampled_consensus_centroid(
+                    nodule_anns, scaling_factors
+                )
 
-                    # Compute the consensus bbox at different img dimensions:
-                    for img_dim in IMAGE_DIMS:
-                        (x_dim, y_dim, z_dim) = compute_consensus_bbox(
-                            img_dim, consensus_centroid, scan_volume
-                        )
-                        dict_df[nodule_id][f"consensus_bbox_{img_dim}"] = (
-                            x_dim,
-                            y_dim,
-                            z_dim,
-                        )
+                dict_df[nodule_id]["consensus_centroid"] = resampled_consensus_centroid
+                dict_df[nodule_id]["scaling_factors"] = scaling_factors
+
+                # Compute the consensus bbox at different img dimensions:
+                for bbox_size in BBOX_SIZES:
+                    (x_dim, y_dim, z_dim) = compute_consensus_bbox(
+                        bbox_size,
+                        resampled_consensus_centroid,
+                        resampled_scan.shape,
+                    )
+                    dict_df[nodule_id][f"consensus_bbox_{bbox_size}"] = (
+                        x_dim,
+                        y_dim,
+                        z_dim,
+                    )
+
+    # CREATE DATAFRAME:
     nodule_df = (
         pd.DataFrame.from_dict(dict_df, orient="index")
         .reset_index(drop=False)
@@ -225,23 +259,22 @@ def create_nodule_df(file_name: str, add_bbox: bool = True) -> None:
     if not len(all_ids_flattened) == len(set(all_ids_flattened)):
         logger.debug("Some nodule annotation IDs are repeated")
 
-    if add_bbox:
-        # Flag nodules where the dimensions of the bbox along all axis are not standardised (=image_dim):
-        for img_dim in IMAGE_DIMS:
-            _verify_image_dim = (
-                lambda roi_dim: img_dim
-                == roi_dim[0][1] - roi_dim[0][0]  # x_dim
-                == roi_dim[1][1] - roi_dim[1][0]  # y_dim
-                == roi_dim[2][1] - roi_dim[2][0]  # z_dim
-            )
-            nodule_df[f"bbox_{img_dim}_standardised"] = nodule_df[
-                f"consensus_bbox_{img_dim}"
-            ].apply(_verify_image_dim)
-
-        # log how many nodules bboxes that do not have standardised img dimensions at max_img:
-        logger.debug(
-            f"Number of standardised nodule bboxes at {MAX_IMG_DIM_USED} bbox sizes:\n{nodule_df[f'bbox_{MAX_IMG_DIM_USED}_standardised'].value_counts()}"
+    # Flag nodules where the dimensions of the POSSIBLE bbox along all axis are not standardised (same value):
+    for img_dim in BBOX_SIZES:
+        _verify_image_dim = (
+            lambda roi_dim: img_dim
+            == roi_dim[0][1] - roi_dim[0][0]  # x_dim
+            == roi_dim[1][1] - roi_dim[1][0]  # y_dim
+            == roi_dim[2][1] - roi_dim[2][0]  # z_dim
         )
+        nodule_df[f"bbox_{img_dim}_standardised"] = nodule_df[
+            f"consensus_bbox_{img_dim}"
+        ].apply(_verify_image_dim)
+
+    # log how many nodules bboxes that do not have standardised img dimensions at max_img:
+    logger.debug(
+        f"Number of standardised nodule bboxes at {MAX_IMG_DIM_USED} bbox sizes:\n{nodule_df[f'bbox_{MAX_IMG_DIM_USED}_standardised'].value_counts()}"
+    )
 
     # validate that there are at most 4 annotations per nodule:
     if max(nodule_df["nodule_annotation_ids"].apply(len)) > 4:
@@ -259,10 +292,56 @@ def create_nodule_df(file_name: str, add_bbox: bool = True) -> None:
 # %%
 if __name__ == "__main__":
     assert (
-        MAX_IMG_DIM_USED in IMAGE_DIMS
+        MAX_IMG_DIM_USED in BBOX_SIZES
     ), "The maximum image dimensions needs to be in the @image_dims list"
     logger.info(
-        f"\nCreating nodule df with image_dims: {IMAGE_DIMS} as {CSV_FILE_NAME}.csv"
+        f"\nCreating nodule df with image_dims: {BBOX_SIZES} as {CSV_FILE_NAME}.csv"
     )
 
     create_nodule_df(CSV_FILE_NAME)
+
+    # DEBUGGING: (investigate the nodules)
+
+    # import ast
+
+    # import matplotlib.pyplot as plt
+    # import numpy as np
+    # import pandas as pd
+
+    # from preprocessing.processing import resample_voxel_size
+    # from utils.utils import load_scan
+
+    # cws = 100
+    # nodule_df = pd.read_csv(f"preprocessing/nodule_df_TEST.csv")
+    # nodule_df[f"consensus_bbox_{cws}"] = nodule_df[f"consensus_bbox_{cws}"].apply(
+    #     ast.literal_eval
+    # )
+    # row = nodule_df.iloc[0]
+    # scan: np.ndarray = load_scan(row["scan_id"], to_numpy=True)
+    # resampled_scan = resample_voxel_size(
+    #     scan,
+    #     row["scan_pixel_spacing"],
+    #     row["scan_slice_thickness"],
+    #     target_spacing=(1.0, 1.0, 1.0),
+    # )
+
+    # x_bounds, y_bounds, z_bounds = row[f"consensus_bbox_{cws}"]
+    # resampled_scan[0].shape
+    # nodule_roi = resampled_scan[0][
+    #     x_bounds[0] : x_bounds[1],
+    #     y_bounds[0] : y_bounds[1],
+    #     z_bounds[0] : z_bounds[1],
+    # ]
+    # nodule_roi.shape
+
+    # middle_slice = nodule_roi.shape[2] // 2
+
+    # # Preview
+    # preview_number = 30
+    # for i in range(preview_number):
+    #     plt.imshow(
+    #         nodule_roi[:, :, (middle_slice - (preview_number // 2) + i)], cmap="gray"
+    #     )
+    #     plt.show()
+
+# %%

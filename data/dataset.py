@@ -269,14 +269,25 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     pdataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_30C_3D",
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_30C_2.5D",
         data_augmentation=True,
     )
-    loader = DataLoader(pdataset, batch_size=2, shuffle=False)
+    loader = DataLoader(pdataset, batch_size=16, shuffle=False)
     for i, (roi, label, nodule_id) in enumerate(loader):
-        print(nodule_id)
-        # plt.imshow(roi[0][1], cmap="gray")
-        # plt.show()
+        print(roi.shape)
+        plt.imshow(roi[0][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[1][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[2][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[3][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[4][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[5][1], cmap="gray")
+        plt.show()
+        break
     # -----------------------
 
     # testing dataloader
