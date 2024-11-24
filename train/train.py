@@ -198,41 +198,42 @@ def train_model(
     experiment.start_time = start_time
     experiment.dataset.context_window = context_window_size
     experiment.id = f"{experiment.config_name}_{start_time.strftime('%d%m_%H%M')}"
-    experiment.training.gpu_used = torch.cuda.get_device_name(0)
+    # experiment.training.gpu_used = torch.cuda.get_device_name(0)
+
+    assert os.path.exists(
+        env_config.PREPROCESSED_DATA_DIR
+    ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
 
     # Create output directory for experiment:
     exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
     if not os.path.exists(exp_out_dir):
         os.makedirs(exp_out_dir)
+
     experiment.write_experiment_to_json(out_dir=f"{exp_out_dir}")
 
     logger.info(
         f"""
-        [[--- Training model: {experiment.config_name} ---]]
+        [[--- Training model: {experiment.id} ---]]
         LR: {LR}
         EPOCHS: {NUM_EPOCHS}
-        BATCH_SIZE: {BATCH_SIZE}
+        BATCH SIZE: {BATCH_SIZE}
         CONTEXT_WINDOW_SIZE: {context_window_size}
         DATA DIMENSIONALITY: {data_dimensionality}
         DATA AUGMENTATION: {DATA_AUGMENTATION}
-        DO_CROSS_VALIDATION: {DO_CROSS_VALIDATION}
-        CROSS_VALIDATION: {cross_validation}
-        CV_FOLDS: {CV_FOLDS}
-        ES_PATIENCE: {PATIENCE}
-        ES_MIN_DELTA: {MIN_DELTA}
-        NUM_WORKERS: {NUM_WORKERS}
+        DO CROSS VALIDATION: {DO_CROSS_VALIDATION}
+        TOTAL NODULES USED FOR TRAINING: {len(nodule_df)}
+        CROSS VALIDATION: {cross_validation}
+        CV FOLDS: {CV_FOLDS}
+        ES PATIENCE: {PATIENCE}
+        ES MIN_DELTA: {MIN_DELTA}
+        NUM WORKERS: {NUM_WORKERS}
 
-        Output directory: {exp_out_dir}
+        Experiment output directory: {exp_out_dir}
 
-        GPU: {torch.cuda.get_device_name(0)}
         Device used: {DEVICE}
+        GPU used: {experiment.training.gpu_used}
         """
     )
-
-    assert os.path.exists(
-        env_config.PREPROCESSED_DATA_DIR
-    ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
-    nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
 
     # --- Cross Validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
@@ -265,7 +266,7 @@ def train_model(
         # save initial fold information
         fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 
-        # Initialize model and move to GPU (if available)
+        # Initialize model and move to GPU if available
         model = ResNet50(
             in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims=DATA_DIMENSIONALITY
         ).to(DEVICE)
@@ -309,6 +310,7 @@ def train_model(
             early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
 
             fold_results.best_loss = early_stopper.best_loss
+            fold_results.best_loss_epoch = early_stopper.best_loss_epoch
             fold_results.val_losses.append(round(val_metrics["avg_val_loss"], 6))
             fold_results.val_accuracies.append(round(val_metrics["accuracy"], 6))
             fold_results.val_binary_accuracies.append(
@@ -326,6 +328,7 @@ def train_model(
             plot_loss(
                 fold_results.train_losses, fold_results.val_losses, out_dir=fold_out_dir
             )
+            # NOTE: this plot only shows for the last epoch (not the best loss necessarily)
             plot_val_error_distribution(val_metrics["errors"], out_dir=fold_out_dir)
             logger.info(
                 f"""

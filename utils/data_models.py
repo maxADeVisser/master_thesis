@@ -86,6 +86,7 @@ class TrainingFold(BaseModel):
         [], description="List of average validation CWCE for all epochs"
     )
     best_loss: float | None = Field(None, description="Best loss for the fold")
+    best_loss_epoch: int | None = Field(None, description="Epoch with best loss")
     epoch_stopped: int | None = Field(
         None, description="Epoch where early stopping stopped training"
     )
