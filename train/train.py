@@ -32,6 +32,7 @@ from utils.early_stopping import EarlyStopping
 from utils.logger_setup import logger
 from utils.metrics import (
     compute_accuracy,
+    compute_binary_accuracy,
     compute_cwce,
     compute_errors,
     compute_filtered_AUC,
@@ -162,6 +163,9 @@ def evaluate_model(
     val_metrics = {
         "avg_val_loss": running_val_loss / number_of_batches,
         "accuracy": compute_accuracy(all_true_labels, all_malignancy_predictions),
+        "binary_accuracy": compute_binary_accuracy(
+            np_all_true_labels, np_all_binary_prob_predictions
+        ),
         "AUC_ovr": compute_ovr_AUC(np_all_true_labels, np_all_class_proba_preds),
         "AUC_filtered": compute_filtered_AUC(
             np_all_true_labels, np_all_binary_prob_predictions
@@ -305,13 +309,16 @@ def train_model(
             early_stopper(val_loss=val_metrics["avg_val_loss"], model=model)
 
             fold_results.best_loss = early_stopper.best_loss
-            fold_results.val_losses.append(round(val_metrics["avg_val_loss"], 4))
-            fold_results.val_accuracies.append(round(val_metrics["accuracy"], 4))
-            fold_results.val_AUC_filtered.append(round(val_metrics["AUC_filtered"], 4))
-            fold_results.val_AUC_ovr.append(round(val_metrics["AUC_ovr"], 4))
-            fold_results.val_maes.append(round(val_metrics["mae"], 4))
-            fold_results.val_mses.append(round(val_metrics["mse"], 4))
-            fold_results.val_cwces.append(round(val_metrics["cwce"], 4))
+            fold_results.val_losses.append(round(val_metrics["avg_val_loss"], 6))
+            fold_results.val_accuracies.append(round(val_metrics["accuracy"], 6))
+            fold_results.val_binary_accuracies.append(
+                round(val_metrics["binary_accuracy"], 6)
+            )
+            fold_results.val_AUC_filtered.append(round(val_metrics["AUC_filtered"], 6))
+            fold_results.val_AUC_ovr.append(round(val_metrics["AUC_ovr"], 6))
+            fold_results.val_maes.append(round(val_metrics["mae"], 6))
+            fold_results.val_mses.append(round(val_metrics["mse"], 6))
+            fold_results.val_cwces.append(round(val_metrics["cwce"], 6))
             # Write incremental results out to JSON:
             fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 

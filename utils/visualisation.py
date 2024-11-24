@@ -92,6 +92,8 @@ def plot_fold_results(
         fold.val_AUC_filtered = dampen(fold.val_AUC_filtered)
         fold.val_AUC_ovr = dampen(fold.val_AUC_ovr)
         fold.val_accuracies = dampen(fold.val_accuracies)
+        fold.val_binary_accuracies = dampen(fold.val_binary_accuracies)
+        # TODO plot the binary accuracies
         fold.val_cwces = dampen(fold.val_cwces)
         fold.train_losses = dampen(fold.train_losses)
         fold.val_losses = dampen(fold.val_losses)

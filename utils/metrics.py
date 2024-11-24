@@ -40,7 +40,6 @@ def compute_ovr_AUC(y_true: np.ndarray, all_class_proba_preds: np.ndarray) -> fl
     """
     Computes the one-vs-rest AUC.
     """
-    # y_true_binary = label_binarize(y_true, classes=[1, 2, 3, 4, 5])
     ovr_AUC = roc_auc_score(
         y_true=y_true,
         y_score=all_class_proba_preds,
@@ -51,13 +50,13 @@ def compute_ovr_AUC(y_true: np.ndarray, all_class_proba_preds: np.ndarray) -> fl
 
 
 def compute_filtered_AUC(
-    all_true_labels: np.ndarray, all_binary_prob_predictions: np.ndarray
+    y_true: np.ndarray, all_binary_prob_predictions: np.ndarray
 ) -> float:
     """Calculate binary AUC for non-ambiguous cases only."""
     # Filter out labels equal to 3:
-    non_ambiguous_mask = all_true_labels != 3
+    non_ambiguous_mask = y_true != 3
     binary_predictions_filtered = all_binary_prob_predictions[non_ambiguous_mask]
-    labels_filtered = all_true_labels[non_ambiguous_mask]
+    labels_filtered = y_true[non_ambiguous_mask]
 
     # Create binary labels (1 if label > 3, else 0):
     binary_labels = (labels_filtered > 3).astype(int)
@@ -72,6 +71,25 @@ def compute_accuracy(y_true: torch.Tensor, y_pred: torch.Tensor) -> float:
     Computes the accuracy of the model.
     """
     return torch.mean((y_true == y_pred).float()).item()
+
+
+def compute_binary_accuracy(
+    y_true: np.ndarray, all_binary_prob_predictions: np.ndarray
+) -> float:
+    """
+    Computes the binary accuracy of the model using only non-ambiguous cases.
+    """
+    # Filter out labels equal to 3:
+    non_ambiguous_mask = y_true != 3
+    binary_predictions_filtered = all_binary_prob_predictions[non_ambiguous_mask]
+    labels_filtered = y_true[non_ambiguous_mask]
+
+    # Create binary labels and predictions (1 if X > 3, else 0):
+    binary_labels = (labels_filtered > 3).astype(int)
+    binary_predictions = (0.5 <= binary_predictions_filtered).astype(int)
+
+    # Compute accuracy:
+    return float(np.mean(binary_labels == binary_predictions))
 
 
 def compute_cwce(
