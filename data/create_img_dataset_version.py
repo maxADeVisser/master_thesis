@@ -12,7 +12,7 @@ import torch
 from PIL import Image
 from tqdm import tqdm
 
-from preprocessing.processing import clip_and_normalise_volume
+from preprocessing.processing import clip_and_normalise_volume, resample_voxel_size
 from project_config import env_config
 from utils.utils import load_scan
 
@@ -35,11 +35,6 @@ def main():
             ast.literal_eval
         )
 
-    # Create nodule IDs:
-    nodule_df["nodule_id"] = (
-        nodule_df["pid"].astype(str) + "_" + nodule_df["nodule_idx"].astype(str)
-    )
-
     # create the directories for the precomputed ROIs
     out_dirs = {}
     for cws in CONTEXT_WINDOW_SIZES:
@@ -58,8 +53,11 @@ def main():
         total=len(nodule_df),
     ):
         # NOTE: Load the scan once per nodule (a bottleneck operation we want to avoid doing to many times)
-        scan: np.ndarray = load_scan(row["pid"], to_numpy=True)
-        nodule_id = row["pid"] + "_" + str(row["nodule_idx"])
+        scan: np.ndarray = load_scan(row["scan_id"], to_numpy=True)
+        resampled_scan, _ = resample_voxel_size(
+            scan, row["scan_pixel_spacing"], row["scan_slice_thickness"]
+        )
+        nodule_id = row["nodule_id"]
         malignancy_consensus = row["malignancy_consensus"]
         subtlety_consensus = row["subtlety_consensus"]
         cancer_label = row["cancer_label"]
@@ -80,7 +78,7 @@ def main():
 
             # Extract the nodule ROI:
             x_bounds, y_bounds, z_bounds = row[f"consensus_bbox_{cws}"]
-            nodule_roi = scan[
+            nodule_roi = resampled_scan[
                 x_bounds[0] : x_bounds[1],
                 y_bounds[0] : y_bounds[1],
                 z_bounds[0] : z_bounds[1],
