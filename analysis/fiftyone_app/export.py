@@ -1,15 +1,21 @@
+"""Exports tags from FiftyOne dataset to CSV file."""
+
 import csv
 
 import fiftyone as fo
 
-# The Dataset or DatasetView containing the samples you wish to export
-dataset = fo.load_dataset("test")
-tags_export = [{"filepath": sample.filepath, "tags": sample.tags} for sample in dataset]
-
-# The directory to which to write the exported dataset
+# SCRIPT PARAMS:
 export_dir = "/Users/newuser/Documents/ITU/master_thesis/out/fiftyone/test"
+dataset_name = "test"
+# ----
 
-# Write tags to CSV
+dataset = fo.load_dataset(dataset_name)
+tags_export = [
+    {"filepath": sample.filepath, "tags": sample.tags, "nodule_ids": sample.nodule_id}
+    for sample in dataset
+]
+
+
 with open(f"{export_dir}/tags_export.csv", "w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=["filepath", "tags"])
     writer.writeheader()
