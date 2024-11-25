@@ -6,10 +6,8 @@ import pandas as pd
 from project_config import env_config
 from utils.data_models import ExperimentAnalysis
 
-# SCRIPT PARAMS ---------
 with open("experiment_analysis_parameters.json", "r") as f:
     config = ExperimentAnalysis.model_validate(json.load(f))
-
 
 # --- SCRIPT PARAMS ---
 context_size = config.analysis.context_size
