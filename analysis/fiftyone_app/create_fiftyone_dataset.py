@@ -89,9 +89,12 @@ def create_fiftyone_nodule_dataset(
         sample["scan_pixel_spacing"] = row["scan_pixel_spacing"]
 
         sample.save()
+    dataset.save()
 
 
 if __name__ == "__main__":
+    # dataset_name = "test"
+    # overwrite_if_exists = True
     create_fiftyone_nodule_dataset(
         f"C{context_size}_Nodule_ROIs", overwrite_if_exists=True
     )
