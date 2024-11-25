@@ -226,6 +226,7 @@ class PrecomputedNoduleROIs(Dataset):
         data = torch.load(self.files[0], weights_only=True)
 
         # Verify that the shape of the precomputed data matches the expected shape
+        # BUG, when used from get_predictions.py, the context_size should not be loaded from the pipeline_config, but from the experiment_analysis_config
         if dimensionality == "2.5D":
             assert data[0].shape == (
                 3,

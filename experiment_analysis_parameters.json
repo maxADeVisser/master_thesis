@@ -1,6 +1,6 @@
 {
   "analysis": {
-    "context_size": 30,
+    "context_size": 70,
     "dimensionality": "2.5D",
     "fold": 0,
     "folds": [
@@ -11,7 +11,7 @@
       4
     ]
   },
-  "experiment_id": "c30_25D_2411_1543",
+  "experiment_id": "c70_25D_2411_1705",
   "holdout_set": false,
   "hpc_job_id": 1682,
   "precompute_nodule_dataset": {

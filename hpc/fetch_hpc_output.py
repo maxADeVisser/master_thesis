@@ -89,47 +89,52 @@ def fetch_all_final_experiment_results(
 if __name__ == "__main__":
     # TODO clean this up
 
-    from utils.data_models import ExperimentAnalysis
+    # from utils.data_models import ExperimentAnalysis
 
-    # SCRIPT PARAMS ---------
-    with open("experiment_analysis_parameters.json", "r") as f:
-        config = ExperimentAnalysis.model_validate(json.load(f))
+    # # SCRIPT PARAMS ---------
+    # with open("experiment_analysis_parameters.json", "r") as f:
+    #     config = ExperimentAnalysis.model_validate(json.load(f))
 
-    experiment_id = config.experiment_id
-    job_id = config.hpc_job_id
+    # # experiment_id = config.experiment_id
+    # # job_id = config.hpc_job_id
+    # experiment_id = "c70_25D_2411_1705"
+    # # job_id =
 
-    local_user = "maxvisser"
-    local_exp_path = (
-        f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
-    )
+    # local_user = "newuser"
+    # local_exp_path = (
+    #     f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
+    # )
 
-    if not os.path.exists(local_exp_path):
-        os.makedirs(local_exp_path)
+    # if not os.path.exists(local_exp_path):
+    #     os.makedirs(local_exp_path)
 
-    # Experiment level data
-    get_job_stdout(job_id, local_exp_path)
-    get_experiment_json(experiment_id, local_exp_path)
+    # # Experiment level data
+    # # get_job_stdout(job_id, local_exp_path)
+    # get_experiment_json(experiment_id, local_exp_path)
 
-    # Fold level data
-    folds = config.analysis.folds
-    for f in folds:
-        fold_path = f"{local_exp_path}/fold_{f}"
-        if not os.path.exists(fold_path):
-            os.makedirs(fold_path)
+    # # Fold level data
+    # folds = config.analysis.folds
+    # folds = [0]
+    # for f in folds:
+    #     fold_path = f"{local_exp_path}/fold_{f}"
+    #     if not os.path.exists(fold_path):
+    #         os.makedirs(fold_path)
 
-        get_fold_json(experiment_id, f, fold_path)
-        # update_loss_plot(experiment_id, f, local_user)
-        # update_error_distribution(experiment_id, f, local_user)
-        # fetch_model_weights(experiment_id, f, local_user)
+    #     # get_fold_json(experiment_id, f, fold_path)
+    #     update_loss_plot(experiment_id, f, local_user)
+    #     # update_error_distribution(experiment_id, f, local_user)
+    #     fetch_model_weights(experiment_id, f, local_user)
 
     # FETCH RESULTS FOR TREND PLOT
-    # experiments = [
-    #     "c30_3D_1711_1513",
-    #     "c50_3D_1711_2149",
-    #     "c30_25D_1911_0928",
-    #     "c50_25D_1911_1125",
-    #     "c70_25D_1911_1411",
-    # ]
-    # fetch_all_final_experiment_results(experiments, user="maxvisser")
+    # experiments = ["c30_3D_2411_1947", "c50_3D_2411_1831"] # 3D
+    experiments = [  # 2.5D
+        "c20_25D_2411_1631",
+        "c30_25D_2411_1543",
+        "c40_25D_2411_1640",
+        "c50_25D_2411_1812",
+        "c60_25D_2411_1641",
+        "c70_25D_2411_1705",
+    ]
+    fetch_all_final_experiment_results(experiments, user="newuser")
 
     # %%
