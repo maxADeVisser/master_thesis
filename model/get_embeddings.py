@@ -32,7 +32,7 @@ batch_size = 8
 # ---------------------
 
 processed_dir_path = (
-    f"{env_config.PROJECT_DIR}/data/precomputed_rois_{context_size}C_{n_dims}"
+    f"{env_config.PROJECT_DIR}/data/precomputed_resampled_rois_{context_size}C_{n_dims}"
 )
 processed_holdout_dir_path = f"{processed_dir_path}hold_out"
 if not os.path.exists(processed_dir_path) or not os.path.exists(

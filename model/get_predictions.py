@@ -23,9 +23,7 @@ experiment_id = config.experiment_id
 dimensionality = config.analysis.dimensionality
 fold = config.analysis.fold
 
-precomputed_dir = (
-    f"{env_config.PROJECT_DIR}/data/precomputed_rois_{context_size}C_{dimensionality}"
-)
+precomputed_dir = f"{env_config.PROJECT_DIR}/data/precomputed_resampled_rois_{context_size}C_{dimensionality}"
 assert os.path.exists(
     precomputed_dir
 ), f"Precomputed ROIs not found at {precomputed_dir}. Run precomputed_nodule_dataset.py first"
@@ -36,8 +34,8 @@ if not os.path.exists(pred_out_dir):
     os.makedirs(pred_out_dir, exist_ok=True)
 
 pred_out_file = f"{pred_out_dir}/pred_nodule_df_fold{fold}.csv"
-# if os.path.exists(pred_out_file):
-#     raise FileExistsError(f"Predictions already exist at {pred_out_file}. Reset first")
+if os.path.exists(pred_out_file):
+    raise FileExistsError(f"Predictions already exist at {pred_out_file}. Reset first")
 
 weights_path = (
     f"{env_config.PROJECT_DIR}/hpc/jobs/{experiment_id}/fold_{fold}/model.pth"

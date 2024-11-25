@@ -4,7 +4,7 @@
       -1000,
       400
     ],
-    "context_window": 30,
+    "context_window": 50,
     "data_augmentation": true,
     "dimensionality": "2.5D",
     "segment_nodule": "none"
