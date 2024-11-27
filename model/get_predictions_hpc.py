@@ -13,6 +13,7 @@ from model.ResNet import (
 )
 from project_config import env_config
 from utils.data_models import ExperimentAnalysis
+from utils.logger_setup import logger
 
 with open("experiment_analysis_parameters.json", "r") as f:
     config = ExperimentAnalysis.model_validate(json.load(f))
@@ -33,11 +34,9 @@ pred_out_dir = f"{env_config.OUT_DIR}/predictions/{experiment_id}"
 if not os.path.exists(pred_out_dir):
     os.makedirs(pred_out_dir, exist_ok=True)
 pred_out_file = f"{pred_out_dir}/pred_nodule_df_fold{fold}.csv"
-if os.path.exists(pred_out_file):
-    raise FileExistsError(f"Predictions already exist at {pred_out_file}. Reset first")
 
 weights_path = (
-    f"{env_config.PROJECT_DIR}/hpc/jobs/{experiment_id}/fold_{fold}/model.pth"
+    f"{env_config.PROJECT_DIR}/out/model_runs/{experiment_id}/fold{fold}/model.pth"
 )
 
 nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
@@ -46,6 +45,7 @@ in_channels = 1 if dimensionality == "3D" else 3
 model = load_resnet_model(
     weights_path=weights_path, in_channels=in_channels, dims=dimensionality
 )
+logger.info(f"Loaded model weights from {weights_path} to device {model.device}")
 model.eval()
 
 dataset = PrecomputedNoduleROIs(precomputed_dir, data_augmentation=False)
@@ -56,7 +56,13 @@ all_nodule_ids = []
 for i, (nodule_roi, label, nodule_id) in tqdm(
     enumerate(loader), total=len(loader), desc="Predicting on Batches"
 ):
+    # transfer to device
+    nodule_roi = nodule_roi.to(model.device)
+
+    # forward pass
     logits = model(nodule_roi)
+
+    # get predictions:
     preds = get_pred_malignancy_from_logits(logits)
     confidence = get_malignancy_rank_confidence(logits, preds).tolist()
     preds = preds.tolist()
