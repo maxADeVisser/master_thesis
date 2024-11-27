@@ -49,6 +49,8 @@ def create_fiftyone_nodule_dataset(
             label=str(row["pred"]),
             confidence=float(row["confidence"]),
         )
+        sample["abs_error"] = abs(row["pred"] - row["malignancy_consensus"])
+
         sample["malignancy_consensus"] = fo.Classification(
             label=str(row["malignancy_consensus"]),
         )
