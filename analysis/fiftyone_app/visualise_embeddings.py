@@ -19,7 +19,7 @@ context_size = config.analysis.context_size
 experiment_id = config.experiment_id
 fold = config.analysis.fold
 
-dataset = fo.load_dataset(f"C{context_size}_Nodule_ROIs")
+dataset = fo.load_dataset(f"{experiment_id}")
 
 embeddings_df_path = (
     f"{env_config.OUT_DIR}/embeddings/{experiment_id}/fold{fold}/embeddings_df.csv"
@@ -47,6 +47,3 @@ sample_id_embedding_mapping = {
 fob.compute_visualization(
     samples=dataset, points=sample_id_embedding_mapping, brain_key="resnet50_embeddings"
 )
-
-session = fo.launch_app(dataset=dataset, port=5151)
-session.wait()

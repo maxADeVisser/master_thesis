@@ -67,6 +67,9 @@ class TrainingFold(BaseModel):
     val_accuracies: list[float] = Field(
         [], description="List of average validation accuracies for all epochs"
     )
+    val_binary_accuracies: list[float] = Field(
+        [], description="List of average validation binary accuracies for all epochs"
+    )
     val_AUC_filtered: list[float] = Field(
         [], description="List of average validation AUC for non-ambiguous cases"
     )
@@ -83,6 +86,7 @@ class TrainingFold(BaseModel):
         [], description="List of average validation CWCE for all epochs"
     )
     best_loss: float | None = Field(None, description="Best loss for the fold")
+    best_loss_epoch: int | None = Field(None, description="Epoch with best loss")
     epoch_stopped: int | None = Field(
         None, description="Epoch where early stopping stopped training"
     )

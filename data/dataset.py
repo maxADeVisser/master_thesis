@@ -226,6 +226,7 @@ class PrecomputedNoduleROIs(Dataset):
         data = torch.load(self.files[0], weights_only=True)
 
         # Verify that the shape of the precomputed data matches the expected shape
+        # BUG, when used from get_predictions.py, the context_size should not be loaded from the pipeline_config, but from the experiment_analysis_config
         if dimensionality == "2.5D":
             assert data[0].shape == (
                 3,
@@ -269,14 +270,25 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     pdataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_30C_3D",
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_30C_2.5D",
         data_augmentation=True,
     )
-    loader = DataLoader(pdataset, batch_size=2, shuffle=False)
+    loader = DataLoader(pdataset, batch_size=16, shuffle=False)
     for i, (roi, label, nodule_id) in enumerate(loader):
-        print(nodule_id)
-        # plt.imshow(roi[0][1], cmap="gray")
-        # plt.show()
+        print(roi.shape)
+        plt.imshow(roi[0][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[1][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[2][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[3][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[4][1], cmap="gray")
+        plt.show()
+        plt.imshow(roi[5][1], cmap="gray")
+        plt.show()
+        break
     # -----------------------
 
     # testing dataloader

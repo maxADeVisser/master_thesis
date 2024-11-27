@@ -19,14 +19,17 @@ class EarlyStopping:
         self.min_delta = min_delta
         self.counter = 0
         self.best_loss = np.inf
+        self.best_loss_epoch = 0
         self.early_stop = False
         self.path = checkpoint_path
 
-    def __call__(self, val_loss: float, model: torch.nn.Module):
+    def __call__(self, val_loss: float, epoch: int, model: torch.nn.Module):
         # Check if the current validation loss improved
         if val_loss < (self.best_loss - self.min_delta):
             self.best_loss = val_loss
+            self.best_loss_epoch = epoch
             self.counter = 0
+
             # Save the best model
             torch.save(model.state_dict(), self.path)
         else:

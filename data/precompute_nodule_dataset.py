@@ -19,7 +19,7 @@ import torch
 from tqdm import tqdm
 
 from data.dataset import transform_3d_to_25d
-from preprocessing.processing import clip_and_normalise_volume
+from preprocessing.processing import clip_and_normalise_volume, resample_voxel_size
 from project_config import env_config
 from utils.data_models import ExperimentAnalysis
 from utils.utils import load_scan
@@ -34,6 +34,7 @@ context_windows = config.precompute_nodule_dataset.context_windows
 dimensionalities = config.precompute_nodule_dataset.dimensionalities
 holdout_set: bool = config.precompute_nodule_dataset.holdout_set
 # ---------------------
+
 
 dataset_version: Literal["hold_out", "train"] = "hold_out" if holdout_set else "train"
 _holdout_indicator = "hold_out" if dataset_version == "hold_out" else ""
@@ -55,17 +56,13 @@ for cws in context_windows:
 # First check if the directories already exist:
 for cws in context_windows:
     for dim in dimensionalities:
-        OUT_DIR = (
-            f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{dim}{_holdout_indicator}"
-        )
+        OUT_DIR = f"{PROJECT_DIR}/data/precomputed_resampled_rois_{cws}C_{dim}{_holdout_indicator}"
         if os.path.exists(OUT_DIR):
             raise FileExistsError(f"{OUT_DIR} already exists. Reset first")
 # Then create the directories:
 for cws in context_windows:
     for dim in dimensionalities:
-        OUT_DIR = (
-            f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{dim}{_holdout_indicator}"
-        )
+        OUT_DIR = f"{PROJECT_DIR}/data/precomputed_resampled_rois_{cws}C_{dim}{_holdout_indicator}"
         os.makedirs(OUT_DIR)
 
 
@@ -102,6 +99,9 @@ for _, row in tqdm(
 ):
     # NOTE: Load the scan once per nodule (a bottleneck operation we want to avoid doing to many times)
     scan: np.ndarray = load_scan(row["scan_id"], to_numpy=True)
+    scan, _ = resample_voxel_size(
+        scan, row["scan_pixel_spacing"], row["scan_slice_thickness"]
+    )
 
     label = row["malignancy_consensus"]
 
@@ -116,9 +116,7 @@ for _, row in tqdm(
         nodule_roi: torch.Tensor = torch.from_numpy(nodule_roi).unsqueeze(0).float()
 
         for dim in dimensionalities:
-            OUT_DIR = (
-                f"{PROJECT_DIR}/data/precomputed_rois_{cws}C_{dim}{_holdout_indicator}"
-            )
+            OUT_DIR = f"{PROJECT_DIR}/data/precomputed_resampled_rois_{cws}C_{dim}{_holdout_indicator}"
             processed_nodule_roi = _process_loaded_nodule(nodule_roi, cws, dim)
 
             torch.save(

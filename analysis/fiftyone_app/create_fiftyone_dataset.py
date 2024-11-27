@@ -6,10 +6,8 @@ import pandas as pd
 from project_config import env_config
 from utils.data_models import ExperimentAnalysis
 
-# SCRIPT PARAMS ---------
 with open("experiment_analysis_parameters.json", "r") as f:
     config = ExperimentAnalysis.model_validate(json.load(f))
-
 
 # --- SCRIPT PARAMS ---
 context_size = config.analysis.context_size
@@ -91,9 +89,8 @@ def create_fiftyone_nodule_dataset(
         sample["scan_pixel_spacing"] = row["scan_pixel_spacing"]
 
         sample.save()
+    dataset.save()
 
 
 if __name__ == "__main__":
-    create_fiftyone_nodule_dataset(
-        f"C{context_size}_Nodule_ROIs", overwrite_if_exists=True
-    )
+    create_fiftyone_nodule_dataset(f"{experiment_id}", overwrite_if_exists=False)

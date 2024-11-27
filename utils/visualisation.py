@@ -92,6 +92,8 @@ def plot_fold_results(
         fold.val_AUC_filtered = dampen(fold.val_AUC_filtered)
         fold.val_AUC_ovr = dampen(fold.val_AUC_ovr)
         fold.val_accuracies = dampen(fold.val_accuracies)
+        fold.val_binary_accuracies = dampen(fold.val_binary_accuracies)
+        fold.val_binary_accuracies = dampen(fold.val_binary_accuracies)
         fold.val_cwces = dampen(fold.val_cwces)
         fold.train_losses = dampen(fold.train_losses)
         fold.val_losses = dampen(fold.val_losses)
@@ -137,7 +139,7 @@ def plot_fold_results(
         color="red",
     )
     ax3.set_xlabel("Epoch")
-    ax3.set_ylabel("AUC Filtered")
+    ax3.set_ylabel("AUC Binary")
     ax3.grid()
 
     # AX4 -- AUC OVR
@@ -159,21 +161,22 @@ def plot_fold_results(
     ax4.grid()
 
     # AX5 -- Validation Accuracy
+    # NOTE: changed to binary val accuracy
     sns.lineplot(
         x=epochs,
-        y=fold.val_accuracies,
+        y=fold.val_binary_accuracies,
         ax=ax5,
         color="green",
     )
     sns.lineplot(
         x=epochs,
-        y=get_rolling_avg(fold.val_accuracies, rolling_window),
+        y=get_rolling_avg(fold.val_binary_accuracies, rolling_window),
         ax=ax5,
         alpha=0.5,
         color="red",
     )
     ax5.set_xlabel("Epoch")
-    ax5.set_ylabel("Validation Accuracy")
+    ax5.set_ylabel("Binary Accuracy")
     ax5.grid()
 
     # AX6 -- Class-wise Calibration Error
@@ -382,7 +385,5 @@ if __name__ == "__main__":
         config = ExperimentAnalysis.model_validate(json.load(f))
 
     dampen_epochs = 3
-    plot_fold_results(
-        config.experiment_id, fold_num=config.analysis.fold, epochs_dampen=dampen_epochs
-    )
+    plot_fold_results(config.experiment_id, fold_num=3, epochs_dampen=dampen_epochs)
 # %%

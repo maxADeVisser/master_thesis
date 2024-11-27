@@ -9,8 +9,8 @@ package-mode = false
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
 ipykernel = "^6.29.5"
-# numpy = "^1.22"                                       # downgraded numpy to 1.22 for umap installation
-numpy = "^2.1.0"                                      # downgraded numpy to 1.22 for umap installation
+numpy = "^1.22"         # downgraded numpy to 1.22 for shap installation
+# numpy = "^2.1.0"      # version that was installed before
 pandas = "^2.2.2"
 torch = "^2.4.0"
 torchvision = "^0.19.0"
@@ -25,10 +25,11 @@ seaborn = "^0.13.2"
 scikit-learn = "^1.5.2"
 plotly = "^5.24.1"
 nbformat = "^5.10.4"
-# llvmlite = "^0.43.0"                                  # dependency for umap-learn
-# numba = "^0.60.0"                                     # dependency for umap-learn
-# umap-learn = "^0.5.7"
 fiftyone = "^1.0.2"
+llvmlite = "^0.43.0"    # dependency for shap
+slicer = "^0.0.8"       # dependency for shap
+numba = "^0.60.0"       # dependency for shap
+shap = "^0.46.0"
 
 [tool.poetry.group.dev.dependencies]
 tensorboard = "^2.18.0"
