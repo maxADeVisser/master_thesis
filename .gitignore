@@ -13,8 +13,6 @@ mlartifacts/
 .DS_Store
 *.pth
 job.*.out
-run_*
-fold*
 annotations*.json
 files_from_before_adding_nodule_ids/
 *TEST_*
