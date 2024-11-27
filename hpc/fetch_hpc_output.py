@@ -128,12 +128,12 @@ if __name__ == "__main__":
     # FETCH RESULTS FOR TREND PLOT
     # experiments = ["c30_3D_2411_1947", "c50_3D_2411_1831"] # 3D
     experiments = [  # 2.5D
-        "c20_25D_2411_1631",
-        "c30_25D_2411_1543",
-        "c40_25D_2411_1640",
-        "c50_25D_2411_1812",
-        "c60_25D_2411_1641",
-        "c70_25D_2411_1705",
+        "c20_3D_2511_0013",
+        "c30_3D_2411_1947",
+        "c40_3D_2511_1536",
+        "c50_3D_2411_1831",
+        "c60_3D_2511_2027",
+        "c70_3D_2411_1824",
     ]
     fetch_all_final_experiment_results(experiments, user="newuser")
 
