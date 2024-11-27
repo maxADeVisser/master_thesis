@@ -33,8 +33,8 @@ experiment_id = config.experiment_id
 dimensionality = config.analysis.dimensionality
 fold = 0
 # DEBUGGING
-batch_size = 1
-num_workers = 0
+batch_size = 4
+num_workers = 2
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 precomputed_dir = f"{env_config.PROJECT_DIR}/data/precomputed_resampled_rois_{context_size}C_{dimensionality}"
