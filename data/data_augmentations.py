@@ -5,7 +5,6 @@ import torch
 import torchvision.transforms as transforms
 
 from project_config import SEED, pipeline_config
-from utils.logger_setup import logger
 
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
@@ -28,11 +27,6 @@ def random_90_degree_rotation_3D(tensor3D: torch.Tensor) -> torch.Tensor:
     """Randomly rotate the 3D input tensor by 90 degrees along each axis with a independent probability of 0.5"""
     tensor3D = torch.squeeze(tensor3D, dim=0)  # remove the channel dimension
     original_shape = tensor3D.shape
-    assert original_shape == (
-        CONTEXT_SIZE,
-        CONTEXT_SIZE,
-        CONTEXT_SIZE,
-    ), f"Shape of squeezed input tensor is not (30, 30, 30). It is {original_shape}"
 
     k_z = random.choice([0, 1, 2, 3])
     tensor3D = torch.rot90(tensor3D, k=k_z, dims=(1, 2))

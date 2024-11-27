@@ -1,5 +1,8 @@
+# %%
 """Here we define functions to process the data. These functions will be used when building training and validation datasets.
 source: https://keras.io/examples/vision/3D_image_classification/"""
+
+from typing import Literal
 
 import numpy as np
 import torch
@@ -75,8 +78,84 @@ def clip_and_normalise_volume(
     return normalised
 
 
+def mask_out_center(
+    roi: torch.Tensor, pixel_diameter: int, dim: Literal["2.5D", "3D"]
+) -> torch.Tensor:
+    """
+    Masks out the center of the ROI to remove the nodule only keep context information.
+    Assumes the ROI is either a 3D uniform cube with 1 channel or 2.5D uniform square with 3-channels
+
+    Args:
+        pixel_diameter (int): the diameter of the cutout in pixels. Is unified across all dimensions.
+    """
+    assert (
+        pixel_diameter < roi.shape[-1]
+    ), "Pixel diameter must be smaller than the ROI."
+
+    center = roi.shape[-1] // 2
+    start = center - (pixel_diameter // 2)
+    end = center + (pixel_diameter // 2)
+
+    if dim == "3D":
+        roi[0, start:end, start:end, start:end] = 0
+        return roi
+
+    elif dim == "2.5D":
+        roi[0, start:end, start:end] = 0
+        roi[1, start:end, start:end] = 0
+        roi[2, start:end, start:end] = 0
+        return roi
+    else:
+        raise ValueError("Invalid dimension. Choose either '2.5D' or '3D'.")
+
+
+# %%
 if __name__ == "__main__":
     # test clip_and_normalise_volume
-    nodule_scan = torch.tensor([[-1000, 400], [0, 1000]])
-    print(nodule_scan)
-    print(clip_and_normalise_volume(nodule_scan))
+    # nodule_scan = torch.tensor([[-1000, 400], [0, 1000]])
+    # print(nodule_scan)
+    # print(clip_and_normalise_volume(nodule_scan))
+
+    import matplotlib.pyplot as plt
+    from torch.utils.data import DataLoader
+
+    from data.dataset import PrecomputedNoduleROIs
+
+    # 3D test of mask_out_center
+    loader = DataLoader(
+        PrecomputedNoduleROIs(
+            "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_30C_3D",
+            data_augmentation=False,
+            remove_center=True,
+        ),
+        batch_size=2,
+        shuffle=True,
+    )
+    feature, _, _ = next(iter(loader))
+    feature = feature[0]
+    middle = feature.shape[-1] // 2
+    plt.imshow(feature[0, :, :, middle], cmap="gray")
+    feature.shape
+
+    masked = mask_out_center(feature, pixel_diameter=25, dim="3D")
+    masked.shape
+    plt.imshow(masked[0, :, :, middle], cmap="gray")
+
+    # 2.5D test of mask_out_center
+    loader = DataLoader(
+        PrecomputedNoduleROIs(
+            "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_30C_2.5D",
+            data_augmentation=False,
+            remove_center=True,
+        ),
+        batch_size=1,
+        shuffle=True,
+    )
+    feature, _, _ = next(iter(loader))
+    feature = feature[0]
+    plt.imshow(feature[1, :, :], cmap="gray")
+    feature.shape
+
+    masked = mask_out_center(feature, pixel_diameter=20, dim="2.5D")
+    masked.shape
+    plt.imshow(masked[1, :, :], cmap="gray")
