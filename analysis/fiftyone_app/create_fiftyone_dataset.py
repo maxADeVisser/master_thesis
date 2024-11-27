@@ -12,8 +12,8 @@ with open("experiment_analysis_parameters.json", "r") as f:
 # --- SCRIPT PARAMS ---
 context_size = config.analysis.context_size
 experiment_id = config.experiment_id
-fold = config.analysis.fold
 # ---------------------
+fold = 0
 
 
 def create_fiftyone_nodule_dataset(

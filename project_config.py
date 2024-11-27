@@ -47,9 +47,7 @@ class _EnvConfig:
                 ]
             )
         except FileNotFoundError:
-            print(
-                "WARNING: The LIDC-IDRI dataset directory is not found.\nMost of the project will not work.\nPlease set the LIDC_IDRI_DIR env var in a .env file in the root directory of the project"
-            )
+            print("WARNING: The LIDC-IDRI dataset directory is not found.")
 
         self.nodule_df_file = f"{project_dir}/preprocessing/nodule_df.csv"
         self.processed_nodule_df_file = (

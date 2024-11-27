@@ -17,7 +17,7 @@ with open("experiment_analysis_parameters.json", "r") as f:
 
 context_size = config.analysis.context_size
 experiment_id = config.experiment_id
-fold = config.analysis.fold
+fold = 0
 
 dataset = fo.load_dataset(f"{experiment_id}")
 
