@@ -303,7 +303,7 @@ def load_resnet_model(
     """
     Load a ResNet model from a checkpoint file.
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = ResNet50(in_channels=in_channels, num_classes=5, dims=dims)
     model.load_state_dict(torch.load(f=weights_path, map_location=torch.device(device)))
     return model

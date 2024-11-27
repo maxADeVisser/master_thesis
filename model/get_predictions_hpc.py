@@ -1,3 +1,12 @@
+import os
+import sys
+
+import torch
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+sys.path.append(os.getenv("PROJECT_DIR"))
+
 import json
 import os
 
@@ -22,8 +31,11 @@ with open("experiment_analysis_parameters.json", "r") as f:
 context_size = config.analysis.context_size
 experiment_id = config.experiment_id
 dimensionality = config.analysis.dimensionality
-# fold = config.analysis.fold
 fold = 0
+# DEBUGGING
+batch_size = 1
+num_workers = 0
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 precomputed_dir = f"{env_config.PROJECT_DIR}/data/precomputed_resampled_rois_{context_size}C_{dimensionality}"
 assert os.path.exists(
@@ -45,11 +57,14 @@ in_channels = 1 if dimensionality == "3D" else 3
 model = load_resnet_model(
     weights_path=weights_path, in_channels=in_channels, dims=dimensionality
 )
-logger.info(f"Loaded model weights from {weights_path} to device {model.device}")
+model.to(DEVICE)
+logger.info(f"Loaded model weights from {weights_path} to device {DEVICE}")
 model.eval()
 
 dataset = PrecomputedNoduleROIs(precomputed_dir, data_augmentation=False)
-loader = DataLoader(dataset, batch_size=16, shuffle=False)
+loader = DataLoader(
+    dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
+)
 all_preds = []
 all_confidence = []
 all_nodule_ids = []
@@ -57,10 +72,11 @@ for i, (nodule_roi, label, nodule_id) in tqdm(
     enumerate(loader), total=len(loader), desc="Predicting on Batches"
 ):
     # transfer to device
-    nodule_roi = nodule_roi.to(model.device)
+    nodule_roi = nodule_roi.to(DEVICE)
 
     # forward pass
     logits = model(nodule_roi)
+    logits = logits.to("cpu")
 
     # get predictions:
     preds = get_pred_malignancy_from_logits(logits)
