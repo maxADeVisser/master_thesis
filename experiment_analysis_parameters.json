@@ -1,16 +1,29 @@
 {
   "analysis": {
-    "context_size": 50,
+    "context_size": 70,
     "dimensionality": "3D",
     "fold": 0,
-    "folds": [0, 1, 2, 3, 4]
+    "folds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ]
   },
-  "experiment_id": "c50_3D_2411_1831",
+  "experiment_id": "c70_3D_2411_1824",
   "holdout_set": false,
   "hpc_job_id": 1682,
   "precompute_nodule_dataset": {
-    "context_windows": [30, 50, 70],
-    "dimensionalities": ["2.5D", "3D"],
+    "context_windows": [
+      30,
+      50,
+      70
+    ],
+    "dimensionalities": [
+      "2.5D",
+      "3D"
+    ],
     "holdout_set": true
   }
 }

@@ -266,8 +266,6 @@ if __name__ == "__main__":
     # testing precomputed dataset ----------------
     import matplotlib.pyplot as plt
 
-    from project_config import pipeline_config
-
     dataset = PrecomputedNoduleROIs(
         "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_50C_3D",
         data_augmentation=True,

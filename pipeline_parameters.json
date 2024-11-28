@@ -1,14 +1,17 @@
 {
   "dataset": {
     "center_mask_size": 25,
-    "clipping_bounds": [-1000, 400],
+    "clipping_bounds": [
+      -1000,
+      400
+    ],
     "context_window": 70,
     "data_augmentation": true,
-    "dimensionality": "2.5D",
+    "dimensionality": "3D",
     "segment_nodule": "none"
   },
   "model": {
-    "in_channels": 3,
+    "in_channels": 1,
     "num_classes": 5
   },
   "training": {
