@@ -79,6 +79,7 @@ if __name__ == "__main__":
     dataset = PrecomputedNoduleROIs(
         "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_70C_3D",
         data_augmentation=True,
+        dimensionality="3D",
     )
     loader = DataLoader(dataset, batch_size=2, shuffle=True)
     feature, _, _ = next(iter(loader))

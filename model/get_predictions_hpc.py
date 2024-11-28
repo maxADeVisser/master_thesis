@@ -60,7 +60,9 @@ model.to(DEVICE)
 logger.info(f"Loaded model weights from {weights_path} to device {DEVICE}")
 model.eval()
 
-dataset = PrecomputedNoduleROIs(precomputed_dir, data_augmentation=False)
+dataset = PrecomputedNoduleROIs(
+    precomputed_dir, data_augmentation=False, dimensionality=dimensionality
+)
 loader = DataLoader(
     dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
 )

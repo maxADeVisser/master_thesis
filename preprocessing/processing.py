@@ -124,9 +124,9 @@ if __name__ == "__main__":
     # 3D test of mask_out_center
     loader = DataLoader(
         PrecomputedNoduleROIs(
-            "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_50C_3D",
+            "data/precomputed_resampled_rois_30C_3D",
             data_augmentation=False,
-            remove_center=True,
+            dimensionality="3D",
         ),
         batch_size=2,
         shuffle=True,
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         PrecomputedNoduleROIs(
             "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_30C_2.5D",
             data_augmentation=False,
-            remove_center=True,
+            dimensionality="2.5D",
         ),
         batch_size=1,
         shuffle=True,

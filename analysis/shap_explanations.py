@@ -27,6 +27,7 @@ class ResNetWrapper(torch.nn.Module):
 dataset = PrecomputedNoduleROIs(
     "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_50C_2.5D",
     data_augmentation=False,
+    dimensionality="2.5D",
 )
 
 loader = DataLoader(dataset, batch_size=110, shuffle=False)

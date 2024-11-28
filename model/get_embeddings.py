@@ -48,7 +48,7 @@ model = load_resnet_model(
 model.eval()
 
 dataset = PrecomputedNoduleROIs(
-    prepcomputed_dir=processed_dir_path, data_augmentation=False, remove_center=False
+    prepcomputed_dir=processed_dir_path, data_augmentation=False, dimensionality=n_dims
 )
 
 feature_vector_size = 2048  # size of the feature vector from the model

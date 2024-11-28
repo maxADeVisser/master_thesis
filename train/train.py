@@ -277,6 +277,7 @@ def train_model(
             prepcomputed_dir=env_config.PREPROCESSED_DATA_DIR,
             data_augmentation=DATA_AUGMENTATION,
             indices=train_idxs,
+            dimensionality=data_dimensionality,
         )
         train_loader = DataLoader(
             train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
@@ -286,6 +287,7 @@ def train_model(
             prepcomputed_dir=env_config.PREPROCESSED_DATA_DIR,
             data_augmentation=DATA_AUGMENTATION,
             indices=val_idxs,
+            dimensionality=data_dimensionality,
         )
         val_loader = DataLoader(
             validation_dataset,

@@ -15,10 +15,6 @@ from utils.utils import load_scan
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
-dimensionality = pipeline_config.dataset.dimensionality
-in_channels = pipeline_config.model.in_channels
-context_size = pipeline_config.dataset.context_window
-
 
 def transform_3d_to_25d(volume: torch.Tensor) -> torch.Tensor:
     """
@@ -208,10 +204,14 @@ class PrecomputedNoduleROIs(Dataset):
     def __init__(
         self,
         prepcomputed_dir: str,
+        dimensionality: Literal["2.5D", "3D"],
         data_augmentation: bool = True,
         indices: list[int] | None = None,  # for cross-validation
     ) -> None:
-        logger.info(f"\nLoading precomputed nodule dataset from: {prepcomputed_dir}")
+        assert os.path.exists(
+            prepcomputed_dir
+        ), "@precomputed_dir directory does not exist"
+
         preprocessed_files = sorted(os.listdir(prepcomputed_dir))
         if indices is not None:
             preprocessed_files = [preprocessed_files[i] for i in indices]
@@ -221,6 +221,7 @@ class PrecomputedNoduleROIs(Dataset):
         self.files = [f"{prepcomputed_dir}/{f}" for f in preprocessed_files]
         self.nodule_ids = [n.split(".")[0] for n in preprocessed_files]
         self.data_augmentation = data_augmentation
+        self.dimensionality = dimensionality
 
         # load the first file to get the shape of the data and verify that the it matches the pipeline config settings
         data = torch.load(self.files[0], weights_only=True)
@@ -247,6 +248,7 @@ class PrecomputedNoduleROIs(Dataset):
         """
         data: torch.Tensor = torch.load(self.files[idx], weights_only=True)
         feature, label = data[0], data[1]
+
         if self.data_augmentation:
             feature = apply_augmentations(feature)
         return feature, label, self.nodule_ids[idx]
@@ -257,9 +259,12 @@ if __name__ == "__main__":
     # testing precomputed dataset ----------------
     import matplotlib.pyplot as plt
 
-    pdataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_rois_30C_2.5D",
+    from project_config import pipeline_config
+
+    dataset = PrecomputedNoduleROIs(
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_30C_2.5D",
         data_augmentation=True,
+        dimensionality="2.5D",
     )
     loader = DataLoader(pdataset, batch_size=16, shuffle=False)
     for i, (roi, label, nodule_id) in enumerate(loader):
