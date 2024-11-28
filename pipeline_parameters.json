@@ -1,13 +1,10 @@
 {
   "dataset": {
     "center_mask_size": 25,
-    "clipping_bounds": [
-      -1000,
-      400
-    ],
+    "clipping_bounds": [-1000, 400],
     "context_window": 70,
     "data_augmentation": true,
-    "dimensionality": "3D",
+    "dimensionality": "2.5D",
     "segment_nodule": "none"
   },
   "model": {
