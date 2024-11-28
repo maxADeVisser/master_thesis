@@ -17,6 +17,7 @@ with open("experiment_analysis_parameters.json", "r") as f:
 
 context_size = config.analysis.context_size
 experiment_id = config.experiment_id
+dimensionality = config.analysis.dimensionality
 fold = 0
 
 dataset = fo.load_dataset(f"{experiment_id}")
@@ -45,5 +46,7 @@ sample_id_embedding_mapping = {
 }
 
 fob.compute_visualization(
-    samples=dataset, points=sample_id_embedding_mapping, brain_key="resnet50_embeddings"
+    samples=dataset,
+    points=sample_id_embedding_mapping,
+    brain_key=f"c{context_size}_{dimensionality}_embeddings",
 )
