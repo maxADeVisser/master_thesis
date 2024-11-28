@@ -54,6 +54,7 @@ NUM_CLASSES = pipeline_config.model.num_classes
 IN_CHANNELS = pipeline_config.model.in_channels
 DATA_DIMENSIONALITY = pipeline_config.dataset.dimensionality
 CONTEXT_WINDOW_SIZE = pipeline_config.dataset.context_window
+CENTER_MASK_SIZE = pipeline_config.dataset.center_mask_size
 DATA_AUGMENTATION = pipeline_config.dataset.data_augmentation
 DO_CROSS_VALIDATION = pipeline_config.training.do_cross_validation
 CV_FOLDS = pipeline_config.training.cross_validation_folds
@@ -221,6 +222,7 @@ def train_model(
         CONTEXT_WINDOW_SIZE: {context_window_size}
         DATA DIMENSIONALITY: {data_dimensionality}
         DATA AUGMENTATION: {DATA_AUGMENTATION}
+        CENTER MASK SIZE: {CENTER_MASK_SIZE}
         DO CROSS VALIDATION: {DO_CROSS_VALIDATION}
         TOTAL NODULES USED FOR TRAINING: {len(nodule_df)}
         CROSS VALIDATION: {cross_validation}
@@ -278,6 +280,7 @@ def train_model(
             data_augmentation=DATA_AUGMENTATION,
             indices=train_idxs,
             dimensionality=data_dimensionality,
+            center_mask_size=CENTER_MASK_SIZE,
         )
         train_loader = DataLoader(
             train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS
@@ -288,6 +291,7 @@ def train_model(
             data_augmentation=DATA_AUGMENTATION,
             indices=val_idxs,
             dimensionality=data_dimensionality,
+            center_mask_size=CENTER_MASK_SIZE,
         )
         val_loader = DataLoader(
             validation_dataset,

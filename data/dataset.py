@@ -6,7 +6,7 @@ from pylidc.utils import consensus, volume_viewer
 from torch.utils.data import DataLoader, Dataset
 
 from data.data_augmentations import apply_augmentations
-from preprocessing.processing import clip_and_normalise_volume
+from preprocessing.processing import clip_and_normalise_volume, mask_out_center
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *
 from utils.logger_setup import logger
@@ -206,6 +206,7 @@ class PrecomputedNoduleROIs(Dataset):
         prepcomputed_dir: str,
         dimensionality: Literal["2.5D", "3D"],
         data_augmentation: bool = True,
+        center_mask_size: int | None = None,
         indices: list[int] | None = None,  # for cross-validation
     ) -> None:
         assert os.path.exists(
@@ -221,6 +222,7 @@ class PrecomputedNoduleROIs(Dataset):
         self.files = [f"{prepcomputed_dir}/{f}" for f in preprocessed_files]
         self.nodule_ids = [n.split(".")[0] for n in preprocessed_files]
         self.data_augmentation = data_augmentation
+        self.center_mask_size = center_mask_size
         self.dimensionality = dimensionality
 
         # load the first file to get the shape of the data and verify that the it matches the pipeline config settings
@@ -250,7 +252,12 @@ class PrecomputedNoduleROIs(Dataset):
         feature, label = data[0], data[1]
 
         if self.data_augmentation:
-            feature = apply_augmentations(feature)
+            feature = apply_augmentations(feature, self.dimensionality)
+
+        if self.center_mask_size:
+            feature = mask_out_center(
+                feature, self.center_mask_size, dim=self.dimensionality
+            )
         return feature, label, self.nodule_ids[idx]
 
 
@@ -262,61 +269,25 @@ if __name__ == "__main__":
     from project_config import pipeline_config
 
     dataset = PrecomputedNoduleROIs(
-        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_30C_2.5D",
+        "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_50C_3D",
         data_augmentation=True,
-        dimensionality="2.5D",
+        dimensionality="3D",
+        center_mask_size=25,
     )
-    loader = DataLoader(pdataset, batch_size=16, shuffle=False)
+    loader = DataLoader(dataset, batch_size=6, shuffle=False)
     for i, (roi, label, nodule_id) in enumerate(loader):
         print(roi.shape)
-        plt.imshow(roi[0][1], cmap="gray")
+        middle = roi.shape[-1] // 2
+        plt.imshow(roi[0, 0, :, :, middle], cmap="gray")
         plt.show()
-        plt.imshow(roi[1][1], cmap="gray")
+        plt.imshow(roi[1, 0, :, :, middle], cmap="gray")
         plt.show()
-        plt.imshow(roi[2][1], cmap="gray")
+        plt.imshow(roi[2, 0, :, :, middle], cmap="gray")
         plt.show()
-        plt.imshow(roi[3][1], cmap="gray")
+        plt.imshow(roi[3, 0, :, :, middle], cmap="gray")
         plt.show()
-        plt.imshow(roi[4][1], cmap="gray")
+        plt.imshow(roi[4, 0, :, :, middle], cmap="gray")
         plt.show()
-        plt.imshow(roi[5][1], cmap="gray")
+        plt.imshow(roi[5, 0, :, :, middle], cmap="gray")
         plt.show()
         break
-    # -----------------------
-
-    # testing dataloader
-    dataset = LIDC_IDRI_DATASET(
-        context_size=70, segmentation_configuration="none", n_dims="2.5D"
-    )
-    train_loader = DataLoader(dataset, batch_size=2, shuffle=True)
-    for i, (roi, label, nodule_id) in enumerate(train_loader):
-        print(roi.shape)
-        print(label)
-        print(nodule_id)
-        break
-    middle_slice = roi.shape[-1] // 2
-    plt.imshow(roi[0][1], cmap="gray")
-    plt.title(f"Label malignancy score: {label[0]}")
-    plt.show()
-
-    # Test Nodule
-    IMG_DIM = 70
-    dataset = LIDC_IDRI_DATASET(
-        context_size=IMG_DIM, segmentation_configuration="none", n_dims="2.5D"
-    )
-
-    test_nodule = Nodule(
-        dataset.nodule_df.iloc[1],
-        nodule_context_size=IMG_DIM,
-        segmentation_setting="none",
-        nodule_dim="3D",
-        # nodule_dim="2.5D",
-    )
-    test_nodule.nodule_roi.shape
-    middle_slice = test_nodule.nodule_roi.shape[-1] // 2
-    plt.imshow(test_nodule.nodule_roi[0, :, :, middle_slice], cmap="gray")
-    plt.show()
-
-    # test_nodule.visualise_nodule_bbox()
-
-# %%

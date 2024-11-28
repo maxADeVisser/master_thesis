@@ -111,11 +111,6 @@ def mask_out_center(
 
 # %%
 if __name__ == "__main__":
-    # test clip_and_normalise_volume
-    # nodule_scan = torch.tensor([[-1000, 400], [0, 1000]])
-    # print(nodule_scan)
-    # print(clip_and_normalise_volume(nodule_scan))
-
     import matplotlib.pyplot as plt
     from torch.utils.data import DataLoader
 
@@ -125,7 +120,7 @@ if __name__ == "__main__":
     loader = DataLoader(
         PrecomputedNoduleROIs(
             "data/precomputed_resampled_rois_30C_3D",
-            data_augmentation=False,
+            data_augmentation=True,
             dimensionality="3D",
         ),
         batch_size=2,
@@ -134,8 +129,8 @@ if __name__ == "__main__":
     feature, _, _ = next(iter(loader))
     feature = feature[0]
     middle = feature.shape[-1] // 2
-    # plt.imshow(feature[0, :, :, middle], cmap="gray")
-    # feature.shape
+    plt.imshow(feature[0, :, :, middle], cmap="gray")
+    feature.shape
 
     masked = mask_out_center(feature, pixel_diameter=25, dim="3D")
     masked.shape
@@ -145,7 +140,7 @@ if __name__ == "__main__":
     loader = DataLoader(
         PrecomputedNoduleROIs(
             "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_30C_2.5D",
-            data_augmentation=False,
+            data_augmentation=True,
             dimensionality="2.5D",
         ),
         batch_size=1,

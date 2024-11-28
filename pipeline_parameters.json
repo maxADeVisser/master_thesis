@@ -1,5 +1,6 @@
 {
   "dataset": {
+    "center_mask_size": 25,
     "clipping_bounds": [
       -1000,
       400

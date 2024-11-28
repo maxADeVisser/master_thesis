@@ -122,6 +122,9 @@ class ExperimentDataset(BaseModel):
     data_augmentation: bool = Field(
         ..., description="Whether to use data augmentation."
     )
+    center_mask_size: int | None = Field(
+        None, description="Uniform size of the center cut-out mask."
+    )
 
 
 class ExperimentModel(BaseModel):

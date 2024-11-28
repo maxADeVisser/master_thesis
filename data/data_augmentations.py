@@ -1,5 +1,6 @@
 # %%
 import random
+from typing import Literal
 
 import torch
 import torchvision.transforms as transforms
@@ -9,8 +10,6 @@ from project_config import SEED, pipeline_config
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 random.seed(SEED)
-
-DIMENSIONALITY = pipeline_config.dataset.dimensionality
 
 # DEBUGGING:
 BATCH_SIZE = pipeline_config.training.batch_size
@@ -57,15 +56,16 @@ def random_90_degree_rotation_3D(tensor3D: torch.Tensor) -> torch.Tensor:
     return tensor3D
 
 
-match DIMENSIONALITY:
-    case "2.5D":
-        t = transforms.Compose([transforms.Lambda(random_90_degree_rotation_2D)])
-    case "3D":
-        t = transforms.Compose([transforms.Lambda(random_90_degree_rotation_3D)])
-
-
-def apply_augmentations(nodule_roi: torch.Tensor) -> torch.Tensor:
-    return t(nodule_roi)
+def apply_augmentations(
+    nodule_roi: torch.Tensor, dimensionality: Literal["2.5D", "3D"]
+) -> torch.Tensor:
+    match dimensionality:
+        case "2.5D":
+            t = transforms.Compose([transforms.Lambda(random_90_degree_rotation_2D)])
+            return t(nodule_roi)
+        case "3D":
+            t = transforms.Compose([transforms.Lambda(random_90_degree_rotation_3D)])
+            return t(nodule_roi)
 
 
 # %%
