@@ -124,7 +124,7 @@ if __name__ == "__main__":
     # 3D test of mask_out_center
     loader = DataLoader(
         PrecomputedNoduleROIs(
-            "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_30C_3D",
+            "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_50C_3D",
             data_augmentation=False,
             remove_center=True,
         ),
@@ -134,8 +134,8 @@ if __name__ == "__main__":
     feature, _, _ = next(iter(loader))
     feature = feature[0]
     middle = feature.shape[-1] // 2
-    plt.imshow(feature[0, :, :, middle], cmap="gray")
-    feature.shape
+    # plt.imshow(feature[0, :, :, middle], cmap="gray")
+    # feature.shape
 
     masked = mask_out_center(feature, pixel_diameter=25, dim="3D")
     masked.shape

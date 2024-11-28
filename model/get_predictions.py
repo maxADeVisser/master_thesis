@@ -13,6 +13,7 @@ from model.ResNet import (
 )
 from project_config import env_config
 from utils.data_models import ExperimentAnalysis
+from utils.logger_setup import logger
 
 with open("experiment_analysis_parameters.json", "r") as f:
     config = ExperimentAnalysis.model_validate(json.load(f))
@@ -21,8 +22,16 @@ with open("experiment_analysis_parameters.json", "r") as f:
 context_size = config.analysis.context_size
 experiment_id = config.experiment_id
 dimensionality = config.analysis.dimensionality
-# fold = config.analysis.fold
+batch_size = 4
+num_workers = 0
 fold = 0
+
+logger.info(
+    f"""
+    Running predictions for experiment {experiment_id} on fold {fold}
+    with context size {context_size} and dimensionality {dimensionality}
+    """
+)
 
 precomputed_dir = f"{env_config.PROJECT_DIR}/data/precomputed_resampled_rois_{context_size}C_{dimensionality}"
 assert os.path.exists(
@@ -48,8 +57,12 @@ model = load_resnet_model(
 )
 model.eval()
 
-dataset = PrecomputedNoduleROIs(precomputed_dir, data_augmentation=False)
-loader = DataLoader(dataset, batch_size=16, shuffle=False)
+dataset = PrecomputedNoduleROIs(
+    precomputed_dir, data_augmentation=False, remove_center=False
+)
+loader = DataLoader(
+    dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
+)
 all_preds = []
 all_confidence = []
 all_nodule_ids = []

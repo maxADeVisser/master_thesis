@@ -225,30 +225,12 @@ class PrecomputedNoduleROIs(Dataset):
         # load the first file to get the shape of the data and verify that the it matches the pipeline config settings
         data = torch.load(self.files[0], weights_only=True)
 
-        # Verify that the shape of the precomputed data matches the expected shape
-        # BUG, when used from get_predictions.py, the context_size should not be loaded from the pipeline_config, but from the experiment_analysis_config
-        if dimensionality == "2.5D":
-            assert data[0].shape == (
-                3,
-                context_size,
-                context_size,
-            ), f"Shape of the precomputed data: {data[0].shape} does not match the expected shape: {3, context_size, context_size}"
-        elif dimensionality == "3D":
-            assert data[0].shape == (
-                1,
-                context_size,
-                context_size,
-                context_size,
-            ), f"Shape of the precomputed data: {data[0].shape} does not match the expected shape: {1, context_size, context_size, context_size}"
-
         logger.info(
             f"""
             Precomputed nodule dataset loaded successfully with parameters:
             Precomputed directory path: {prepcomputed_dir}
             Number of nodules: {len(self.files)} {indices_message}
-            Dimensionality: {dimensionality}
-            Context size: {context_size}
-            In channels: {in_channels}
+            Data shape: {data[0].shape}
             Data augmentation: {self.data_augmentation}
             """
         )
@@ -257,6 +239,12 @@ class PrecomputedNoduleROIs(Dataset):
         return len(self.files)
 
     def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor, str]:
+        """
+        Returns:
+            - feature: the nodule ROI, either 3D or 2.5D with channels
+            - label: the consensus malignancy score of the nodule
+            - nodule_id: the unique id of the nodule
+        """
         data: torch.Tensor = torch.load(self.files[idx], weights_only=True)
         feature, label = data[0], data[1]
         if self.data_augmentation:
