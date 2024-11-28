@@ -32,16 +32,10 @@ context_size = config.analysis.context_size
 experiment_id = config.experiment_id
 dimensionality = config.analysis.dimensionality
 fold = 0
-batch_size = 4
+batch_size = 2
 num_workers = 2
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-logger.info(
-    f"""
-    Running predictions for experiment {experiment_id} on fold {fold}
-    with context size {context_size} and dimensionality {dimensionality}
-    """
-)
 
 precomputed_dir = f"{env_config.PROJECT_DIR}/data/precomputed_resampled_rois_{context_size}C_{dimensionality}"
 assert os.path.exists(
@@ -55,6 +49,21 @@ pred_out_file = f"{pred_out_dir}/pred_nodule_df_fold{fold}.csv"
 
 weights_path = (
     f"{env_config.PROJECT_DIR}/out/model_runs/{experiment_id}/fold{fold}/model.pth"
+)
+
+logger.info(
+    f"""
+    Running predictions for experiment {experiment_id} on fold {fold}
+    with context size {context_size} and dimensionality {dimensionality}
+
+    Using precomputed ROIs from {precomputed_dir}
+    with model weights from {weights_path}
+    Saving predictions to {pred_out_file}
+
+    Batch size: {batch_size}
+    Num workers: {num_workers}
+    Using GPU: {torch.cuda.get_device_name(0)}
+    """
 )
 
 nodule_df = pd.read_csv(env_config.processed_nodule_df_file)
