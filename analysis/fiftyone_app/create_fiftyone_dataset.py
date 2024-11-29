@@ -122,6 +122,6 @@ def create_fiftyone_nodule_dataset(
 
 
 if __name__ == "__main__":
-    create_fiftyone_nodule_dataset("c30", overwrite_if_exists=True)
-    create_fiftyone_nodule_dataset("c50", overwrite_if_exists=True)
-    create_fiftyone_nodule_dataset("c70", overwrite_if_exists=True)
+    create_fiftyone_nodule_dataset("c30", overwrite_if_exists=False)
+    create_fiftyone_nodule_dataset("c50", overwrite_if_exists=False)
+    create_fiftyone_nodule_dataset("c70", overwrite_if_exists=False)
