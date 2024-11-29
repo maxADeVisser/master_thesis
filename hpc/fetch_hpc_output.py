@@ -90,7 +90,12 @@ def fetch_predictions(experiment_id: str, fold: int = 0, user: str = "newuser") 
     Fetch the model weights from the HPC
     """
     hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/out/predictions/{experiment_id}/pred_nodule_df_fold{fold}.csv"
-    out_dir = f"/Users/{user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}/fold_{fold}"
+    out_dir = (
+        f"/Users/{user}/Documents/ITU/master_thesis/out/predictions/{experiment_id}"
+    )
+    if not os.path.exists(out_dir):
+        print("Creating output directory")
+        os.makedirs(out_dir, exist_ok=True)
     _transfer_hpc_to_local(hpc_out, out_dir)
 
 
@@ -107,9 +112,8 @@ if __name__ == "__main__":
     # experiment_id = config.experiment_id
     # job_id = config.hpc_job_id
     experiment_id = "c70_3D_2411_1824"
-    # job_id =
 
-    local_user = "maxvisser"
+    local_user = "newuser"
     local_exp_path = (
         f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
     )

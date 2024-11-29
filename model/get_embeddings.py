@@ -35,7 +35,7 @@ if not os.path.exists(processed_dir_path):
         f"Precomputed ROIs not found for {context_size} | {n_dims} (both holdout and full needs to be there). Precompute the nodule ROIs first using precomputed_nodule_dataset.py"
     )
 
-embeddings_out = f"{env_config.PROJECT_DIR}/out/embeddings/{experiment_id}/fold{fold}"
+embeddings_out = f"{env_config.PROJECT_DIR}/model/embeddings/{experiment_id}/fold{fold}"
 if not os.path.exists(embeddings_out):
     os.makedirs(embeddings_out)
 embeddings_out_file = f"{embeddings_out}/embeddings_df.csv"

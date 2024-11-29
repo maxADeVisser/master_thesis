@@ -38,7 +38,7 @@ assert os.path.exists(
     precomputed_dir
 ), f"Precomputed ROIs not found at {precomputed_dir}. Run precomputed_nodule_dataset.py first"
 
-pred_out_dir = f"{env_config.OUT_DIR}/predictions/{experiment_id}"
+pred_out_dir = f"{env_config.PROJECT_DIR}/model/predictions/{experiment_id}"
 if not os.path.exists(pred_out_dir):
     os.makedirs(pred_out_dir, exist_ok=True)
 pred_out_file = f"{pred_out_dir}/pred_nodule_df_fold{fold}.csv"

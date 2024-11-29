@@ -22,9 +22,7 @@ fold = 0
 
 dataset = fo.load_dataset(f"{experiment_id}")
 
-embeddings_df_path = (
-    f"{env_config.OUT_DIR}/embeddings/{experiment_id}/fold{fold}/embeddings_df.csv"
-)
+embeddings_df_path = f"{env_config.PROJECT_DIR}/model/embeddings/{experiment_id}/fold{fold}/embeddings_df.csv"
 embeddings_df = pd.read_csv(embeddings_df_path).set_index("nodule_id")
 
 nodule_id_sample_id_mapping = {sample["nodule_id"]: sample.id for sample in dataset}

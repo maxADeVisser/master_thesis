@@ -24,7 +24,7 @@ def create_fiftyone_nodule_dataset(
     )
 
     # load predictions and embeddings
-    pred_df_path = f"{env_config.OUT_DIR}/predictions/{experiment_id}/pred_nodule_df_fold{fold}.csv"
+    pred_df_path = f"{env_config.PROJECT_DIR}/model/predictions/{experiment_id}/pred_nodule_df_fold{fold}.csv"
     try:
         pred_nodule_df = pd.read_csv(pred_df_path).set_index("nodule_id")
     except FileNotFoundError:
