@@ -8,14 +8,14 @@ from tqdm import tqdm
 
 experiments = [
     "c30_25D_2411_1543",
-    "c50_25D_2411_1812",
+    # "c50_25D_2411_1812",
     "c70_25D_2411_1705",
     "c50_3D_2411_1831",
 ]
 fold = 0
 
 for experiment_id in tqdm(experiments, total=len(experiments), desc="Exporting tags"):
-    export_dir = f"/Users/newuser/Documents/ITU/master_thesis/analysis/fiftyone_app/app_annotations"
+    export_dir = f"/Users/maxvisser/Documents/ITU/master_thesis/analysis/fiftyone_app/app_annotations"
     out_file_name = f"{experiment_id}_fold{fold}.csv"
     dataset_name = f"{experiment_id}"
 
