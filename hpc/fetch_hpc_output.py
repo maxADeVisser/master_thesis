@@ -103,47 +103,47 @@ def fetch_predictions(experiment_id: str, fold: int = 0, user: str = "newuser") 
 if __name__ == "__main__":
     # TODO clean this up
 
-    from utils.data_models import ExperimentAnalysis
+    # from utils.data_models import ExperimentAnalysis
 
-    # SCRIPT PARAMS ---------
-    with open("experiment_analysis_parameters.json", "r") as f:
-        config = ExperimentAnalysis.model_validate(json.load(f))
+    # # SCRIPT PARAMS ---------
+    # with open("experiment_analysis_parameters.json", "r") as f:
+    #     config = ExperimentAnalysis.model_validate(json.load(f))
 
-    experiment_id = config.experiment_id
-    job_id = config.hpc_job_id
-    experiment_id = "c50_25D_2811_2112"
+    # experiment_id = config.experiment_id
+    # job_id = config.hpc_job_id
+    # experiment_id = "c50_25D_2811_2112"
 
-    local_user = "newuser"
-    local_exp_path = (
-        f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
-    )
+    # local_user = "newuser"
+    # local_exp_path = (
+    #     f"/Users/{local_user}/Documents/ITU/master_thesis/hpc/jobs/{experiment_id}"
+    # )
 
-    if not os.path.exists(local_exp_path):
-        os.makedirs(local_exp_path)
+    # if not os.path.exists(local_exp_path):
+    #     os.makedirs(local_exp_path)
 
     # Experiment level data
     # get_job_stdout(job_id, local_exp_path)
     # get_experiment_json(experiment_id, local_exp_path)
 
     # Fold level data
-    folds = [0, 1, 2, 3, 4]
-    for f in folds:
-        fold_path = f"{local_exp_path}/fold_{f}"
-        if not os.path.exists(fold_path):
-            os.makedirs(fold_path)
-
-        get_fold_json(experiment_id, f, fold_path)
-        # update_loss_plot(experiment_id, f, local_user)
-        # update_error_distribution(experiment_id, f, local_user)
-        # fetch_model_weights(experiment_id, f, local_user)
-        # fetch_predictions(experiment_id, f, local_user)
+    # folds = [0, 1, 2, 3, 4]
+    # for f in folds:
+    #     fold_path = f"{local_exp_path}/fold_{f}"
+    #     if not os.path.exists(fold_path):
+    #         os.makedirs(fold_path)
+    #     get_fold_json(experiment_id, f, fold_path)
+    #     update_loss_plot(experiment_id, f, local_user)
+    #     update_error_distribution(experiment_id, f, local_user)
+    #     fetch_model_weights(experiment_id, f, local_user)
+    #     fetch_predictions(experiment_id, f, local_user)
 
     # FETCH RESULTS FOR TREND PLOT
-    # experiments = [  # 2.5D
-    #     "c50_25D_2811_2112",
-    #     "c60_25D_2811_2111",
-    #     "c70_25D_2811_2106",
-    # ]
-    # fetch_all_final_experiment_results(experiments, user="newuser")
+    experiments = [  # 2.5D
+        "c40_25D_2811_2153",
+        "c50_25D_2811_2112",
+        "c60_25D_2811_2111",
+        "c70_25D_2811_2106",
+    ]
+    fetch_all_final_experiment_results(experiments, user="newuser")
 
     # %%
