@@ -44,8 +44,17 @@ def create_fiftyone_nodule_dataset(
     pred_25D_path = f"{env_config.PROJECT_DIR}/model/predictions/{experiment_ids['2.5D']}/pred_nodule_df_fold{fold}.csv"
     pred_3D_path = f"{env_config.PROJECT_DIR}/model/predictions/{experiment_ids['3D']}/pred_nodule_df_fold{fold}.csv"
     try:
-        pred_25D_df = pd.read_csv(pred_25D_path).set_index("nodule_id")
+        pred_25D_df = pd.read_csv(pred_25D_path)
+        # add dicom meta data attributes
+        dicom_meta_df = pd.read_csv(
+            f"{env_config.PROJECT_DIR}/preprocessing/dicom_meta_data.csv"
+        )
+        pred_25D_df = pd.merge(
+            pred_25D_df, dicom_meta_df, on="scan_id", how="left"
+        ).set_index("nodule_id")
+
         pred_3D_df = pd.read_csv(pred_3D_path).set_index("nodule_id")
+
     except FileNotFoundError:
         raise FileNotFoundError(f"Predictions not found. Run get_predictions.py first")
 
@@ -117,11 +126,20 @@ def create_fiftyone_nodule_dataset(
         sample["scan_slice_spacing"] = row25D["scan_slice_spacing"]
         sample["scan_pixel_spacing"] = row25D["scan_pixel_spacing"]
 
+        # Dicom meta data fields
+        sample["manufacturer"] = row25D["manufacturer"]
+        sample["manufacturer_model_name"] = row25D["manufacturer_model_name"]
+        sample["x-ray tube current"] = row25D["x-ray tube current"]
+        sample["kvp"] = row25D["kvp"]
+        sample["exposure time"] = row25D["exposure time"]
+        sample["exposure"] = row25D["exposure"]
+        sample["software_versions"] = str(row25D["software_versions"])
+
         sample.save()
     dataset.save()
 
 
 if __name__ == "__main__":
-    create_fiftyone_nodule_dataset("c30", overwrite_if_exists=False)
-    create_fiftyone_nodule_dataset("c50", overwrite_if_exists=False)
-    create_fiftyone_nodule_dataset("c70", overwrite_if_exists=False)
+    create_fiftyone_nodule_dataset("c30", overwrite_if_exists=True)
+    create_fiftyone_nodule_dataset("c50", overwrite_if_exists=True)
+    create_fiftyone_nodule_dataset("c70", overwrite_if_exists=True)
