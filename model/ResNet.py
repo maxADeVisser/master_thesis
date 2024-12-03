@@ -1,7 +1,6 @@
 """
 source: https://github.com/MedMNIST/experiments/blob/main/MedMNIST3D/models.py
 This is the ResNet50 benchmark model for the MedMNIST3D dataset.
-Adapted from kuangliu/pytorch-cifar.
 """
 
 # %%
@@ -39,7 +38,6 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(num_features=out_channels)
-        # self.bn1 = nn.GroupNorm(num_groups=2, num_channels=planes)
         self.conv2 = nn.Conv2d(
             out_channels,
             out_channels,
@@ -49,12 +47,10 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(num_features=out_channels)
-        # self.bn2 = nn.GroupNorm(num_groups=2, num_channels=planes)
         self.conv3 = nn.Conv2d(
             out_channels, n_out_channels, kernel_size=1, stride=1, padding=0, bias=False
         )
         self.bn3 = nn.BatchNorm2d(num_features=n_out_channels)
-        # self.bn3 = nn.GroupNorm(num_groups=2, num_channels=self.expansion*planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != n_out_channels:
@@ -67,7 +63,6 @@ class Bottleneck(nn.Module):
                     bias=False,
                 ),
                 nn.BatchNorm2d(n_out_channels),
-                # nn.GroupNorm(num_groups=2, num_channels=self.expansion*planes)
             )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -95,7 +90,6 @@ class ResNet(nn.Module):
             nn.Conv2d(in_channels, 64, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            # nn.GroupNorm(num_groups=2, num_channels=64),
             self._make_layer(64, num_blocks[0], stride=1),
             self._make_layer(128, num_blocks[1], stride=2),
             self._make_layer(256, num_blocks[2], stride=2),
@@ -317,7 +311,9 @@ if __name__ == "__main__":
     n_classes = 5
 
     # Test 3D input
-    model = ResNet50(in_channels=1, num_classes=5, dims="3D")
+    model = ResNet50(in_channels=3, num_classes=5, dims="2.5D")
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Total number of parameters: {total_params}")
     test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
     test_input.shape
 
