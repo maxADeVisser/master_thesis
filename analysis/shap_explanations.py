@@ -29,6 +29,7 @@ dataset = PrecomputedNoduleROIs(
     "/Users/newuser/Documents/ITU/master_thesis/data/precomputed_resampled_rois_50C_2.5D",
     data_augmentation=False,
     dimensionality="2.5D",
+    center_mask_size=None,
 )
 
 loader = DataLoader(dataset, batch_size=110, shuffle=False)
@@ -36,17 +37,15 @@ batch, labels, ids = next(iter(loader))
 batch = batch.permute(0, 2, 3, 1).numpy()
 
 # select a set of background examples to take an expectation over:
+# and select a set of test examples to explain:
 baseline = batch[:100]
 baseline_labels = labels[:100]
-
-# select a set of test examples to explain:
 test = batch[100:-1]
 test_labels = labels[100:-1]
-test = np.expand_dims(batch[-1], axis=0)
-test_labels = labels[-1]
 
 # Define the classes for which we want to compute the SHAP values:
 classes = ["P(y > 1)", "P(y > 2)", "P(y > 3)", "P(y > 4)"]
+
 # Specifies the shape of individual inputs (ignoring batch size):
 input_shape = test.shape[1:]
 masker = shap.maskers.Image(mask_value=0, shape=input_shape)
@@ -84,27 +83,44 @@ shap_values = explainer(
 # %%
 
 # Show explanation plot
-shap.image_plot(shap_values, test)
+# shap.image_plot(shap_values, test)
 
-# OR Creating own shap plot:
-# overlap shap values with the original image
-img_idx = 0
-logits = model(test[img_idx : img_idx + 1]).detach().numpy()
-predicted_class = np.sum([0.5 < logits])
-shap_overlay = shap_values[img_idx, :, :, :, predicted_class].values
-original_image = test[img_idx]
 
-plt.figure(figsize=(8, 8))
-plt.imshow(original_image[:, :, 1], cmap="gray")
-plt.imshow(
-    shap_overlay.sum(axis=-1),  # Summing across channels
-    cmap="coolwarm",
-    alpha=0.4,
-    vmin=-np.max(np.abs(shap_overlay)),
-    vmax=np.max(np.abs(shap_overlay)),
-)
-plt.colorbar(label="SHAP value", cmap="coolwarm")
-plt.title(f"SHAP Explanation for model prediction: {predicted_class + 1}")
-plt.axis("off")
-plt.tight_layout()
-plt.show()
+# %%
+def plot_shap_overlay(test_img_idx, shap_values, model, test):
+    logits = model(test[test_img_idx : test_img_idx + 1]).detach().numpy()
+    predicted_class = np.sum([0.5 < logits])
+    shap_overlay = shap_values[test_img_idx, :, :, :, predicted_class].values
+    original_image = test[test_img_idx]
+
+    _, ax = plt.subplots(1, 2, figsize=(8, 8), constrained_layout=True)
+
+    ax[0].imshow(original_image[:, :, 1], cmap="gray")
+    ax[0].axis("off")
+    ax[0].set_aspect("equal")
+
+    im = ax[1].imshow(original_image[:, :, 1], cmap="gray")
+    shap_im = ax[1].imshow(
+        shap_overlay.sum(axis=-1),  # Summing across channels
+        cmap="coolwarm",
+        alpha=0.5,
+        vmin=-np.max(np.abs(shap_overlay)),
+        vmax=np.max(np.abs(shap_overlay)),
+    )
+    ax[1].axis("off")
+    ax[1].set_aspect("equal")
+
+    # Add colorbar for the SHAP values to the second axis
+    cbar = plt.colorbar(
+        shap_im, ax=ax[1], orientation="vertical", fraction=0.046, pad=0.04
+    )
+    cbar.set_label("SHAP value")
+
+    plt.suptitle(f"SHAP explanation for class {predicted_class}", y=0.75)
+    plt.show()
+
+
+for img_idx in range(9):
+    plot_shap_overlay(img_idx, shap_values, model, test)
+
+# %%
