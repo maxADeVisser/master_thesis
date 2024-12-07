@@ -1,5 +1,6 @@
 import json
 
+import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -7,9 +8,6 @@ from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import load_resnet_model
 from project_config import env_config, pipeline_config
 from train.train import evaluate_model
-
-dimensionality = pipeline_config.dataset.dimensionality
-context_window = pipeline_config.dataset.context_window
 
 experiments = [
     "c30_25D_2411_1543",
@@ -20,19 +18,21 @@ experiments = [
     "c70_3D_2411_1824",
 ]
 folds = [0, 1, 2, 3, 4]
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 all_exp_results = {}
-
 for exp in tqdm(experiments, desc="Evaluating models"):
     all_exp_results[exp] = {}
-    for fold in folds:
-        weights_path = f"hpc/jobs/{exp}/fold_{fold}/model.pth"
+    for fold in tqdm(folds, desc=f"Folds for {exp}"):
+        # weights_path = f"hpc/jobs/{exp}/fold_{fold}/model.pth"
+        weights_path = f"out/model_runs/{exp}/fold{fold}/model.pth"
 
         in_channels = 1 if "3D" in exp else 3
         dims = "3D" if "3D" in exp else "2.5D"
         context = int(exp.split("_")[0][1:])
 
         model = load_resnet_model(weights_path, in_channels=in_channels, dims=dims)
+
         precomputed_holdout_path = f"{env_config.PROJECT_DIR}/data/precomputed_resampled_rois_{context}C_{dims}hold_out"
         holdout_dataset = PrecomputedNoduleROIs(
             precomputed_holdout_path,
@@ -41,7 +41,7 @@ for exp in tqdm(experiments, desc="Evaluating models"):
             center_mask_size=None,
         )
         holdout_loader = DataLoader(
-            holdout_dataset, batch_size=4, shuffle=False, num_workers=0
+            holdout_dataset, batch_size=4, shuffle=False, num_workers=4
         )
         metric_results = evaluate_model(model, holdout_loader)
 
@@ -57,5 +57,6 @@ for exp in tqdm(experiments, desc="Evaluating models"):
             "fold_errors": metric_results["errors"],
         }
 
-with open(f"{env_config.PROJECT_DIR}/model/model_benchmark_results.json", "w") as f:
-    json.dump(all_exp_results, f)
+    # Write incremental results to file
+    with open(f"{env_config.PROJECT_DIR}/model/model_benchmark_results.json", "w") as f:
+        json.dump(all_exp_results, f)

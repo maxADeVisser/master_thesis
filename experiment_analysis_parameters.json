@@ -12,12 +12,15 @@
     ]
   },
   "experiment_id": "c70_3D_2411_1824",
-  "holdout_set": false,
+  "holdout_set": true,
   "hpc_job_id": 1682,
   "precompute_nodule_dataset": {
     "context_windows": [
+      20,
       30,
+      40,
       50,
+      60,
       70
     ],
     "dimensionalities": [
