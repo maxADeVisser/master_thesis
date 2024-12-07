@@ -52,7 +52,11 @@ def plot_loss(
 
 
 def plot_fold_results(
-    experiment_id: str, fold_num: int, rolling_window: int = 10, epochs_dampen: int = 2
+    experiment_id: str,
+    fold_num: int,
+    rolling_window: int = 10,
+    epochs_dampen: int = 2,
+    save_path: str | None = None,
 ) -> None:
     """
     Visualises a fold results downloaded from the HPC.
@@ -106,6 +110,7 @@ def plot_fold_results(
         ax=ax1,
         alpha=0.5,
         color="red",
+        linestyle="--",
     )
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("MAE")
@@ -119,6 +124,7 @@ def plot_fold_results(
         ax=ax2,
         alpha=0.5,
         color="red",
+        linestyle="--",
     )
     ax2.set_xlabel("Epoch")
     ax2.set_ylabel("MSE")
@@ -137,9 +143,10 @@ def plot_fold_results(
         ax=ax3,
         alpha=0.5,
         color="red",
+        linestyle="--",
     )
     ax3.set_xlabel("Epoch")
-    ax3.set_ylabel("AUC Binary")
+    ax3.set_ylabel("AUC")
     ax3.grid()
 
     # AX4 -- AUC OVR
@@ -155,13 +162,13 @@ def plot_fold_results(
         ax=ax4,
         alpha=0.5,
         color="red",
+        linestyle="--",
     )
     ax4.set_xlabel("Epoch")
     ax4.set_ylabel("AUC OVR")
     ax4.grid()
 
     # AX5 -- Validation Accuracy
-    # NOTE: changed to binary val accuracy
     sns.lineplot(
         x=epochs,
         y=fold.val_binary_accuracies,
@@ -174,9 +181,10 @@ def plot_fold_results(
         ax=ax5,
         alpha=0.5,
         color="red",
+        linestyle="--",
     )
     ax5.set_xlabel("Epoch")
-    ax5.set_ylabel("Binary Accuracy")
+    ax5.set_ylabel("ACC")
     ax5.grid()
 
     # AX6 -- Class-wise Calibration Error
@@ -192,9 +200,10 @@ def plot_fold_results(
         ax=ax6,
         alpha=0.5,
         color="red",
+        linestyle="--",
     )
     ax6.set_xlabel("Epoch")
-    ax6.set_ylabel("Class-wise Calibration Error")
+    ax6.set_ylabel("CWCE")
     ax6.grid()
 
     # AX7 -- Loss Plot
@@ -208,17 +217,19 @@ def plot_fold_results(
         x=epochs,
         y=fold.val_losses,
         ax=ax7,
-        label="Val Loss",
+        label="Validation Loss",
     )
     ax7.set_title(f"Train vs. Validation Loss")
     ax7.set_xlabel("Epoch")
     ax7.set_ylabel("CORN Loss")
     ax7.grid()
 
-    plt.suptitle(
-        f"Model {model_context_size} | {model_dimensionality} - Fold {fold_num} Validation Metrics"
-    )
+    # plt.suptitle(
+    #     f"Model {model_context_size} | {model_dimensionality} - Fold {fold_num} Validation Metrics"
+    # )
     plt.savefig(f"{fold_path}/fold_metric_results.png")
+    if save_path:
+        plt.savefig(save_path)
     plt.show()
 
 
