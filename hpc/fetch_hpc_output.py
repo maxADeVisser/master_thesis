@@ -99,6 +99,17 @@ def fetch_predictions(experiment_id: str, fold: int = 0, user: str = "newuser") 
     _transfer_hpc_to_local(hpc_out, out_dir)
 
 
+def fetch_benchmark(user: str = "newuser") -> None:
+    """
+    Fetch the model weights from the HPC
+    """
+    hpc_out = f"maxd@hpc.itu.dk:~/master_thesis/model/model_benchmark_results.json"
+    out_dir = (
+        f"/Users/{user}/Documents/ITU/master_thesis/model/model_benchmark_results.json"
+    )
+    _transfer_hpc_to_local(hpc_out, out_dir)
+
+
 # %%
 if __name__ == "__main__":
     # TODO clean this up
