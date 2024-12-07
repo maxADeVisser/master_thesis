@@ -1,3 +1,11 @@
+import os
+import sys
+
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+sys.path.append(os.getenv("PROJECT_DIR"))
+
 import json
 
 import torch

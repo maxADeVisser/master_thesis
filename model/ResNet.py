@@ -299,7 +299,9 @@ def load_resnet_model(
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = ResNet50(in_channels=in_channels, num_classes=5, dims=dims)
-    model.load_state_dict(torch.load(f=weights_path, map_location=torch.device(device)))
+    model.load_state_dict(
+        torch.load(f=weights_path, map_location=torch.device(device), weights_only=True)
+    )
     return model
 
 
