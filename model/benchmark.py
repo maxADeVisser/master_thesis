@@ -32,7 +32,6 @@ all_exp_results = {}
 for exp in tqdm(experiments, desc="Evaluating models"):
     all_exp_results[exp] = {}
     for fold in tqdm(folds, desc=f"Folds for {exp}"):
-        # weights_path = f"hpc/jobs/{exp}/fold_{fold}/model.pth"
         weights_path = f"out/model_runs/{exp}/fold{fold}/model.pth"
 
         in_channels = 1 if "3D" in exp else 3
