@@ -2,22 +2,15 @@ lung_data/
 precomputed*
 out/
 .env
-max/
 .idea/
 logs/*
-mlruns/
-mlartifacts/
 *.png
-*jpg
 *tar.gz
 .DS_Store
 *.pth
 job.*.out
-run_*
-fold*
 annotations*.json
 files_from_before_adding_nodule_ids/
-*TEST_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

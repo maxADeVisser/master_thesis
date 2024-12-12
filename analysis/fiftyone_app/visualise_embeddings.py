@@ -47,6 +47,3 @@ sample_id_embedding_mapping = {
 fob.compute_visualization(
     samples=dataset, points=sample_id_embedding_mapping, brain_key="resnet50_embeddings"
 )
-
-session = fo.launch_app(dataset=dataset, port=5151)
-session.wait()

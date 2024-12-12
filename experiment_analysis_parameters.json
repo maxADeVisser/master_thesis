@@ -1,6 +1,6 @@
 {
   "analysis": {
-    "context_size": 30,
+    "context_size": 70,
     "dimensionality": "2.5D",
     "fold": 0,
     "folds": [
