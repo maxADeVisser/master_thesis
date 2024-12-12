@@ -260,6 +260,13 @@ class PrecomputedNoduleROIs(Dataset):
             )
         return feature, label, self.nodule_ids[idx]
 
+    def get_nodule_by_id(self, nodule_id: str) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Returns the nodule ROI and label based on the nodule id
+        """
+        idx = self.nodule_ids.index(nodule_id)
+        return self.__getitem__(idx)
+
 
 # %%
 if __name__ == "__main__":
