@@ -6,7 +6,7 @@ import fiftyone as fo
 import pandas as pd
 from tqdm import tqdm
 
-dataset_name: Literal["c30", "c50", "c70"] = "c70"
+# dataset_name: Literal["c30", "c50", "c70"] = "c70"
 
 all_experiment_ids = {
     "c30": "c30_25D_2411_1543",
@@ -35,4 +35,6 @@ def load_tags(dataset_name: Literal["c30", "c50", "c70"]) -> None:
 
 
 if __name__ == "__main__":
-    load_tags(dataset_name)
+    load_tags("c30")
+    load_tags("c50")
+    load_tags("c70")
