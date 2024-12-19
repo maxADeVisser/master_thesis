@@ -1,0 +1,41 @@
+Patient ID,contrast fluid,tissue cut-off,metal artifacts (beam hardening),scanner lines(bed) visible in the image,visible breast tissue,significant breast tissue,poc,catheter,Obvious calcification in the blood vessels,NOTE
+1,x,,x,1,,,,,,
+2,,x,,1,,,,,,
+3,x,x,,1,,,x,,,
+4,x,,x,3,x,,,,,
+5,x,x,,1,x,,,,,
+6,x,x,,1,x,,,,,clearly sick lungs and blood vessel
+7,x,,,2,,,,,,perhaps higher x-ray dosis? (image appears sharper)
+8,x,x,,3,,x,,,,
+9,,,,3,,,,,,perhaps lower dosis. a screening maybe?
+10,x,,,3,,,,,,
+11,x,x,x,2,,,x,,,
+12,x,x,,1,x,,,,,
+13,x,x,,1,,,,,,smoked a lot of cigarettes
+14,x,x,,1,,,x,,,
+15,,,,2,x,,,cvk?,,visible wires on the outer side of the body
+16,,x,x,1,x,,,,,very sick lungs. Big size difference between lungs
+17,x,x,,2,,,,cvk?,,
+18,x,x,x,2,x,,x,,,
+19,x,,x,2,,,,,,
+20,x,,,3,,,,cvk?,,
+21,x,x,x,3,,,,,,visible sick lungs
+22,x,x,,1,,,,,,Higher dosis? visible sick lungs
+23,x,x,,2,,,,,,
+24,x,x,,2,,,,,,
+25,x,,,2,,x,,,,smoker lungs
+26,,,,3,x,,,,,screening?
+27,?,x,,3,,,,cvk,,
+28,,x,,3,x,,,,,
+29,x,,,3,x,,,,,
+30,x,x,,2,,,,,,
+31,x,x,,1,,,,,,
+32,x,,,3,,,,,,
+33,,x,x,1,,,,grip?,,Very clear scanner lines
+34,,,,2,x,,,x,,
+35,x,,x,1,x,,,,,
+36,,x,,3,,,,cvk?,,Person is lying crooked
+37,x,x,,1,x,,,,,
+38,x,x,,1,,x,,,,
+39,,,,2,x,,,,x,(a women most likely) only a single breast
+40,x,x,,0,,x,,,,
