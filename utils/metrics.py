@@ -142,53 +142,6 @@ def compute_cwce(
     return ece.item()
 
 
-# NOT used. Calculates pr. class (but not sure if it's correct)
-# def classwise_ece(
-#     pred_probas: np.ndarray, y_true: np.ndarray, num_classes: int = 5, num_bins: int = 5
-# ):
-#     """
-#     Computes the Expected Calibration Error (ECE) per class.
-
-#     Params
-#     ---
-#     @pred_probas: The predicted probabilities for each class.
-#         Shape: (num_samples, num_classes)
-#     @y_true: The true class labels.
-#         Shape: (num_samples,)
-#     """
-#     classwise_ece = []
-#     bin_boundaries = np.linspace(0, 1, num_bins + 1)
-#     num_samples = len(y_true)
-
-#     for c in range(num_classes):
-#         class_ece = 0.0
-
-#         # Subset the class of interest:
-#         class_probs = pred_probas[:, c]  # predicted probabilities for class c
-#         binary_class_labels = (y_true == c + 1).astype(int)
-
-#         # For each bin, compute the confidence and accuracy:
-#         for i in range(num_bins):
-#             bin_lower, bin_upper = bin_boundaries[i], bin_boundaries[i + 1]
-#             bin_mask = (class_probs >= bin_lower) & (class_probs < bin_upper)
-
-#             n_bin = bin_mask.sum()  # number of samples in the bin
-#             if n_bin > 0:
-#                 # average confidence of the predictions in the bin:
-#                 avg_bin_confidence = class_probs[bin_mask].mean()
-
-#                 # P(y = c | y_pred in bin) - proportion of correct predictions in the bin:
-#                 bin_accuracy = binary_class_labels[bin_mask].sum() / n_bin
-
-#                 # n_b/N: proportion of samples in the bin:
-#                 bin_weight = n_bin / num_samples
-#                 class_ece += bin_weight * abs(bin_accuracy - avg_bin_confidence)
-
-#         classwise_ece.append(round(float(class_ece), 4))
-
-#     return classwise_ece
-
-
 def reliability_diagram(
     y_true: np.ndarray, pred_probas: np.ndarray, num_bins: int = 5, n_classes: int = 5
 ):
