@@ -9,11 +9,6 @@ from utils.data_models import ExperimentAnalysis
 with open("experiment_analysis_parameters.json", "r") as f:
     config = ExperimentAnalysis.model_validate(json.load(f))
 
-# --- SCRIPT PARAMS ---
-context_size = config.analysis.context_size
-dataset_name = "c30"
-# ---------------------
-
 all_experiment_ids = {
     "c30": {
         "2.5D": "c30_25D_2411_1543",
@@ -32,7 +27,7 @@ fold = 0
 
 
 def create_fiftyone_nodule_dataset(
-    dataset_name: str, overwrite_if_exists: bool = False
+    dataset_name: str, context_size: int, overwrite_if_exists: bool = False
 ) -> None:
     nodule_roi_jpg_dir = (
         f"{env_config.PROJECT_DIR}/data/middle_slice_images_c{context_size}"
@@ -140,6 +135,6 @@ def create_fiftyone_nodule_dataset(
 
 
 if __name__ == "__main__":
-    create_fiftyone_nodule_dataset("c30", overwrite_if_exists=True)
-    create_fiftyone_nodule_dataset("c50", overwrite_if_exists=True)
-    create_fiftyone_nodule_dataset("c70", overwrite_if_exists=True)
+    create_fiftyone_nodule_dataset("c30", context_size=30, overwrite_if_exists=True)
+    create_fiftyone_nodule_dataset("c50", context_size=50, overwrite_if_exists=True)
+    create_fiftyone_nodule_dataset("c70", context_size=70, overwrite_if_exists=True)

@@ -6,8 +6,6 @@ import fiftyone as fo
 import pandas as pd
 from tqdm import tqdm
 
-# dataset_name: Literal["c30", "c50", "c70"] = "c70"
-
 all_experiment_ids = {
     "c30": "c30_25D_2411_1543",
     "c50": "c50_3D_2411_1831",
