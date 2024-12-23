@@ -1,6 +1,6 @@
 """
 source: https://github.com/MedMNIST/experiments/blob/main/MedMNIST3D/models.py
-This is the ResNet50 benchmark model for the MedMNIST3D dataset.
+This is the ResNet50 model implemenation for the MedMNIST3D dataset.
 """
 
 # %%

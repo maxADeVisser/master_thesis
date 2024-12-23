@@ -5,7 +5,7 @@ import torch
 from pylidc.utils import consensus, volume_viewer
 from torch.utils.data import DataLoader, Dataset
 
-from data.data_augmentations import apply_augmentations
+from preprocessing.data_augmentations import apply_augmentations
 from preprocessing.processing import clip_and_normalise_volume, mask_out_center
 from project_config import SEED, env_config, pipeline_config
 from utils.common_imports import *

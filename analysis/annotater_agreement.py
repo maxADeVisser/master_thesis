@@ -1,3 +1,7 @@
+"""
+Annotation data is computed using the create_annotations_df.py script in the preprocessing folder
+"""
+
 import pandas as pd
 
 
@@ -7,21 +11,20 @@ def compute_kendall_w(annotation_data: pd.DataFrame) -> pd.DataFrame:
     # n: number of items (nodules) and m: number of raters (annotations):
     n, m = annotation_data.shape
 
-    # Rank the ratings for each subject:
+    # rank the ratings for each subject:
     ranked_data = annotation_data.rank(axis=0, method="average")
 
-    # Compute the sum of ranks for each item:
+    # sum of ranks for each item:
     sum_of_total_ranks = ranked_data.sum(axis=1)  # R_i
 
-    # Compute the mean of the sum of total ranks:
+    # mean of the sum of total ranks:
     mean_of_ranks = sum_of_total_ranks.mean()  # \bar{R}
 
-    # Compute the sum of squared deviations from the mean rank sum:
+    # sum of squared deviations from the mean rank sum:
     S = ((sum_of_total_ranks - mean_of_ranks) ** 2).sum()
 
-    #  Calculate Kendall's W:
+    # kendall's W:
     W = (12 * S) / (m**2 * (n**3 - n))
-
     return W
 
 

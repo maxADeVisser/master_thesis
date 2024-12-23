@@ -26,11 +26,8 @@ from model.ResNet import (
     predict_binary_from_logits,
 )
 from project_config import SEED, env_config, pipeline_config
-from utils.common_imports import *
-from utils.data_models import TrainingFold
-from utils.early_stopping import EarlyStopping
-from utils.logger_setup import logger
-from utils.metrics import (
+from train.early_stopping import EarlyStopping
+from train.metrics import (
     compute_accuracy,
     compute_binary_accuracy,
     compute_cwce,
@@ -40,6 +37,9 @@ from utils.metrics import (
     compute_mse,
     compute_ovr_AUC,
 )
+from utils.common_imports import *
+from utils.data_models import TrainingFold
+from utils.logger_setup import logger
 from utils.visualisation import plot_loss, plot_val_error_distribution
 
 torch.manual_seed(SEED)

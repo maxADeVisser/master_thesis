@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import load_resnet_model
-from project_config import env_config, pipeline_config
+from project_config import env_config
 from train.train import evaluate_model
 
 experiments = [

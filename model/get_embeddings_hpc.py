@@ -12,8 +12,6 @@ from model.ResNet import load_resnet_model
 from project_config import SEED, env_config
 from utils.data_models import ExperimentAnalysis
 
-# TODO also add the embeddings for the holdout set and make a flag indicating them
-
 # SCRIPT PARAMS ---------
 with open("experiment_analysis_parameters.json", "r") as f:
     config = ExperimentAnalysis.model_validate(json.load(f))
@@ -93,8 +91,6 @@ embeddings_results["nodule_ids"] = all_nodule_ids
 
 # Reduce embeddings to 2 dimensions using t-SNE:
 tnse = TSNE(n_components=2, perplexity=30, random_state=SEED)
-
-# TODO, we cant compute the t-sne on the two datasets seperately, we need to combine them and then compute the t-sne. This is because the t-sne is a non-linear dimensionality reduction technique that tries to preserve the local structure of the data. If we compute the t-sne on the two datasets seperately, we will not be able to compare the embeddings of the two datasets.
 
 train_reduced_embeddings = tnse.fit_transform(embeddings_results["embeddings"].numpy())
 train_embeddings_df = pd.DataFrame(
