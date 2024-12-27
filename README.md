@@ -2,6 +2,8 @@
 
 ## Abstract
 
+TODO ADD THIS
+
 ## Repository Overview
 
 The project uses [Poetry](https://python-poetry.org/) for dependency management and the requirements are specified in the `pyproject.toml` file.

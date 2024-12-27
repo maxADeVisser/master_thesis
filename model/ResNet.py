@@ -29,6 +29,7 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
 
         n_out_channels = self.expansion * out_channels
+        # 1x1 convolution:
         self.conv1 = nn.Conv2d(
             in_channels,
             out_channels,
@@ -38,6 +39,7 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(num_features=out_channels)
+        # 3x3 convolution:
         self.conv2 = nn.Conv2d(
             out_channels,
             out_channels,
@@ -47,6 +49,7 @@ class Bottleneck(nn.Module):
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(num_features=out_channels)
+        # 1x1 convolution:
         self.conv3 = nn.Conv2d(
             out_channels, n_out_channels, kernel_size=1, stride=1, padding=0, bias=False
         )
@@ -94,7 +97,7 @@ class ResNet(nn.Module):
             self._make_layer(128, num_blocks[1], stride=2),
             self._make_layer(256, num_blocks[2], stride=2),
             self._make_layer(512, num_blocks[3], stride=2),
-            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.AdaptiveAvgPool2d((1, 1)),  # global average pooling layer
         )
         self.classifier = nn.Sequential(
             nn.Dropout(p=DROPOUT_RATE),  # added dropout layer
