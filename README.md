@@ -110,8 +110,6 @@ Contains various utility modules, data models, and functions used across the pro
 
 4. add a `.env` file in the root of the working directory and specify `LIDC_IDRI_DIR` as the directory path for the downloaded dataset. The path should be specified the same way that is specified for the configuration of [pylidc](https://pylidc.github.io/install.html)
 
-5. create a `out/` directory at the repository root level.
-
 Example setup of the `.env` file:
 
 ```
