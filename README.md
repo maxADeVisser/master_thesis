@@ -27,7 +27,7 @@ Contains:
 
 - analysis work such as exploraty data analysis on the data that was used for developement of the model
 - our setup for using [FiftyOne](https://docs.voxel51.com/) for the qualitative analysis.
-- the script for doing the annotator agreement analysis by computing Kendall's W (`annotater_agreement.py`).
+- the script for doing the annotator agreement analysis by computing Kendall's W (`annotater_agreement.py`) as well as the .csv files with the annotations.
 - a .csv file with the exploraty shortcut annotations we did (`exploraty_shortcut_annotations.csv`).
 - the beginning of a script for creating SHAP explanations (this is however not used in the report.) (`shap_explanations.py`).
 

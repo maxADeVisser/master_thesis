@@ -4,6 +4,8 @@ Annotation data is computed using the create_annotations_df.py script in the pre
 
 import pandas as pd
 
+from project_config import env_config
+
 
 def compute_kendall_w(annotation_data: pd.DataFrame) -> pd.DataFrame:
     """Computes Kendall's W assuming that there are no rank ties."""
@@ -29,10 +31,23 @@ def compute_kendall_w(annotation_data: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    anno_2 = pd.read_csv("out/annotation_files/malignancy_2.csv")
-    anno_3 = pd.read_csv("out/annotation_files/malignancy_3.csv")
-    anno_4 = pd.read_csv("out/annotation_files/malignancy_4.csv")
-
-    compute_kendall_w(anno_2)
-    compute_kendall_w(anno_3)
-    compute_kendall_w(anno_4)
+    # compute kendall's W for the malignancy annotations:
+    anno_2 = compute_kendall_w(
+        pd.read_csv(
+            f"{env_config.PROJECT_DIR}/analysis/annotation_agreement/annotation_files/malignancy_2.csv"
+        )
+    )
+    anno_3 = compute_kendall_w(
+        pd.read_csv(
+            f"{env_config.PROJECT_DIR}/analysis/annotation_agreement/annotation_files/malignancy_3.csv"
+        )
+    )
+    anno_4 = compute_kendall_w(
+        pd.read_csv(
+            f"{env_config.PROJECT_DIR}/analysis/annotation_agreement/annotation_files/malignancy_4.csv"
+        )
+    )
+    print(f"Kendall's W for malignancy annotations:")
+    print(f"Annotator 2: {anno_2}")
+    print(f"Annotator 3: {anno_3}")
+    print(f"Annotator 4: {anno_4}")

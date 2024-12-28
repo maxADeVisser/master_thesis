@@ -16,7 +16,7 @@ import torch.nn as nn
 import torch.optim as optim
 from coral_pytorch.losses import corn_loss
 from sklearn.model_selection import StratifiedGroupKFold
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 
 from data.dataset import PrecomputedNoduleROIs
 from model.ResNet import (
@@ -42,6 +42,7 @@ from utils.data_models import TrainingFold
 from utils.logger_setup import logger
 from utils.visualisation import plot_loss, plot_val_error_distribution
 
+# Set random seeds for reproducibility:
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 np.random.seed(SEED)
@@ -72,28 +73,28 @@ def train_epoch(
     optimizer: optim.Optimizer,
 ) -> float:
     """
-    Trains the model for one epoch.
+    Trains the @model for one epoch.
     Returns the average batch loss for the epoch.
     """
-    model.to(DEVICE)  # move model to GPU
+    model.to(DEVICE)  # move model to GPU if available
     model.train()
     running_epoch_loss = 0.0
     n_batches = len(train_loader)
 
     for inputs, labels, _ in train_loader:
-        # Move data to GPU (if available):
+        # move data to GPU (if available):
         inputs, labels = inputs.float().to(DEVICE), labels.int().to(DEVICE)
 
-        # Zero the parameter gradients
+        # zero the parameter gradients
         optimizer.zero_grad()
 
-        # Forward pass and loss calculation
+        # forward pass and loss calculation
         logits = model(inputs)
-        # class labels should start at 0 according to documentation:
+        # NOTE: class labels are treated as indices, and should therefore start at 0 according to documentation:
         # https://raschka-research-group.github.io/coral-pytorch/api_subpackages/coral_pytorch.losses/
         loss = corn_loss(logits, labels - 1, num_classes=NUM_CLASSES)
 
-        # Backward pass and optimisation
+        # backward pass and optimisation
         loss.backward()
         optimizer.step()
 
@@ -107,12 +108,15 @@ def evaluate_model(
     model: nn.Module,
     validation_loader: DataLoader,
 ) -> dict:
-    """Validates the model according performance metrics using the provided data loader."""
+    """
+    Evaluates the model according to performance metrics using the provided data loader.
+    Returns a dictionary of the computed metrics.
+    """
     logger.info("Validating model ...")
     model.to(DEVICE)
     model.eval()
 
-    # Preallocate tensors for storing predictions and labels (on the CPU):
+    # preallocate tensors for storing predictions and labels (on the CPU):
     num_val_samples = len(validation_loader.dataset)
     all_true_labels = torch.empty(num_val_samples, dtype=torch.int, device="cpu")
     all_binary_prob_predictions = torch.empty(
@@ -142,12 +146,12 @@ def evaluate_model(
             # move to CPU for metrics calculations:
             logits, labels = logits.cpu().float(), labels.cpu().int()
 
-            # Get predictions and labels:
+            # get predictions and labels:
             binary_probas = predict_binary_from_logits(logits, return_probs=True)
             malignancy_scores = get_pred_malignancy_from_logits(logits)
             class_probas = compute_class_probs_from_logits(logits)
 
-            # Fill the preallocated tensors with the predictions and labels
+            # fill the preallocated tensors with the predictions and labels
             batch_size = inputs.size(0)
             end_idx = start_idx + batch_size
             all_binary_prob_predictions[start_idx:end_idx] = binary_probas
@@ -157,7 +161,7 @@ def evaluate_model(
 
             start_idx += batch_size
 
-    # --- COMPUTE METRICS ---
+    # --- COMPUTE EVALUATION METRICS ---
     np_all_true_labels = all_true_labels.numpy()
     np_all_class_proba_preds = all_class_proba_preds.numpy()
     np_all_binary_prob_predictions = all_binary_prob_predictions.numpy()
@@ -185,15 +189,14 @@ def train_model(
     cross_validation: bool = DO_CROSS_VALIDATION,
 ) -> None:
     """
-    Trains the model.
+    Trains the model using the specified configuration in the pipeline_config.
 
-    Params
-    ---
+    Params:
         @context_window_size: size of the context window of the nodule ROI used for training.
         @data_dimensionality: whether to use 2.5D or 3D data.
         @cross_validation: whether to train the model using cross-validation.
     """
-    # Log experiment:
+    # log experiment:
     experiment = pipeline_config.model_copy()
     start_time = dt.datetime.now()
     experiment.start_time = start_time
@@ -205,7 +208,7 @@ def train_model(
         env_config.PREPROCESSED_DATA_DIR
     ), f"Precomputed ROIs do not exist for {CONTEXT_WINDOW_SIZE}C_{DATA_DIMENSIONALITY}"
 
-    # Create output directory for experiment:
+    # create output directory for experiment:
     exp_out_dir = f"{env_config.OUT_DIR}/model_runs/{experiment.id}"
     if not os.path.exists(exp_out_dir):
         os.makedirs(exp_out_dir)
@@ -238,7 +241,7 @@ def train_model(
         """
     )
 
-    # --- Cross Validation ---
+    # --- cross validation ---
     sgkf = StratifiedGroupKFold(n_splits=CV_FOLDS, shuffle=True, random_state=SEED)
     for fold, (train_idxs, val_idxs) in enumerate(
         sgkf.split(
@@ -269,7 +272,7 @@ def train_model(
         # save initial fold information
         fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 
-        # Initialize model and move to GPU if available
+        # initialize model and move to GPU if available
         model = ResNet50(
             in_channels=IN_CHANNELS, num_classes=NUM_CLASSES, dims=DATA_DIMENSIONALITY
         ).to(DEVICE)
@@ -306,14 +309,14 @@ def train_model(
             min_delta=MIN_DELTA,
         )
 
-        # --- Training Loop ---
+        # --- training loop ---
         for epoch in tqdm(range(1, NUM_EPOCHS + 1), desc="Epoch"):
             avg_epoch_train_loss = train_epoch(model, train_loader, optimizer)
             fold_results.train_losses.append(avg_epoch_train_loss)
 
-            # Evaluate model:
+            # evaluate model:
             val_metrics = evaluate_model(model, val_loader)
-            # (NOTE: Checkpointing the model if it improves is handled by the EarlyStopping)
+            # (NOTE: checkpointing the model if it improves is handled by the EarlyStopping)
             early_stopper(
                 val_loss=val_metrics["avg_val_loss"], epoch=epoch, model=model
             )
@@ -330,15 +333,13 @@ def train_model(
             fold_results.val_maes.append(round(val_metrics["mae"], 6))
             fold_results.val_mses.append(round(val_metrics["mse"], 6))
             fold_results.val_cwces.append(round(val_metrics["cwce"], 6))
-            # Write incremental results out to JSON:
+            # incrementally write results out to JSON:
             fold_results.write_fold_to_json(out_dir=f"{fold_out_dir}")
 
-            # Log epoch results:
+            # log epoch results:
             plot_loss(
                 fold_results.train_losses, fold_results.val_losses, out_dir=fold_out_dir
             )
-            # NOTE: this plot only shows for the last epoch (not the best loss necessarily)
-            plot_val_error_distribution(val_metrics["errors"], out_dir=fold_out_dir)
             logger.info(
                 f"""
                 [[Fold {fold + 1}/{CV_FOLDS}]] - [Epoch {epoch}]
@@ -365,6 +366,7 @@ def train_model(
 
         if not cross_validation:
             # do not do cross-validation (train on one fold only)
+            # used for debugging or quick model training
             break
 
         if fold + 1 == CV_TRAIN_FOLDS:

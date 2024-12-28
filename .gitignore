@@ -1,6 +1,5 @@
 lung_data/
 precomputed*
-out/
 .env
 .idea/
 logs/*
@@ -12,7 +11,11 @@ job.*.out
 .vscode/
 annotations*.json
 files_from_before_adding_nodule_ids/
-*TEST_*
+out/annotation_files/
+out/model_runs
+out/annotation_df.csv
+out/lidc_meta_data.csv
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -114,15 +114,14 @@ def fetch_benchmark(user: str = "newuser") -> None:
 if __name__ == "__main__":
     # TODO clean this up
 
-    # from utils.data_models import ExperimentAnalysis
+    from utils.data_models import ExperimentAnalysis
 
     # # SCRIPT PARAMS ---------
     # with open("experiment_analysis_parameters.json", "r") as f:
     #     config = ExperimentAnalysis.model_validate(json.load(f))
-
     # experiment_id = config.experiment_id
     # job_id = config.hpc_job_id
-    # experiment_id = "c50_25D_2811_2112"
+    experiment_id = "c70_3D_2411_1824"
 
     # local_user = "newuser"
     # local_exp_path = (
@@ -149,12 +148,12 @@ if __name__ == "__main__":
     #     fetch_predictions(experiment_id, f, local_user)
 
     # FETCH RESULTS FOR TREND PLOT
-    experiments = [  # 2.5D
-        "c40_25D_2811_2153",
-        "c50_25D_2811_2112",
-        "c60_25D_2811_2111",
-        "c70_25D_2811_2106",
-    ]
-    fetch_all_final_experiment_results(experiments, user="newuser")
+    # experiments = [  # 2.5D
+    #     "c40_25D_2811_2153",
+    #     "c50_25D_2811_2112",
+    #     "c60_25D_2811_2111",
+    #     "c70_25D_2811_2106",
+    # ]
+    # fetch_all_final_experiment_results(experiments, user="newuser")
 
     # %%

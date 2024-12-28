@@ -164,7 +164,7 @@ def ResNet50(
             num_classes=num_classes,
         )
     else:
-        raise ValueError("Invalid value for dims. Must be '2D' or '3D'")
+        raise ValueError("Invalid value for dims. Must be '2.5D' or '3D'")
 
 
 def get_conditional_probas(logits: torch.Tensor) -> torch.Tensor:
@@ -180,9 +180,9 @@ def get_unconditional_probas(logits: torch.Tensor) -> torch.Tensor:
     P(y_i > r_k) = P(y_i > r_k | y_i > r_k-1) * P(y_i > r_k-1).
     """
     conditional_probas = get_conditional_probas(logits)
-    # chain rule of probability:
+    # chain rule of probability to get the unconditional probabilities:
+    # (and ensure that rank-monotonicity is maintained)
     unconditional_probas = torch.cumprod(conditional_probas, dim=1)
-    # (ensure that rank-monotonicity is maintained)
     return unconditional_probas
 
 
@@ -190,10 +190,7 @@ def compute_class_probs_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given the logits, return the class probabilities.
 
-    Params
-    ---
-    @logits: The model's output logits
-        tensor of shape (batch_size, num_classes)
+    @logits: The model's output logits. tensor of shape (batch_size, num_classes)
     Returns tensor of shape (batch_size, num_classes)
     """
     uncond_probas = get_unconditional_probas(logits)
@@ -222,7 +219,9 @@ def get_malignancy_rank_confidence(
     and for rank 4 (r_i = 5), the confidence is P(y_i > 4).
 
     @logits is the model's output logits
+        tensor of shape (batch_size, num_classes)
     @predicted_rank is the rank index (1 to 5)
+        tensor of shape (batch_size,)
     """
     class_probas = compute_class_probs_from_logits(logits)
     batch_size = logits.size(0)
@@ -235,21 +234,18 @@ def get_malignancy_rank_confidence(
 def get_pred_malignancy_from_logits(logits: torch.Tensor) -> torch.Tensor:
     """
     Given output logits, return the malignancy rank.
-
-    Params
-    ---
     @logits: The model's output logits
         tensor of shape (batch_size, num_classes)
 
     Returns
-    ---
     @predicted_rank: The predicted rank
         tensor of shape (batch_size,)
     """
     uncond_probas = get_unconditional_probas(logits)
     predicted_levels = 0.5 < uncond_probas
     predicted_rank = torch.sum(predicted_levels, dim=1) + 1
-    """NOTE: i think that the +1 is not added in the @corn_label_from_logits function, because the function returns the rank index, and not the rank value itself. But we can do this here, since we are predicting a score from 1 to 5"""
+    # NOTE: the +1 is not added in the @corn_label_from_logits function, because the function returns the rank index, and not the rank value itself.
+    # But we can do this here, since we are predicting a numerical score from 1 to 5 (instead of the rank index).
     return predicted_rank.int()
 
 
@@ -259,14 +255,10 @@ def predict_binary_from_logits(
 ) -> torch.Tensor:
     """
     Given output logits, return the binary classification based on the classification threshold
-
-    Params
-    ---
     @logits: The model's output logits
         tensor of shape (batch_size, num_classes)
 
     Returns
-    ---
     @binary_prediction: The binary prediction (0 or 1) or the probability of the positive class (P(y > 3))
         tensor of size (batch_size,)
     """
@@ -305,48 +297,15 @@ def load_resnet_model(
 # %%
 if __name__ == "__main__":
     img_dim = 10
-    channels = 1  # 1 for grayscale (or one-dimensional data)
+    channels = 1  # channel for hounsfield units
     batch_size = 2
-    n_classes = 5
 
-    # Test 3D input
+    # Test 3D input:
     model = ResNet50(in_channels=3, num_classes=5, dims="2.5D")
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f"Total number of parameters: {total_params}")
     test_input = torch.randn(batch_size, channels, img_dim, img_dim, img_dim)
-    test_input.shape
 
     features = model.get_feature_vector(test_input)
+    print(features)
 
     logits = model(test_input)
-    logits
-
-    # Get predicted rank probabilities
-    # from coral_pytorch.dataset import corn_label_from_logits
-    # corn_label_from_logits(logits).float()
-
-    get_unconditional_probas(logits)
-
-    get_pred_malignancy_from_logits(logits)
-
-    # Binary inference (this gives the binary classification)
-    # predict_binary_from_logits(logits)
-
-    compute_class_probs_from_logits(logits)
-
-    # Model only trained for 1 epoch
-    model = load_resnet_model(
-        "out/model_runs/testing_training_flow_0811_1113/model_fold_0.pth",
-        in_channels=1,
-        dims="3D",
-    )
-    logits = model(test_input)
-
-    with torch.no_grad():
-        uncond = get_unconditional_probas(logits)
-        preds = get_pred_malignancy_from_logits(logits)
-        class_probas = compute_class_probs_from_logits(logits)
-
-    uncond
-    preds
-    class_probas
+    print(logits)
