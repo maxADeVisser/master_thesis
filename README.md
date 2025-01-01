@@ -2,7 +2,7 @@
 
 ## Abstract
 
-TODO ADD THIS
+The availability of public medical imaging datasets, combined with advancements in deep learning algorithms, has significantly accelerated the development of automated systems for image-based medical diagnosis. However, these datasets can contain spurious correlations that can compromise the model's ability to generalize. Trust in deep learning models for medical image analysis hinges on verifying that models primarily rely on meaningful medical features rather than dataset-specific artifacts. This work presents a case study on lung nodule malignancy prediction in CT scans using the LIDC-IDRI dataset. We analyze how varying contextual information around the lung nodules influences feature dependency within a novel deep ordinal regression network based on a ResNet50 architecture. This offers insights into model reliability and feature interpretability. Our findings suggests that the models we train mainly relies on features that are medically relevant to lung nodule malignancy prediction. Our code is available at [Github](https://github.com/maxADeVisser/master_thesis).
 
 ## Repository Overview
 

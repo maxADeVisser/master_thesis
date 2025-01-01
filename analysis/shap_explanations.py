@@ -5,14 +5,9 @@ import pandas as pd
 import shap
 import shap.maskers
 import torch
-from torch.utils.data import DataLoader, Subset
 
 from data.dataset import PrecomputedNoduleROIs
-from model.ResNet import (
-    get_pred_malignancy_from_logits,
-    get_unconditional_probas,
-    load_resnet_model,
-)
+from model.ResNet import get_unconditional_probas, load_resnet_model
 
 
 class ResNetWrapper(torch.nn.Module):
@@ -72,7 +67,6 @@ classes = ["P(y > 1)", "P(y > 2)", "P(y > 3)", "P(y > 4)"]
 input_shape = top3_conf_batch.shape[1:]
 masker = shap.maskers.Image(mask_value=0, shape=input_shape)
 
-# Define a function that takes a batch of inputs and returns the model's predictions in the correct format:
 model = ResNetWrapper(
     load_resnet_model(
         "hpc/jobs/c50_25D_2411_1812/fold_0/model.pth",
@@ -83,7 +77,10 @@ model = ResNetWrapper(
 model.eval()
 
 
-def f(x):
+def f(x: np.ndarray):
+    """
+    Takes a batch of inputs and returns the model's predictions in the correct format
+    """
     tmp = x.copy()
     pred = model(tmp)
     pred = pred.detach().numpy().astype("float32")

@@ -63,8 +63,3 @@ pio.write_html(
     file=f"out/embeddings/{experiment_id}_fold{fold}/tnse_embeddings_plot{hold_indicator}.html",
 )
 fig.show()
-
-
-# TODO ???
-# evaluate clusters using silhouette score and other clustering metrics
-# potentially use the elbow method to determine the optimal number of clusters
